@@ -26,7 +26,7 @@ CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
-LIBS     =  -lpthread
+LIBS     =  -ldl -lpthread
 
 TARGET   =  libax25c_runtime.so
 

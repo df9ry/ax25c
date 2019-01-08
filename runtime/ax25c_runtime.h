@@ -33,19 +33,31 @@
  * @brief Data structure to be filled out in case of an exception.
  */
 struct exception {
-	int   erc;      /**< Error code                               */
-	char *module;   /**< Name of te module causing the exception. */
-	char *message;  /**< Error message text.                      */
+	int   erc;      /**< Error code                                */
+	char *module;   /**< Name of the module causing the exception. */
+	char *function; /**< Name of the function that failed.         */
+	char *message;  /**< Error message text.                       */
+	char *param;    /**< Additional information, if available.     */
 };
 
 /**
  * @brief Load a shared object file.
- * @param name Name of the shared object file without extension.
- * @param ifc  Name of the interface to request from the module.
- * @param excp Pointer to exception buffer. May be NULL.
+ * @param name   Name of the shared object file without extension.
+ * @param ifc    Name of the interface to request from the module.
+ * @param module Pointer to the module handle. Must not be NULL.
+ * @param ex     Pointer to exception buffer. May be NULL.
  * @return True if the request could be succesful handled. If false
- *   and excp was not NULL, excp was filled with useful information.
+ *   and excp was not NULL, ex was filled with useful information.
  */
-extern bool load(char *name, char *ifc, struct exception *excp);
+extern bool load(char *name, char *ifc, void **module, struct exception *ex);
+
+/**
+ * @brief Unload a shared object file.
+ * @param module Module handle. Might be NULL.
+ * @param ex     Pointer to exception buffer. May be NULL.
+ * @return True if the request could be succesful handled. If false
+ *   and excp was not NULL, ex was filled with useful information.
+ */
+extern bool unload(void *module, struct exception *ex);
 
 #endif /* RUNTIME_AX25C_RUNTIME_H_ */

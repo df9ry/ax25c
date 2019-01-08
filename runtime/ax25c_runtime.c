@@ -17,13 +17,45 @@
 
 #include "ax25c_runtime.h"
 
-bool load(char *name, char *ifc, struct exception *excp)
+#include <dlfcn.h>
+#include <assert.h>
+
+#define MODULE_NAME "RUNTIME"
+
+bool load(char *name, char *ifc, void **handle, struct exception *ex)
 {
-	if (excp) {
-		excp->erc = 99;
-		excp->message = "Module does not provide the requested interface";
-		excp->module = name;
+	assert(name);
+	assert(ifc);
+	assert(handle);
+	*handle = dlopen(name, RTLD_NOW);
+	if (!*handle) {
+		if (ex) {
+			ex->erc = -1;
+			ex->message = "Unable to load shared object file";
+			ex->param = name;
+			ex->module = MODULE_NAME;
+			ex->function = "load";
+		}
 		return false;
+	}
+	return true;
+}
+
+bool unload(void *module, struct exception *ex)
+{
+	int erc;
+	if (module) {
+		erc = dlclose(module);
+		if (erc) {
+			if (ex) {
+				ex->erc = erc;
+				ex->message = "Unable to unload shared object file";
+				ex->param = "";
+				ex->module = MODULE_NAME;
+				ex->function = "unload";
+			}
+			return false;
+		}
 	}
 	return true;
 }
