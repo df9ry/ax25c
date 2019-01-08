@@ -24,9 +24,11 @@ VPATH = $(SRCDIR)
 CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
-TARGET   =  libax25c_runtime.so
-OBJS     =  ax25c_runtime.o
-LIBS     =  -lmapc -ldl -lpthread
+
+TARGET   =  ax25c_mm_simple.so
+OBJS     =  module.o
+LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
+			-lpthread
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
@@ -44,4 +46,3 @@ $(TARGET): $(OBJS)
 
 #----- Begin Boilerplate
 endif
-

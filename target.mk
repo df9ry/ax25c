@@ -22,7 +22,10 @@ export _CONF
 endif
 
 OBJDIR := _$(_CONF)
+export OBJDIR
+
 DOCDIR := _Documentation
+export DOCDIR
 
 MAKETARGET = $(MAKE) --no-print-directory -C $@ -f $(CURDIR)/Makefile \
 	SRCDIR=$(CURDIR) $(MAKECMDGOALS)
@@ -45,7 +48,3 @@ Makefile : ;
 
 % :: $(OBJDIR) ;
 
-.PHONY: clean
-clean: clean_dirs
-	+rm -rf $(OBJDIR) $(DOCDIR)
-	

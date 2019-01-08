@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--
+ *  Project: ax25c - File: ax25c.xsd
+ *  Copyright (C) 2019 - Tania Hagn - tania@df9ry.de
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU Affero General Public License as
+ *  published by the Free Software Foundation, either version 3 of the
+ *  License, or (at your option) any later version.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU Affero General Public License for more details.
+ *
+ *  You should have received a copy of the GNU Affero General Public License
+ *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
+-->
+
+<Configuration name="Default"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+	xsi:schemaLocation="http://df9ry.ampr.org/ax25c ax25c.xsd" 
+	xmlns="http://df9ry.ampr.org/ax25c">
+	
+	<Settings>
+		<!-- Timer tick in ms -->
+		<Setting name="tick">20</Setting>
+		<!-- Log level -->
+		<Setting name="loglevel">DEBUG</Setting>
+	</Settings>
+	
+	<Plugins>
+		<!--
+			The simple memory manager uses the OS malloc and free functions
+			without any buffering.
+		-->
+		<Plugin name="MemoryManager" file="ax25c_mm_simple.so">
+		</Plugin>
+		
+		<!--
+			Terminal implements a simple command line interface.
+		-->
+		<Plugin name="Terminal" file="ax25c_terminal.so">
+			<Settings>
+				<!-- Max. length of a line -->
+				<Setting name="line_length">132</Setting>
+				<!-- Number of rx line buffers available -->
+				<Setting name="rx_bufsize">100</Setting>
+				<!-- Try to stop rx, when less buffers are left. -->
+				<Setting name="rx_threshold">20</Setting>
+				<!-- Block tx, when less buffers are left. -->
+				<Setting name="tx_threshold">20</Setting>
+				<!-- My own call sign. -->
+				<Setting name="mycall">DF9RY-9</Setting>
+			</Settings>
+		</Plugin>
+	</Plugins>
+	
+</Configuration>
