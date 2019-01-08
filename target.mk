@@ -46,6 +46,6 @@ Makefile : ;
 % :: $(OBJDIR) ;
 
 .PHONY: clean
-clean:
-	rm -rf $(OBJDIR) $(DOCDIR)
-
+clean: clean_dirs
+	+rm -rf $(OBJDIR) $(DOCDIR)
+	

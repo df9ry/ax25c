@@ -21,19 +21,22 @@ else
 
 VPATH = $(SRCDIR)
 
-CFLAGS   =  -Wall -g -fmessage-length=0 -pthread
+CFLAGS   =  -Wall -g -ggdb -fmessage-length=0 -pthread
 
-LDFLAGS  =  -Wall -g -fmessage-length=0 -pthread
+LDFLAGS  =  -Wall -g -ggdb -fmessage-length=0 -pthread
 			
-OBJS     =  \
-	ax25.o
-			
-LIBS     =  -lpthread
+LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF) -lax25c_runtime \
+			-lpthread
 
-TARGET   =  ax25
+TARGET   =  runtime ax25c
 
-$(TARGET):  $(OBJS)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+.PHONY: all $(TARGET)
+
+runtime:
+	$(MAKE) -C $(SRCDIR)/runtime all
+
+ax25c: ax25c.o
+	$(CC) $(LDFLAGS) -o ax25c ax25c.o $(LIBS)
 	
 %.o: %.c $(SRCDIR)
 	$(CC) $(CFLAGS) -c $<	
@@ -46,17 +49,21 @@ doc:
 	( cd $(SRCDIR)/_Documentation/latex && make )
 	cp $(SRCDIR)/_Documentation/latex/refman.pdf \
 		$(SRCDIR)/_Documentation/ax25c.pdf
-
-test: $(TARGET)
-	./$(TARGET)
+		
+clean:
+	$(MAKE) -C $(SRCDIR)/runtime clean
 	
-install: $(TARGET) doc
-	sudo cp $(TARGET) /usr/local/bin
-	sudo chown root:staff /usr/local/bin/$(TARGET)
-	sudo cp -rf $(SRCDIR)/uki /usr/local/include
-	sudo chown -R root:staff /usr/local/include/uki
+install: ax25c doc
+	sudo cp ax25c /usr/local/bin
+	sudo chown root:staff /usr/local/bin/ax25c
 	sudo mkdir -p /usr/local/doc
 	sudo cp $(SRCDIR)/_Documentation/ax25c.pdf /usr/local/doc
+	$(MAKE) -C $(SRCDIR)/runtime install
+	
+run: $(TARGET)
+	LD_LIBRARY_PATH=$(SRCDIR)/runtime/_$(_CONF) \
+		$(SRCDIR)/_$(_CONF)/ax25c
+	
 	
 #----- Begin Boilerplate
 endif
