@@ -61,7 +61,7 @@ install: ax25c doc
 	$(MAKE) -C $(SRCDIR)/runtime install
 	
 run: $(TARGET)
-	LD_LIBRARY_PATH=$(SRCDIR)/runtime/_$(_CONF) \
+	@LD_LIBRARY_PATH=$(SRCDIR)/runtime/_$(_CONF) \
 		$(SRCDIR)/_$(_CONF)/ax25c
 	
 	
