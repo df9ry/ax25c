@@ -26,11 +26,12 @@ CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
-LIBS     =  -lmapc -ldl -lpthread
+LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
+			-lpthread
 
-TARGET   =  libax25c_runtime.so
+TARGET   =  ax25c_terminal.so
 
-OBJS     =  ax25c_runtime.o
+OBJS     =  ax25c_terminal.o
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
@@ -47,4 +48,3 @@ install:
 
 #----- Begin Boilerplate
 endif
-

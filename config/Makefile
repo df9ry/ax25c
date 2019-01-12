@@ -22,24 +22,25 @@ else
 
 VPATH = $(SRCDIR)
 
-CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
+CXXFLAGS =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
-LIBS     =  -lmapc -ldl -lpthread
+LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
+			-lxerces-c -lpthread
 
-TARGET   =  libax25c_runtime.so
+TARGET   =  ax25c_config.so
 
-OBJS     =  ax25c_runtime.o
+OBJS     =  DOMTreeErrorReporter.o ax25c_config.o
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+	$(CXX) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 	
-%.o: %.c $(SRCDIR)
-	$(CC) $(CFLAGS) -c $<	
+%.o: %.cpp $(SRCDIR)
+	$(CXX) $(CXXFLAGS) -c $<	
 
 install:
 
@@ -47,4 +48,3 @@ install:
 
 #----- Begin Boilerplate
 endif
-

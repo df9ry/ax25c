@@ -28,20 +28,26 @@ LDFLAGS  =  -Wall -g -ggdb -fmessage-length=0 -pthread
 LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF) -lax25c_runtime \
 			-lpthread
 
-TARGET   =  runtime ax25c
+TARGET   =  ax25c
 
-.PHONY: all $(TARGET)
+.PHONY: all $(TARGET) runtime config terminal
 
 runtime:
 	$(MAKE) -C $(SRCDIR)/runtime all
 
-ax25c: ax25c.o
+config: runtime
+	$(MAKE) -C $(SRCDIR)/config all
+
+terminal: runtime
+	$(MAKE) -C $(SRCDIR)/terminal all
+
+ax25c: ax25c.o runtime config
 	$(CC) $(LDFLAGS) -o ax25c ax25c.o $(LIBS)
 	
 %.o: %.c $(SRCDIR)
 	$(CC) $(CFLAGS) -c $<	
 	
-all: $(TARGET)
+all: $(TARGET) runtime config terminal
 	echo "Build OK"
 
 doc:
@@ -52,6 +58,7 @@ doc:
 		
 clean:
 	$(MAKE) -C $(SRCDIR)/runtime clean
+	$(MAKE) -C $(SRCDIR)/config clean
 	
 install: ax25c doc
 	sudo cp ax25c /usr/local/bin
@@ -59,11 +66,13 @@ install: ax25c doc
 	sudo mkdir -p /usr/local/doc
 	sudo cp $(SRCDIR)/_Documentation/ax25c.pdf /usr/local/doc
 	$(MAKE) -C $(SRCDIR)/runtime install
+	$(MAKE) -C $(SRCDIR)/config install
 	
-run: $(TARGET)
-	@LD_LIBRARY_PATH=$(SRCDIR)/runtime/_$(_CONF) \
-		$(SRCDIR)/_$(_CONF)/ax25c
-	
-	
+run: all
+	@echo "Executing ax25c"
+	@LD_LIBRARY_PATH=$(SRCDIR)/_$(_CONF)/ \
+		$(SRCDIR)/_$(_CONF)/ax25c $(SRCDIR)/ax25c.xml
+	@echo "OK"
+
 #----- Begin Boilerplate
 endif

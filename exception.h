@@ -1,5 +1,5 @@
 /*
- *  Project: ax25c - File: ax25.c
+ *  Project: ax25c - File: exception.h
  *  Copyright (C) 2019 - Tania Hagn - tania@df9ry.de
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -15,34 +15,31 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _POSIX_SOURCE 1
+/**
+ * @file
+ * @brief Structure to use in very simple exception like mechanism.
+ */
 
-#include "configuration.h"
-#include "exception.h"
-#include "runtime.h"
-#include "config/ax25c_config.h"
+#ifndef EXCEPTION_H_
+#define EXCEPTION_H_
 
-#include <stdio.h>
-#include <stdlib.h>
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-static struct configuration config;
+/**
+ * @brief Data structure to be filled out in case of an exception.
+ */
+struct exception {
+	int   erc;            /**< Error code                                */
+	const char *module;   /**< Name of the module causing the exception. */
+	const char *function; /**< Name of the function that failed.         */
+	const char *message;  /**< Error message text.                       */
+	const char *param;    /**< Additional information, if available.     */
+};
 
-int main(int argc, char *argv[]) {
-	struct exception ex;
-
-	{ /* Load the configuration */
-		void *module_handle;
-		config_func_t configure;
-
-		if (!load_so("ax25c_config.so", &module_handle, &ex))
-			return print_ex(&ex);
-		if (!getsym_so(module_handle, "configure", (void **)&configure, &ex))
-			return print_ex(&ex);
-		if (!configure(argc, argv, &config, &ex))
-			return print_ex(&ex);
-		if (!unload_so(module_handle, &ex))
-			return print_ex(&ex);
-	}
-
-	return EXIT_SUCCESS;
+#ifdef __cplusplus
 }
+#endif
+
+#endif /* EXCEPTION_H_ */

@@ -15,44 +15,102 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ax25c_runtime.h"
+#define _POSIX_SOURCE 1
 
+#include "../runtime.h"
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <errno.h>
+#include <string.h>
 #include <dlfcn.h>
 #include <assert.h>
 
 #define MODULE_NAME "RUNTIME"
 
-bool load(char *name, char *ifc, void **handle, struct exception *ex)
+int print_ex(struct exception *ex)
+{
+	if (!ex) {
+		return EXIT_SUCCESS;
+	}
+	const char* erm;
+
+	switch (ex->erc) {
+	case EXIT_SUCCESS :
+		erm = "No error";
+		break;
+	case EXIT_FAILURE :
+		erm = "Application error";
+		break;
+	default :
+		erm = strerror(ex->erc);
+		break;
+	}
+	fprintf(stderr, "Function \"%s\" in module \"%s\""
+					" throwed exception \"%s[%s]\""
+			        " with error code %i:%s\n",
+			(ex->function) ? ex->function : "unknown",
+			(ex->module)   ? ex->module   : "unknown",
+			(ex->message)  ? ex->message  : "error",
+			(ex->param)    ? ex->param    : "",
+			ex->erc, erm);
+	return ex->erc;
+}
+
+
+
+bool load_so(const char *name, void **handle, struct exception *ex)
 {
 	assert(name);
-	assert(ifc);
 	assert(handle);
+	dlerror();
 	*handle = dlopen(name, RTLD_NOW);
 	if (!*handle) {
 		if (ex) {
-			ex->erc = -1;
-			ex->message = "Unable to load shared object file";
+			ex->erc = EXIT_FAILURE;
+			ex->message = dlerror();
 			ex->param = name;
 			ex->module = MODULE_NAME;
-			ex->function = "load";
+			ex->function = "load_so";
 		}
 		return false;
 	}
 	return true;
 }
 
-bool unload(void *module, struct exception *ex)
+bool getsym_so(void *handle, const char *name, void ** addr, struct exception *ex)
+{
+	assert(handle);
+	assert(name);
+	assert(addr);
+	dlerror();
+	*addr = dlsym(handle, name);
+	if (!*addr) {
+		if (ex) {
+			ex->erc = EXIT_FAILURE;
+			ex->message = dlerror();
+			ex->param = name;
+			ex->module = MODULE_NAME;
+			ex->function = "getsym_so";
+		}
+		return false;
+	}
+	return true;
+}
+
+bool unload_so(void *module, struct exception *ex)
 {
 	int erc;
 	if (module) {
+		dlerror();
 		erc = dlclose(module);
 		if (erc) {
 			if (ex) {
 				ex->erc = erc;
-				ex->message = "Unable to unload shared object file";
+				ex->message = dlerror();
 				ex->param = "";
 				ex->module = MODULE_NAME;
-				ex->function = "unload";
+				ex->function = "unload_so";
 			}
 			return false;
 		}

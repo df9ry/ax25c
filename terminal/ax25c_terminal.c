@@ -1,5 +1,5 @@
 /*
- *  Project: ax25c - File: ax25.c
+ *  Project: ax25c - File: ax25c_terminal.c
  *  Copyright (C) 2019 - Tania Hagn - tania@df9ry.de
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -15,34 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _POSIX_SOURCE 1
-
-#include "configuration.h"
-#include "exception.h"
-#include "runtime.h"
-#include "config/ax25c_config.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-
-static struct configuration config;
-
-int main(int argc, char *argv[]) {
-	struct exception ex;
-
-	{ /* Load the configuration */
-		void *module_handle;
-		config_func_t configure;
-
-		if (!load_so("ax25c_config.so", &module_handle, &ex))
-			return print_ex(&ex);
-		if (!getsym_so(module_handle, "configure", (void **)&configure, &ex))
-			return print_ex(&ex);
-		if (!configure(argc, argv, &config, &ex))
-			return print_ex(&ex);
-		if (!unload_so(module_handle, &ex))
-			return print_ex(&ex);
-	}
-
-	return EXIT_SUCCESS;
+int foo()
+{
+	return 1;
 }
