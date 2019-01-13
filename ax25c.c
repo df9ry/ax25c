@@ -21,11 +21,8 @@
 #include "exception.h"
 #include "runtime.h"
 #include "config/ax25c_config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
-
-static struct configuration config;
 
 int main(int argc, char *argv[]) {
 	struct exception ex;
@@ -38,7 +35,9 @@ int main(int argc, char *argv[]) {
 			return print_ex(&ex);
 		if (!getsym_so(module_handle, "configure", (void **)&configure, &ex))
 			return print_ex(&ex);
-		if (!configure(argc, argv, &config, &ex))
+		if (!configure(argc, argv, &configuration, &ex))
+			return print_ex(&ex);
+		if (!start(&ex))
 			return print_ex(&ex);
 		if (!unload_so(module_handle, &ex))
 			return print_ex(&ex);

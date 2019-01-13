@@ -25,6 +25,10 @@
 #ifndef RUNTIME_H_
 #define RUNTIME_H_
 
+#include "configuration.h"
+
+#include <stdio.h>
+
 /**
  * @file
  * @brief Common runtime for all loadable modules.
@@ -72,6 +76,62 @@ extern bool getsym_so(void *handle, const char *name, void ** addr,
  * @return Execution status.
  */
 extern bool unload_so(void *handle, struct exception *ex);
+
+/**
+ * @brief Start all plugins and instances.
+ * @param ex Exception structure.
+ * @return Execution status.
+ */
+extern bool start(struct exception *ex);
+
+/**
+ * @brief This is the global configuration object.
+ */
+extern struct configuration configuration;
+
+/**
+ * @brief DEBUG method.
+ * @param msg Message to print.
+ * @param par Parameter to print.
+ */
+static inline void DEBUG(const char *msg, const char *par)
+{
+	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
+		fprintf(stderr, "D:%s:%s\n", msg, par);
+}
+
+/**
+ * @brief ERROR method.
+ * @param msg Message to print.
+ * @param par Parameter to print.
+ */
+static inline void ERROR(const char *msg, const char *par)
+{
+	if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
+		fprintf(stderr, "E:%s:%s\n", msg, par);
+}
+
+/**
+ * @brief WARNING method.
+ * @param msg Message to print.
+ * @param par Parameter to print.
+ */
+static inline void WARNING(const char *msg, const char *par)
+{
+	if (configuration.loglevel >= DEBUG_LEVEL_WARNING)
+		fprintf(stderr, "W:%s:%s\n", msg, par);
+}
+
+/**
+ * @brief INFO method.
+ * @param msg Message to print.
+ * @param par Parameter to print.
+ */
+static inline void INFO(const char *msg, const char *par)
+{
+	if (configuration.loglevel >= DEBUG_LEVEL_INFO)
+		fprintf(stderr, "I:%s:%s\n", msg, par);
+}
 
 #ifdef __cplusplus
 }

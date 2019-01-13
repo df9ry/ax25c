@@ -31,8 +31,20 @@
 	
 	<Plugins>
 		<Plugin name="Terminal" file="ax25c_terminal.so">
-			<Settings>
-			</Settings>
+			<Instances>
+				<Instance name="T2001">
+					<Settings>
+						<Setting name="line_length">256</Setting>
+						<Setting name="port">2001</Setting>
+					</Settings>
+				</Instance>
+				<Instance name="T2000">
+					<Settings>
+						<Setting name="line_length">256</Setting>
+						<Setting name="port">2000</Setting>
+					</Settings>
+				</Instance>
+			</Instances>
 		</Plugin>
 	</Plugins>
 	

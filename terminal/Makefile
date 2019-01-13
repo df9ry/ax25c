@@ -31,7 +31,7 @@ LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
 
 TARGET   =  ax25c_terminal.so
 
-OBJS     =  ax25c_terminal.o
+OBJS     =  module.o
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)

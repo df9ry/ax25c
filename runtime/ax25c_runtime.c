@@ -19,6 +19,8 @@
 
 #include "../runtime.h"
 
+#include <uki/kernel.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
@@ -27,6 +29,8 @@
 #include <assert.h>
 
 #define MODULE_NAME "RUNTIME"
+
+struct configuration configuration;
 
 int print_ex(struct exception *ex)
 {
@@ -48,7 +52,7 @@ int print_ex(struct exception *ex)
 	}
 	fprintf(stderr, "Function \"%s\" in module \"%s\""
 					" throwed exception \"%s[%s]\""
-			        " with error code %i:%s\n",
+			        " with error code %i[%s]\n",
 			(ex->function) ? ex->function : "unknown",
 			(ex->module)   ? ex->module   : "unknown",
 			(ex->message)  ? ex->message  : "error",
@@ -116,4 +120,50 @@ bool unload_so(void *module, struct exception *ex)
 		}
 	}
 	return true;
+}
+
+struct cb_info {
+	struct exception *ex;
+	struct plugin_descriptor *pd;
+};
+
+static void start_instance(struct mapc_node *elem, void *user_data)
+{
+	struct cb_info *pcbi = user_data;
+	struct instance *inst;
+	assert(pcbi);
+	assert(pcbi->ex);
+	if (pcbi->ex->erc != EXIT_SUCCESS)
+		return;
+	inst = container_of(elem, struct instance, node);
+	assert(inst);
+	assert(pcbi->pd->start_instance);
+	INFO("START INST", inst->name);
+	pcbi->pd->start_instance(inst->handle, pcbi->ex);
+}
+
+static void start_plugin(struct mapc_node *elem, void *user_data)
+{
+	struct cb_info cbi = { user_data, NULL };
+	struct plugin *plugin;
+	assert(cbi.ex);
+	if (cbi.ex->erc != EXIT_SUCCESS)
+		return;
+	plugin = container_of(elem, struct plugin, node);
+	assert(plugin);
+	cbi.pd = plugin->plugin_descriptor;
+	assert(cbi.pd);
+	assert(cbi.pd->start_plugin);
+	INFO("START PLUG", plugin->name);
+	if (!cbi.pd->start_plugin(plugin->handle, cbi.ex))
+		return;
+	mapc_foreach(&plugin->instances, start_instance, &cbi);
+}
+
+bool start(struct exception *ex)
+{
+	assert(ex);
+	ex->erc = EXIT_SUCCESS;
+	mapc_foreach(&configuration.plugins, start_plugin, ex);
+	return (ex->erc == EXIT_SUCCESS);
 }
