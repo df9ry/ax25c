@@ -32,7 +32,7 @@ all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
 	
 clean:
-	rm -rf $(OBJDIR) $(DOCDIR)
+	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
 
 install:
 

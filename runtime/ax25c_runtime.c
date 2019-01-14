@@ -61,8 +61,6 @@ int print_ex(struct exception *ex)
 	return ex->erc;
 }
 
-
-
 bool load_so(const char *name, void **handle, struct exception *ex)
 {
 	assert(name);
@@ -160,10 +158,33 @@ static void start_plugin(struct mapc_node *elem, void *user_data)
 	mapc_foreach(&plugin->instances, start_instance, &cbi);
 }
 
+static volatile bool alive = false;
+
 bool start(struct exception *ex)
 {
 	assert(ex);
 	ex->erc = EXIT_SUCCESS;
+	alive = true;
+	DEBUG("alive", "true");
 	mapc_foreach(&configuration.plugins, start_plugin, ex);
 	return (ex->erc == EXIT_SUCCESS);
+}
+
+void stop(void) {
+	alive = false;
+	DEBUG("alive", "false");
+}
+
+bool tick(struct exception *ex)
+{
+	assert(ex);
+	if (!alive) {
+		ex->erc = EXIT_SUCCESS;
+		ex->message = "Normal shutdown";
+		ex->param = "";
+		ex->module = MODULE_NAME;
+		ex->function = "tick";
+		return false;
+	}
+	return true;
 }

@@ -85,6 +85,11 @@ extern bool unload_so(void *handle, struct exception *ex);
 extern bool start(struct exception *ex);
 
 /**
+ * @brief Stop the system.
+ */
+extern void stop(void);
+
+/**
  * @brief This is the global configuration object.
  */
 extern struct configuration configuration;
@@ -132,6 +137,13 @@ static inline void INFO(const char *msg, const char *par)
 	if (configuration.loglevel >= DEBUG_LEVEL_INFO)
 		fprintf(stderr, "I:%s:%s\n", msg, par);
 }
+
+/**
+ * @brief Heardbeat tick.
+ * @param ex Exception structure.
+ * @return Execution status.
+ */
+extern bool tick(struct exception *ex);
 
 #ifdef __cplusplus
 }

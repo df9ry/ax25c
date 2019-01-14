@@ -23,19 +23,9 @@
 
 static struct plugin_handle {
 	const char *name;
-	size_t      line_length;
-	size_t      rx_bufsize;
-	size_t      rx_threshold;
-	size_t      tx_threshold;
-	const char *mycall;
 } plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
-		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256" },
-		{ "rx_bufsize",   SIZE_T, offsetof(struct plugin_handle, rx_bufsize),   "256" },
-		{ "rx_threshold", SIZE_T, offsetof(struct plugin_handle, rx_threshold), "32"  },
-		{ "tx_threshold", SIZE_T, offsetof(struct plugin_handle, tx_threshold), "32"  },
-		{ "mycall",       CSTR_T, offsetof(struct plugin_handle, mycall),       NULL  },
 		{ NULL }
 };
 
@@ -54,41 +44,6 @@ static void *get_plugin(const char *name,
 static bool start_plugin(struct plugin_handle *plugin) {
 	return true;
 }
-
-#if 0
-struct instance_handle {
-	const char  *name;
-	size_t       line_length;
-	unsigned int port;
-};
-
-static struct setting_descriptor instance_settings_descriptor[] = {
-		{ "line_length", SIZE_T, offsetof(struct instance_handle, line_length), "256" },
-		{ "port",        UINT_T, offsetof(struct instance_handle, port),        NULL  },
-		{ NULL }
-};
-
-static void *get_instance(const char *name,
-		configurator_func configurator, void *context, struct exception *ex)
-{
-	struct instance *instance;
-	assert(name);
-	assert(configurator);
-	instance = (struct instance*)malloc(sizeof(struct instance));
-	assert(instance);
-	instance->name = name;
-	if (!configurator(instance, instance_settings_descriptor, context, ex)) {
-		free(instance);
-		return NULL;
-	}
-	return instance;
-}
-
-
-static bool start_instance(struct instance_handle *plugin) {
-	return true;
-}
-#endif
 
 struct plugin_descriptor plugin_descriptor = {
 		get_plugin,	  (start_func)start_plugin,

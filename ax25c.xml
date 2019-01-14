@@ -30,21 +30,29 @@
 	</Settings>
 	
 	<Plugins>
+		<!--
+			The simple memory manager uses the OS malloc and free functions
+			without any buffering.
+		-->
+		<Plugin name="MemoryManager" file="ax25c_mm_simple.so">
+		</Plugin>
+		
+		<!--
+			Terminal implements a simple command line interface.
+		-->
 		<Plugin name="Terminal" file="ax25c_terminal.so">
-			<Instances>
-				<Instance name="T2001">
-					<Settings>
-						<Setting name="line_length">256</Setting>
-						<Setting name="port">2001</Setting>
-					</Settings>
-				</Instance>
-				<Instance name="T2000">
-					<Settings>
-						<Setting name="line_length">256</Setting>
-						<Setting name="port">2000</Setting>
-					</Settings>
-				</Instance>
-			</Instances>
+			<Settings>
+				<!-- Max. length of a line -->
+				<Setting name="line_length">132</Setting>
+				<!-- Number of rx line buffers available -->
+				<Setting name="rx_bufsize">100</Setting>
+				<!-- Try to stop rx, when less buffers are left. -->
+				<Setting name="rx_threshold">20</Setting>
+				<!-- Block tx, when less buffers are left. -->
+				<Setting name="tx_threshold">20</Setting>
+				<!-- My own call sign. -->
+				<Setting name="mycall">DF9RY-9</Setting>
+			</Settings>
 		</Plugin>
 	</Plugins>
 	

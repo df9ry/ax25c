@@ -28,14 +28,15 @@ OBJS     =  ax25c.o
 LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF) -lax25c_runtime \
 			-lpthread
 
-all:
+all: $(OBJS)
 	$(MAKE) -C $(SRCDIR)/runtime all
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 	$(MAKE) -C $(SRCDIR)/config all
 	$(MAKE) -C $(SRCDIR)/terminal all
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+	$(MAKE) -C $(SRCDIR)/mm_simple all
 	echo "Build OK"
 
-%.o: %.c $(SRCDIR)
+%.o: %.c %.h Makefile
 	$(CC) $(CFLAGS) -c $<	
 	
 doc:
@@ -45,10 +46,11 @@ doc:
 		$(SRCDIR)/$(DOCDIR)/$(TARGET).pdf
 		
 clean:
-	rm -rf $(OBJDIR) $(DOCDIR)
+	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
 	$(MAKE) -C $(SRCDIR)/runtime clean
 	$(MAKE) -C $(SRCDIR)/config clean
 	$(MAKE) -C $(SRCDIR)/terminal clean
+	$(MAKE) -C $(SRCDIR)/mm_simple clean
 	
 install: ax25c doc
 	sudo cp $(TARGET) /usr/local/bin
@@ -57,6 +59,8 @@ install: ax25c doc
 	sudo cp $(SRCDIR)/$(DOCDIR)/$(TARGET).pdf /usr/local/doc
 	$(MAKE) -C $(SRCDIR)/runtime install
 	$(MAKE) -C $(SRCDIR)/config install
+	$(MAKE) -C $(SRCDIR)/terminal install
+	$(MAKE) -C $(SRCDIR)/mm_simple install
 	
 run: all
 	@echo "Executing $(TARGET)"
