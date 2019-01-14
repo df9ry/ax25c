@@ -140,6 +140,21 @@ static void start_instance(struct mapc_node *elem, void *user_data)
 	pcbi->pd->start_instance(inst->handle, pcbi->ex);
 }
 
+static void stop_instance(struct mapc_node *elem, void *user_data)
+{
+	struct cb_info *pcbi = user_data;
+	struct instance *inst;
+	assert(pcbi);
+	assert(pcbi->ex);
+	if (pcbi->ex->erc != EXIT_SUCCESS)
+		return;
+	inst = container_of(elem, struct instance, node);
+	assert(inst);
+	assert(pcbi->pd->stop_instance);
+	INFO("STOP INST", inst->name);
+	pcbi->pd->stop_instance(inst->handle, pcbi->ex);
+}
+
 static void start_plugin(struct mapc_node *elem, void *user_data)
 {
 	struct cb_info cbi = { user_data, NULL };
@@ -158,7 +173,39 @@ static void start_plugin(struct mapc_node *elem, void *user_data)
 	mapc_foreach(&plugin->instances, start_instance, &cbi);
 }
 
+static void stop_plugin(struct mapc_node *elem, void *user_data)
+{
+	struct cb_info cbi = { user_data, NULL };
+	struct plugin *plugin;
+	assert(cbi.ex);
+	if (cbi.ex->erc != EXIT_SUCCESS)
+		return;
+	plugin = container_of(elem, struct plugin, node);
+	assert(plugin);
+	cbi.pd = plugin->plugin_descriptor;
+	assert(cbi.pd);
+	mapc_foreach_reverse(&plugin->instances, stop_instance, &cbi);
+	if (cbi.ex->erc != EXIT_SUCCESS)
+		return;
+	INFO("STOP PLUG", plugin->name);
+	assert(cbi.pd->stop_plugin);
+	cbi.pd->stop_plugin(plugin->handle, cbi.ex);
+}
+
 static volatile bool alive = false;
+
+void die(void) {
+	alive = false;
+}
+
+bool stop(struct exception *ex) {
+	assert(ex);
+	ex->erc = EXIT_SUCCESS;
+	die();
+	DEBUG("alive", "false");
+	mapc_foreach_reverse(&configuration.plugins, stop_plugin, ex);
+	return (ex->erc == EXIT_SUCCESS);
+}
 
 bool start(struct exception *ex)
 {
@@ -167,12 +214,13 @@ bool start(struct exception *ex)
 	alive = true;
 	DEBUG("alive", "true");
 	mapc_foreach(&configuration.plugins, start_plugin, ex);
+	if (ex->erc != EXIT_SUCCESS) {
+		struct exception ex1;
+		stop(&ex1);
+		print_ex(&ex1);
+		return false;
+	}
 	return (ex->erc == EXIT_SUCCESS);
-}
-
-void stop(void) {
-	alive = false;
-	DEBUG("alive", "false");
 }
 
 bool tick(struct exception *ex)

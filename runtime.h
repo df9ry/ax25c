@@ -86,8 +86,10 @@ extern bool start(struct exception *ex);
 
 /**
  * @brief Stop the system.
+ * @param ex Exception structure.
+ * @return Execution status.
  */
-extern void stop(void);
+extern bool stop(struct exception *ex);
 
 /**
  * @brief This is the global configuration object.
@@ -144,6 +146,11 @@ static inline void INFO(const char *msg, const char *par)
  * @return Execution status.
  */
 extern bool tick(struct exception *ex);
+
+/**
+ * @brief Kill all processes and exit.
+ */
+extern void die(void);
 
 #ifdef __cplusplus
 }

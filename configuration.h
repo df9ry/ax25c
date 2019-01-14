@@ -136,13 +136,23 @@ typedef void *(*get_handle_func)(const char *name,
 typedef bool (*start_func)(void *handle, struct exception *ex);
 
 /**
+ * @brief Stop object denoted by handle.
+ * @param Handle of the object to stop.
+ * @param ex Exception object (optional).
+ * @return True on successful completion.
+ */
+typedef bool (*stop_func)(void *handle, struct exception *ex);
+
+/**
  * @brief Descriptor exported by a loadable module.
  */
 struct plugin_descriptor {
 	get_handle_func get_plugin_handle;   /**< Pointer to function to get the plugin handle.  */
 	start_func start_plugin;             /**< Pointer to function to start up the plugin.    */
+	stop_func stop_plugin;               /**< Pointer to function to stop the plugin.        */
 	get_handle_func get_instance_handle; /**< Pointer to function to get an instance handle. */
 	start_func start_instance;           /**< Pointer to function to start up the instance.  */
+	stop_func stop_instance;             /**< Pointer to function to stop the instance.      */
 };
 
 #ifdef __cplusplus
