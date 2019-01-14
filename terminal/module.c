@@ -16,6 +16,7 @@
  */
 
 #include "../configuration.h"
+#include "../runtime.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -51,7 +52,17 @@ static void *get_plugin(const char *name,
 	return &plugin;
 }
 
-static bool start_plugin(struct plugin_handle *plugin) {
+static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
+	assert(plugin);
+	assert(ex);
+	DEBUG("terminal start", plugin->name);
+	return true;
+}
+
+static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
+	assert(plugin);
+	assert(ex);
+	DEBUG("terminal stop", plugin->name);
 	return true;
 }
 
@@ -91,6 +102,6 @@ static bool start_instance(struct instance_handle *plugin) {
 #endif
 
 struct plugin_descriptor plugin_descriptor = {
-		get_plugin,	  (start_func)start_plugin,
-		NULL,         NULL
+		get_plugin,	  (start_func)start_plugin, (stop_func)stop_plugin,
+		NULL,         NULL,                     NULL
 };

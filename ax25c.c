@@ -36,7 +36,7 @@ static void handle_signal(int signal) {
             break;
         case SIGINT:
         	DEBUG("SIGINT", "");
-            stop();
+            die();
             break;
         default:
         	DEBUG("SIG???", "");
@@ -88,6 +88,7 @@ int main(int argc, char *argv[]) {
 
 	/* Shutdown */
 	INFO("Shutdown", "");
+	stop(&ex);
 
 	if (configuration.loglevel >= DEBUG_LEVEL_INFO) {
 		return print_ex(&ex);
