@@ -27,8 +27,10 @@
 #include <exception>
 #include <iostream>
 #include <sstream>
+#include <fstream>
 
 #include <stddef.h>
+#include <unistd.h>
 
 #define MODULE_NAME "ax25c_config"
 
@@ -82,6 +84,16 @@ static const string str(debug_level_t t) {
 	}
 }
 
+static debug_level_t decodeDebugLevel(const char *s) {
+	assert(s);
+	if (strcmp(s, "NONE")    == 0) return DEBUG_LEVEL_NONE;
+	if (strcmp(s, "ERROR")   == 0) return DEBUG_LEVEL_ERROR;
+	if (strcmp(s, "WARNING") == 0) return DEBUG_LEVEL_WARNING;
+	if (strcmp(s, "INFO")    == 0) return DEBUG_LEVEL_INFO;
+	if (strcmp(s, "DEBUG")   == 0) return DEBUG_LEVEL_DEBUG;
+	return (debug_level_t)-1;
+}
+
 static inline const XMLCh* toX(const char *cs) {
 	return XMLString::transcode(cs);
 }
@@ -108,8 +120,8 @@ static int compare(const void *o1, const void *o2)
 #endif
 
 static struct setting_descriptor settings_descriptor[] = {
-		{ "tick",     UINT_T,  offsetof(struct configuration, tick),     "10"   },
-		{ "loglevel", DEBUG_T, offsetof(struct configuration, loglevel), "NONE" },
+		{ "tick",     UINT_T,  offsetof(struct configuration, tick),     "10" },
+		{ "loglevel", DEBUG_T, offsetof(struct configuration, loglevel), "-"  },
 		{ NULL }
 };
 
@@ -289,23 +301,17 @@ static bool getDebugLevel(DOMNodeList *nodeList, const char *name,
 		ex->param = name;
 		return false;
 	}
-	if (_val == "NONE") {
-		*val = DEBUG_LEVEL_NONE;
-	} else if (_val == "ERROR") {
-		*val = DEBUG_LEVEL_ERROR;
-	} else if (_val == "WARNING") {
-		*val = DEBUG_LEVEL_WARNING;
-	} else if (_val == "INFO") {
-		*val = DEBUG_LEVEL_INFO;
-	}else if (_val == "DEBUG") {
-		*val = DEBUG_LEVEL_DEBUG;
-	} else {
-		ex->erc = EXIT_FAILURE;
-		ex->module = MODULE_NAME;
-		ex->function = "getDebugLevel";
-		ex->message = "Invalid debug level";
-		ex->param = strbuf(_val.c_str());
-		return false;
+	if (_val != "-") {
+		debug_level_t debug_level = decodeDebugLevel(_val.c_str());
+		if (debug_level < 0) {
+			ex->erc = EXIT_FAILURE;
+			ex->module = MODULE_NAME;
+			ex->function = "getDebugLevel";
+			ex->message = "Invalid debug level";
+			ex->param = strbuf(_val.c_str());
+			return false;
+		}
+		*val = debug_level;
 	}
 	return true;
 }
@@ -498,6 +504,68 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 		struct ::exception *ex)
 {
 	bool result = true;
+	configuration.loglevel = DEBUG_LEVEL_NONE;
+
+	// Get config parameters:
+	while ((argc > 1) && (strncmp(argv[1], "--", 2) == 0)) {
+		if (strncmp(argv[1], "--loglevel:", 11) == 0) {
+			const char *s = &argv[1][11];
+			configuration.loglevel = decodeDebugLevel(s);
+			INFO("Set loglevel", s);
+			if (configuration.loglevel < 0) {
+				if (ex) {
+					ex->erc = EXIT_FAILURE;
+					ex->message = "Invalid debug level";
+					ex->param = s;
+					ex->module = MODULE_NAME;
+					ex->function = "configure";
+				}
+				return false;
+			}
+		} else if (strncmp(argv[1], "--pid:", 6) == 0) {
+			const char *s = &argv[1][6];
+			INFO("Set pid", s);
+			int pid = getpid();
+			try {
+				ofstream stream;
+				stream.open(s);
+				stream << pid;
+				stream.close();
+			}
+			catch(std::exception &_ex) {
+				if (ex) {
+					ex->erc = EXIT_FAILURE;
+					ex->message = strbuf(_ex.what());
+					ex->param = s;
+					ex->module = MODULE_NAME;
+					ex->function = "configure";
+				}
+				return false;
+			}
+			catch(...) {
+				if (ex) {
+					ex->erc = EXIT_FAILURE;
+					ex->message = "IO Error";
+					ex->param = s;
+					ex->module = MODULE_NAME;
+					ex->function = "configure";
+				}
+				return false;
+			}
+		} else {
+			if (ex) {
+				ex->erc = EXIT_FAILURE;
+				ex->message = "Invalid argument";
+				ex->param = argv[1];
+				ex->module = MODULE_NAME;
+				ex->function = "configure";
+			}
+			return false;
+		}
+		DEBUG("argv[1]=", argv[1]);
+		--argc;
+		memmove(&argv[1], &argv[2], argc * sizeof(char*));
+	} // end while //
 
 	// Get the XML file path. This is either specified as an argument
 	// argv[1] or can be deduced by argv[0]:
