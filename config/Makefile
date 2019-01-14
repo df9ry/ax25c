@@ -21,30 +21,27 @@ else
 #----- End Boilerplate
 
 VPATH = $(SRCDIR)
-
 CXXFLAGS =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
-
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
-			
+
+TARGET   =  ax25c_config.so
+OBJS     =  DOMTreeErrorReporter.o ax25c_config.o
 LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
 			-lxerces-c -lpthread
 
-TARGET   =  ax25c_config.so
-
-OBJS     =  DOMTreeErrorReporter.o ax25c_config.o
-
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
+	
+clean:
+	rm -rf $(OBJDIR) $(DOCDIR)
+
+install:
 
 $(TARGET): $(OBJS)
 	$(CXX) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 	
 %.o: %.cpp $(SRCDIR)
 	$(CXX) $(CXXFLAGS) -c $<	
-
-install:
-
-.PHONY: all clean install
 
 #----- Begin Boilerplate
 endif

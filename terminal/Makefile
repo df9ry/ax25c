@@ -21,30 +21,28 @@ else
 #----- End Boilerplate
 
 VPATH = $(SRCDIR)
-
 CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
-
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
+
+TARGET   =  ax25c_terminal.so
+OBJS     =  module.o
 LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
 			-lpthread
 
-TARGET   =  ax25c_terminal.so
-
-OBJS     =  module.o
-
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
+	
+clean:
+	rm -rf $(OBJDIR) $(DOCDIR)
+
+install:
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 	
 %.o: %.c $(SRCDIR)
 	$(CC) $(CFLAGS) -c $<	
-
-install:
-
-.PHONY: all clean install
 
 #----- Begin Boilerplate
 endif

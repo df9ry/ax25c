@@ -21,29 +21,26 @@ else
 #----- End Boilerplate
 
 VPATH = $(SRCDIR)
-
 CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
-
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
-LIBS     =  -lmapc -ldl -lpthread
-
 TARGET   =  libax25c_runtime.so
-
 OBJS     =  ax25c_runtime.o
+LIBS     =  -lmapc -ldl -lpthread
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
+	
+clean:
+	rm -rf $(OBJDIR) $(DOCDIR)
+
+install:
 
 $(TARGET): $(OBJS)
 	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 	
 %.o: %.c $(SRCDIR)
 	$(CC) $(CFLAGS) -c $<	
-
-install:
-
-.PHONY: all clean install
 
 #----- Begin Boilerplate
 endif

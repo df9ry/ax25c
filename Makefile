@@ -20,58 +20,48 @@ else
 #----- End Boilerplate
 
 VPATH = $(SRCDIR)
-
 CFLAGS   =  -Wall -g -ggdb -fmessage-length=0 -pthread
-
 LDFLAGS  =  -Wall -g -ggdb -fmessage-length=0 -pthread
-			
+
+TARGET   =  ax25c
+OBJS     =  ax25c.o
 LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF) -lax25c_runtime \
 			-lpthread
 
-TARGET   =  ax25c
-
-.PHONY: all $(TARGET) runtime config terminal
-
-runtime:
+all:
 	$(MAKE) -C $(SRCDIR)/runtime all
-
-config: runtime
 	$(MAKE) -C $(SRCDIR)/config all
-
-terminal: runtime
 	$(MAKE) -C $(SRCDIR)/terminal all
+	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+	echo "Build OK"
 
-ax25c: ax25c.o runtime config
-	$(CC) $(LDFLAGS) -o ax25c ax25c.o $(LIBS)
-	
 %.o: %.c $(SRCDIR)
 	$(CC) $(CFLAGS) -c $<	
 	
-all: $(TARGET) runtime config terminal
-	echo "Build OK"
-
 doc:
 	doxygen $(SRCDIR)/doxygen.conf
-	( cd $(SRCDIR)/_Documentation/latex && make )
-	cp $(SRCDIR)/_Documentation/latex/refman.pdf \
-		$(SRCDIR)/_Documentation/ax25c.pdf
+	( cd $(SRCDIR)/$(DOCDIR)/latex && make )
+	cp $(SRCDIR)/$(DOCDIR)/latex/refman.pdf \
+		$(SRCDIR)/$(DOCDIR)/$(TARGET).pdf
 		
 clean:
+	rm -rf $(OBJDIR) $(DOCDIR)
 	$(MAKE) -C $(SRCDIR)/runtime clean
 	$(MAKE) -C $(SRCDIR)/config clean
+	$(MAKE) -C $(SRCDIR)/terminal clean
 	
 install: ax25c doc
-	sudo cp ax25c /usr/local/bin
-	sudo chown root:staff /usr/local/bin/ax25c
+	sudo cp $(TARGET) /usr/local/bin
+	sudo chown root:staff /usr/local/bin/$(TARGET)
 	sudo mkdir -p /usr/local/doc
-	sudo cp $(SRCDIR)/_Documentation/ax25c.pdf /usr/local/doc
+	sudo cp $(SRCDIR)/$(DOCDIR)/$(TARGET).pdf /usr/local/doc
 	$(MAKE) -C $(SRCDIR)/runtime install
 	$(MAKE) -C $(SRCDIR)/config install
 	
 run: all
-	@echo "Executing ax25c"
+	@echo "Executing $(TARGET)"
 	@LD_LIBRARY_PATH=$(SRCDIR)/_$(_CONF)/ \
-		$(SRCDIR)/_$(_CONF)/ax25c $(SRCDIR)/ax25c.xml
+		$(SRCDIR)/_$(_CONF)/$(TARGET) $(SRCDIR)/$(TARGET).xml
 	@echo "OK"
 
 #----- Begin Boilerplate
