@@ -21,6 +21,10 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <stddef.h>
+#include <unistd.h>
+#include <errno.h>
+
+#define PLUGIN_NAME "Terminal";
 
 static struct plugin_handle {
 	const char *name;
@@ -54,8 +58,18 @@ static void *get_plugin(const char *name,
 
 static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
-	assert(ex);
 	DEBUG("terminal start", plugin->name);
+	if (fprintf(stdout, "Open AX.25 terminal on %s\n", ttyname(STDOUT_FILENO)) < 0) {
+		if (ex) {
+			ex->erc = errno;
+			ex->function = "start_plugin";
+			ex->module = PLUGIN_NAME;
+			ex->message = strerror(ex->erc);
+			ex->param = "01";
+		}
+		return false;
+	}
+	fflush(stdout);
 	return true;
 }
 
