@@ -80,13 +80,13 @@ int main(int argc, char *argv[]) {
 		return print_ex(&ex);
 	}
 
-	/* Run */
+	/* Run: */
 	INFO("Run", "");
 	while (tick(&ex)) {
 		usleep(configuration.tick * 1000);
 	} /* end while */
 
-	/* Shutdown */
+	/* Shutdown: */
 	INFO("Shutdown", "");
 	stop(&ex);
 

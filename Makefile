@@ -64,7 +64,7 @@ install: ax25c doc
 	
 run: all
 	@echo "Executing $(TARGET)"
-	LD_LIBRARY_PATH=$(SRCDIR)/_$(_CONF)/ \
+	@LD_LIBRARY_PATH=$(SRCDIR)/_$(_CONF)/ \
 		$(SRCDIR)/_$(_CONF)/$(TARGET) \
 		"--loglevel:DEBUG" \
 		"--pid:$(SRCDIR)/_$(_CONF)/$(TARGET).pid" \

@@ -31,6 +31,8 @@ extern "C" {
 
 #include <mapc/mapc.h>
 
+#include <stdint.h>
+
 /**
  * @brief Copy string into a static buffer.
  * If the string is longer than 36 characters, it will be truncated and

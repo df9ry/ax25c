@@ -25,7 +25,7 @@ CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
 TARGET   =  libax25c_runtime.so
-OBJS     =  ax25c_runtime.o
+OBJS     =  ax25c_runtime.o memory.o
 LIBS     =  -lmapc -ldl -lpthread
 
 all: $(TARGET)

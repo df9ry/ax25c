@@ -25,10 +25,6 @@
 #ifndef RUNTIME_H_
 #define RUNTIME_H_
 
-#include "configuration.h"
-
-#include <stdio.h>
-
 /**
  * @file
  * @brief Common runtime for all loadable modules.
@@ -38,8 +34,11 @@
 extern "C" {
 #endif
 
+#include "configuration.h"
 #include "exception.h"
 
+#include <stdio.h>
+#include <stdint.h>
 #include <stdbool.h>
 
 /**
@@ -151,6 +150,37 @@ extern bool tick(struct exception *ex);
  * @brief Kill all processes and exit.
  */
 extern void die(void);
+
+/**
+ * @brief Allocate memory from the memory manager.
+ *        The memory is already locked one time. If you don't need the memory any
+ * @param cb Number of bytes to alloc.
+ * @param ex Exception structure.
+ * @return Pointer to the allocated memory or NULL, in case of an error.
+ */
+extern void *mem_alloc(uint32_t cb, struct exception *ex);
+
+/**
+ * @brief Get the size of a memory block.
+ * @param Pointer to a memory block.
+ * @return Size of the memory block.
+ */
+extern uint32_t mem_size(void *mem);
+
+/**
+ * @brief Increase the lock counter of this memory block by one.
+ * @param mem Pointer to the memory block.
+ */
+extern void mem_lock(void *mem);
+
+/**
+ * @brief Decrease the lock counter of this memory block by one.
+ *        If the lock counter reaches 0 the memory block is given back to
+ *        the operating system or the cache, in the case when a cached memory
+ *        manager is in use.
+ * @param mem Pointer to the memory to free.
+ */
+extern void mem_free(void *mem);
 
 #ifdef __cplusplus
 }
