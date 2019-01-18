@@ -48,6 +48,8 @@ int main(int argc, char *argv[]) {
 	struct exception ex;
 	struct sigaction sa;
 
+	ax25c_log_init();
+
 	/* Catch signals */
 	sa.sa_handler = &handle_signal;
 	sigfillset(&sa.sa_mask);
@@ -89,6 +91,7 @@ int main(int argc, char *argv[]) {
 	/* Shutdown: */
 	INFO("Shutdown", "");
 	stop(&ex);
+	ax25c_log_term();
 
 	if (configuration.loglevel >= DEBUG_LEVEL_INFO) {
 		return print_ex(&ex);

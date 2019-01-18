@@ -30,7 +30,10 @@
 
 #define MODULE_NAME "RUNTIME"
 
-struct configuration configuration;
+struct configuration configuration = {
+		.name = NULL,
+		.loglevel = DEBUG_LEVEL_NONE
+};
 
 int print_ex(struct exception *ex)
 {

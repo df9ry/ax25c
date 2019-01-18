@@ -504,7 +504,6 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 		struct ::exception *ex)
 {
 	bool result = true;
-	configuration.loglevel = DEBUG_LEVEL_NONE;
 
 	// Get config parameters:
 	while ((argc > 1) && (strncmp(argv[1], "--", 2) == 0)) {

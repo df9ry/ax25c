@@ -78,11 +78,10 @@ enum debug_level_t {
  * @brief Description of a <Configuration>.
  */
 struct configuration {
-	const char         *name;         /**< Configuration name.   */
-	void               *handle;       /**< Configuration handle. */
-	struct mapc         plugins;      /**< Map of plugins.       */
-	unsigned int        tick;         /**< Timer tick in ms.     */
-	enum debug_level_t  loglevel;     /**< Log Level.            */
+	const char         *name;         /**< Configuration name.     */
+	struct mapc         plugins;      /**< Map of plugins.         */
+	unsigned int        tick;         /**< Timer tick in ms.       */
+	enum debug_level_t  loglevel;     /**< Log Level.              */
 };
 
 /**
