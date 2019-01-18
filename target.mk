@@ -21,9 +21,17 @@ _CONF := Debug
 export _CONF
 endif
 
+OS := $(shell uname -o)
+export OS
+ifeq ($(OS),Cygwin)
+	SOEXT := dll
+else
+	SOEXT := so
+endif
+export SOEXT
+
 OBJDIR := _$(_CONF)
 export OBJDIR
-
 DOCDIR := _Documentation
 export DOCDIR
 
@@ -47,4 +55,3 @@ Makefile : ;
 %.mk :: ;
 
 % :: $(OBJDIR) ;
-

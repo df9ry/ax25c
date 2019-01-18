@@ -18,18 +18,16 @@
 ifeq (,$(filter _%,$(notdir $(CURDIR))))
 include ../target.mk
 else
-#----- End Boilerplate
 
-VPATH = $(SRCDIR)
-CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
-LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
+VPATH    = $(SRCDIR)
+CFLAGS   = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
-TARGET   =  libax25c_runtime.so
-OBJS     =  ax25c_runtime.o memory.o
-LIBS     =  -lmapc -ldl -lpthread
+TARGET   = libax25c_runtime.$(SOEXT)
+OBJS     = ax25c_runtime.o memory.o
+LIBS     = -L/usr/local/lib -lmapc -ldl -lpthread
 
 all: $(TARGET)
-	cp $(TARGET) ../../_$(_CONF)
+	cp $(TARGET) $(SRCDIR)/../_$(_CONF)
 	
 clean:
 	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
@@ -37,11 +35,10 @@ clean:
 install:
 
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 	
 %.o: %.c $(SRCDIR)
 	$(CC) $(CFLAGS) -c $<	
 
-#----- Begin Boilerplate
 endif
 

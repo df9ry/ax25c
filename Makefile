@@ -17,24 +17,39 @@
 ifeq (,$(filter _%,$(notdir $(CURDIR))))
 include target.mk
 else
-#----- End Boilerplate
 
-VPATH = $(SRCDIR)
-CFLAGS   =  -Wall -g -ggdb -fmessage-length=0 -pthread
-LDFLAGS  =  -Wall -g -ggdb -fmessage-length=0 -pthread
+VPATH    =  $(SRCDIR)
+CFLAGS   =  -Wall -Werror -g -ggdb -fmessage-length=0 -pthread
 
-TARGET   =  ax25c
-OBJS     =  ax25c.o
 LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF) -lax25c_runtime \
 			-lpthread
+TARGET   =  ax25c
+OBJS     =  ax25c.o
 
-all: $(OBJS)
-	$(MAKE) -C $(SRCDIR)/runtime all
-	$(CC) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+all: runtime config terminal mm_simple $(TARGET)
 	$(MAKE) -C $(SRCDIR)/config all
 	$(MAKE) -C $(SRCDIR)/terminal all
 	$(MAKE) -C $(SRCDIR)/mm_simple all
 	echo "Build OK"
+	
+$(TARGET): runtime $(OBJS)
+	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+
+.PHONY: runtime
+runtime:
+	$(MAKE) -C $(SRCDIR)/runtime all
+
+.PHONY: config
+config:
+	$(MAKE) -C $(SRCDIR)/config all
+
+.PHONY: terminal
+terminal:
+	$(MAKE) -C $(SRCDIR)/terminal all
+
+.PHONY: mm_simple
+mm_simple:
+	$(MAKE) -C $(SRCDIR)/mm_simple all
 
 %.o: %.c %.h Makefile
 	$(CC) $(CFLAGS) -c $<	
@@ -52,28 +67,18 @@ clean:
 	$(MAKE) -C $(SRCDIR)/terminal clean
 	$(MAKE) -C $(SRCDIR)/mm_simple clean
 	
-install: ax25c doc
-	sudo cp $(TARGET) /usr/local/bin
-	sudo chown root:staff /usr/local/bin/$(TARGET)
-	sudo mkdir -p /usr/local/doc
-	sudo cp $(SRCDIR)/$(DOCDIR)/$(TARGET).pdf /usr/local/doc
-	$(MAKE) -C $(SRCDIR)/runtime install
-	$(MAKE) -C $(SRCDIR)/config install
-	$(MAKE) -C $(SRCDIR)/terminal install
-	$(MAKE) -C $(SRCDIR)/mm_simple install
+install: all
 	
 run: all
 	@echo "Executing $(TARGET)"
-	@LD_LIBRARY_PATH=$(SRCDIR)/_$(_CONF)/ \
-		$(SRCDIR)/_$(_CONF)/$(TARGET) \
-		"--loglevel:DEBUG" \
-		"--pid:$(SRCDIR)/_$(_CONF)/$(TARGET).pid" \
-		"$(SRCDIR)/$(TARGET).xml"
+	cp /usr/local/lib/libstringc.$(SOEXT) .
+	cp /usr/local/lib/libmapc.$(SOEXT) .
+	LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:DEBUG" "--pid:$(TARGET).pid" \
+		"../$(TARGET).xml"
 	@echo "OK"
 	
 stop:
 	@echo "Stopping $(TARGET)"
 	@bash -c "kill -s SIGINT `cat $(SRCDIR)/_$(_CONF)/$(TARGET).pid`"
 
-#----- Begin Boilerplate
 endif
