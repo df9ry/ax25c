@@ -18,19 +18,25 @@
 ifeq (,$(filter _%,$(notdir $(CURDIR))))
 include ../target.mk
 else
-#----- End Boilerplate
 
-VPATH = $(SRCDIR)
-CXXFLAGS =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
-LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
+ifeq ($(OS),Cygwin)
+	XERCESLIB := -L/usr/bin/ -lxerces-c-3-1
+else
+	XERCESLIB := -lxercesc
+endif
 
-TARGET   =  ax25c_config.so
-OBJS     =  DOMTreeErrorReporter.o ax25c_config.o
-LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
-			-lxerces-c -lpthread
+VPATH    = $(SRCDIR)
+CXXFLAGS = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
+
+TARGET   = ax25c_config.$(SOEXT)
+OBJS     = DOMTreeErrorReporter.o ax25c_config.o
+LIBS     = -L$(SRCDIR)/../_$(_CONF) -lax25c_runtime \
+			$(XERCESLIB) \
+			-L/usr/local/lib -lmapc \
+			-lpthread
 
 all: $(TARGET)
-	cp $(TARGET) ../../_$(_CONF)
+	cp $(TARGET) $(SRCDIR)/../_$(_CONF)
 	
 clean:
 	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
@@ -38,10 +44,9 @@ clean:
 install:
 
 $(TARGET): $(OBJS)
-	$(CXX) $(LDFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 	
 %.o: %.cpp $(SRCDIR)
 	$(CXX) $(CXXFLAGS) -c $<	
 
-#----- Begin Boilerplate
 endif
