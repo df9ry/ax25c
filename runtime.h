@@ -96,6 +96,25 @@ extern bool stop(struct exception *ex);
 extern struct configuration configuration;
 
 /**
+ * @brief Initialize the logging system.
+ */
+extern void ax25c_log_init(void);
+
+/**
+ * @brief Terminate the logging system.
+ */
+extern void ax25c_log_term(void);
+
+/**
+ * @brief Write a message into the log.
+ *        This function is non blocking.
+ * @param dl Debug level
+ * @param fmt Format
+ * @param ... Variable list of arguments.
+ */
+extern void ax25c_log(enum debug_level_t dl, const char *fmt, ...);
+
+/**
  * @brief DEBUG method.
  * @param msg Message to print.
  * @param par Parameter to print.
@@ -103,7 +122,7 @@ extern struct configuration configuration;
 static inline void DEBUG(const char *msg, const char *par)
 {
 	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
-		fprintf(stderr, "D:%s:%s\n", msg, par);
+		ax25c_log(DEBUG_LEVEL_DEBUG, "%s:%s", msg, par);
 }
 
 /**
@@ -114,7 +133,7 @@ static inline void DEBUG(const char *msg, const char *par)
 static inline void ERROR(const char *msg, const char *par)
 {
 	if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
-		fprintf(stderr, "E:%s:%s\n", msg, par);
+		ax25c_log(DEBUG_LEVEL_ERROR, "%s:%s", msg, par);
 }
 
 /**
@@ -125,7 +144,7 @@ static inline void ERROR(const char *msg, const char *par)
 static inline void WARNING(const char *msg, const char *par)
 {
 	if (configuration.loglevel >= DEBUG_LEVEL_WARNING)
-		fprintf(stderr, "W:%s:%s\n", msg, par);
+		ax25c_log(DEBUG_LEVEL_WARNING, "%s:%s", msg, par);
 }
 
 /**
@@ -136,7 +155,7 @@ static inline void WARNING(const char *msg, const char *par)
 static inline void INFO(const char *msg, const char *par)
 {
 	if (configuration.loglevel >= DEBUG_LEVEL_INFO)
-		fprintf(stderr, "I:%s:%s\n", msg, par);
+		ax25c_log(DEBUG_LEVEL_INFO, "%s:%s", msg, par);
 }
 
 /**
