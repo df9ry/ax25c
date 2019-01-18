@@ -22,7 +22,7 @@ else
 ifeq ($(OS),Cygwin)
 	XERCESLIB := -L/usr/bin/ -lxerces-c-3-1
 else
-	XERCESLIB := -lxercesc
+	XERCESLIB := -lxerces-c
 endif
 
 VPATH    = $(SRCDIR)
