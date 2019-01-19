@@ -26,7 +26,7 @@ LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
 
 TARGET   =  ax25c_terminal.$(SOEXT)
-OBJS     =  module.o
+OBJS     =  module.o terminal.o
 LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
 			-lpthread
 

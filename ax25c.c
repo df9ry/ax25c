@@ -18,13 +18,30 @@
 #include "configuration.h"
 #include "exception.h"
 #include "runtime.h"
+#include "runtime/log.h"
+#include "runtime/tick.h"
 #include "config/ax25c_config.h"
+
+#include <sys/types.h>
+#include <fcntl.h>
+#include <termios.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <unistd.h>
 #include <signal.h>
 #include <assert.h>
 #include <time.h>
+
+static void exit_handler(void)
+{
+	struct termios t;
+	int flags = fcntl(STDIN_FILENO, F_GETFL);
+	flags &= ~O_NONBLOCK;
+	fcntl(STDIN_FILENO, F_SETFL, flags);
+	flags = tcgetattr(STDIN_FILENO, &t);
+	t.c_lflag |= (ICANON | ECHO | ISIG);
+	tcsetattr(STDIN_FILENO, TCSANOW, &t);
+}
 
 static void handle_signal(int signal) {
     switch (signal) {
@@ -49,8 +66,10 @@ int main(int argc, char *argv[]) {
 	struct sigaction sa;
 
 	ax25c_log_init();
+	ax25c_tick_init();
 
 	/* Catch signals */
+	atexit(exit_handler);
 	sa.sa_handler = &handle_signal;
 	sigfillset(&sa.sa_mask);
 	assert(sigaction(SIGHUP, &sa, NULL) == 0);
@@ -84,13 +103,17 @@ int main(int argc, char *argv[]) {
 
 	/* Run: */
 	INFO("Run", "");
+	ex.erc = EXIT_SUCCESS;
 	while (tick(&ex)) {
 		usleep(configuration.tick * 1000);
 	} /* end while */
+	if (ex.erc != EXIT_SUCCESS)
+		return print_ex(&ex);
 
 	/* Shutdown: */
 	INFO("Shutdown", "");
 	stop(&ex);
+	ax25c_tick_term();
 	ax25c_log_term();
 
 	if (configuration.loglevel >= DEBUG_LEVEL_INFO) {
