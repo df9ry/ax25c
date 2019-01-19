@@ -23,7 +23,7 @@ VPATH    = $(SRCDIR)
 CFLAGS   = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
 TARGET   = libax25c_runtime.$(SOEXT)
-OBJS     = ax25c_runtime.o memory.o log.o
+OBJS     = ax25c_runtime.o memory.o log.o tick.o
 LIBS     = -L/usr/local/lib -lmapc -ldl -lpthread
 
 all: $(TARGET)

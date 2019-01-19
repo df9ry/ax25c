@@ -15,13 +15,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-/*
- * runtime.h
- *
- *  Created on: 08.01.2019
- *      Author: tania
- */
-
 #ifndef RUNTIME_H_
 #define RUNTIME_H_
 
@@ -36,6 +29,8 @@ extern "C" {
 
 #include "configuration.h"
 #include "exception.h"
+
+#include <uki/list.h>
 
 #include <stdio.h>
 #include <stdint.h>
@@ -96,16 +91,6 @@ extern bool stop(struct exception *ex);
 extern struct configuration configuration;
 
 /**
- * @brief Initialize the logging system.
- */
-extern void ax25c_log_init(void);
-
-/**
- * @brief Terminate the logging system.
- */
-extern void ax25c_log_term(void);
-
-/**
  * @brief Write a message into the log.
  *        This function is non blocking.
  * @param dl Debug level
@@ -159,16 +144,15 @@ static inline void INFO(const char *msg, const char *par)
 }
 
 /**
- * @brief Heardbeat tick.
- * @param ex Exception structure.
- * @return Execution status.
- */
-extern bool tick(struct exception *ex);
-
-/**
  * @brief Kill all processes and exit.
  */
 extern void die(void);
+
+/**
+ * @brief Check if the system ist still alive.
+ * @return True, when system is alive.
+ */
+extern bool isAlive(void);
 
 /**
  * @brief Allocate memory from the memory manager.
@@ -200,6 +184,28 @@ extern void mem_lock(void *mem);
  * @param mem Pointer to the memory to free.
  */
 extern void mem_free(void *mem);
+
+/**
+ * @brief Structure for registration of a tick listener.
+ */
+struct tick_listener {
+	struct list_head node;            /**< Node in system list.         */
+	bool (*onTick)(void *user_data,
+			struct exception *ex);    /**< Function to call on tick.    */
+	void *user_data;                  /**< User data for function call. */
+};
+
+/**
+ * @brief Register a tick listener.
+ * @param l Tick listener to register.
+ */
+extern void registerTickListener(struct tick_listener *l);
+
+/**
+ * @brief Unegister a tick listener.
+ * @param l Tick listener to unregister.
+ */
+extern void unregisterTickListener(struct tick_listener *l);
 
 #ifdef __cplusplus
 }

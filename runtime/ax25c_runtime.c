@@ -201,6 +201,10 @@ void die(void) {
 	alive = false;
 }
 
+bool isAlive(void) {
+	return alive;
+}
+
 bool stop(struct exception *ex) {
 	assert(ex);
 	ex->erc = EXIT_SUCCESS;
@@ -224,18 +228,4 @@ bool start(struct exception *ex)
 		return false;
 	}
 	return (ex->erc == EXIT_SUCCESS);
-}
-
-bool tick(struct exception *ex)
-{
-	assert(ex);
-	if (!alive) {
-		ex->erc = EXIT_SUCCESS;
-		ex->message = "Normal shutdown";
-		ex->param = "";
-		ex->module = MODULE_NAME;
-		ex->function = "tick";
-		return false;
-	}
-	return true;
 }

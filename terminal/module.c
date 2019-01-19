@@ -18,6 +18,9 @@
 #include "../configuration.h"
 #include "../runtime.h"
 
+#include "terminal.h"
+#include "_internal.h"
+
 #include <assert.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -26,21 +29,20 @@
 
 #define PLUGIN_NAME "Terminal";
 
-static struct plugin_handle {
-	const char *name;
-	size_t      line_length;
-	size_t      rx_bufsize;
-	size_t      rx_threshold;
-	size_t      tx_threshold;
-	const char *mycall;
-} plugin;
+static struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
-		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256" },
-		{ "rx_bufsize",   SIZE_T, offsetof(struct plugin_handle, rx_bufsize),   "256" },
-		{ "rx_threshold", SIZE_T, offsetof(struct plugin_handle, rx_threshold), "32"  },
-		{ "tx_threshold", SIZE_T, offsetof(struct plugin_handle, tx_threshold), "32"  },
-		{ "mycall",       CSTR_T, offsetof(struct plugin_handle, mycall),       NULL  },
+		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256"  },
+		{ "rx_bufsize",   SIZE_T, offsetof(struct plugin_handle, rx_bufsize),   "256"  },
+		{ "rx_threshold", SIZE_T, offsetof(struct plugin_handle, rx_threshold), "32"   },
+		{ "tx_threshold", SIZE_T, offsetof(struct plugin_handle, tx_threshold), "32"   },
+		{ "s_out_buf",    SIZE_T, offsetof(struct plugin_handle, s_out_buf),    "1024" },
+		{ "mycall",       CSTR_T, offsetof(struct plugin_handle, mycall),       NULL   },
+		{ "lead_txt",     CSTR_T, offsetof(struct plugin_handle, lead_txt),     ":"    },
+		{ "lead_cmd",     CSTR_T, offsetof(struct plugin_handle, lead_cmd),     ">"    },
+		{ "lead_inf",     CSTR_T, offsetof(struct plugin_handle, lead_inf),     "+"    },
+		{ "lead_err",     CSTR_T, offsetof(struct plugin_handle, lead_err),     "!"    },
+		{ "prompt",       CSTR_T, offsetof(struct plugin_handle, prompt),       "cmd>" },
 		{ NULL }
 };
 
@@ -59,17 +61,7 @@ static void *get_plugin(const char *name,
 static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	DEBUG("terminal start", plugin->name);
-	if (fprintf(stdout, "Open AX.25 terminal on %s\n", ttyname(STDOUT_FILENO)) < 0) {
-		if (ex) {
-			ex->erc = errno;
-			ex->function = "start_plugin";
-			ex->module = PLUGIN_NAME;
-			ex->message = strerror(ex->erc);
-			ex->param = "01";
-		}
-		return false;
-	}
-	fflush(stdout);
+	initialize(plugin);
 	return true;
 }
 
@@ -77,6 +69,7 @@ static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	assert(ex);
 	DEBUG("terminal stop", plugin->name);
+	terminate(plugin);
 	return true;
 }
 
