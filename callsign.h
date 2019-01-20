@@ -47,11 +47,13 @@ struct addressField {
 /**
  * @brief Encode a callsign from string notation.
  * @param str String notation to encode into a callsign.
+ * @param next Pointer to next char after the callsign. May be NULL.
  * @param ex Exception struct, optional.
  * @return Encoded callsign or 0, in the case of an error. Param ex will
  *         contain detailed information about the problem otherwise.
  */
-extern callsign callsignFromString(const char *str, struct exception *ex);
+extern callsign callsignFromString(const char *str, const char **next,
+		struct exception *ex);
 
 /**
  * @brief Decode a callsign to a string buffer.
@@ -106,13 +108,13 @@ static inline bool getHBit(callsign call)
  * @param h Value of H-Bit to set.
  * @return Modified callsign.
  */
-static inline callsign setHBit(callsign call, bool h)
+static inline void setHBit(callsign *call, bool h)
 {
+	uint8_t *po = &(((uint8_t*)(call))[6]);
 	if (h)
-		((uint8_t*)(&call))[6] |= 0x80;
+		*po |= 0x80;
 	else
-		((uint8_t*)(&call))[6] &= ~0x80;
-	return call;
+		*po &= ~0x80;
 }
 
 /**
@@ -131,13 +133,13 @@ static inline bool getXBit(callsign call)
  * @param x Value of X-Bit to set.
  * @return Modified callsign.
  */
-static inline callsign setXBit(callsign call, bool x)
+static inline void setXBit(callsign *call, bool x)
 {
+	uint8_t *po = &(((uint8_t*)(call))[6]);
 	if (x)
-		((uint8_t*)(&call))[6] |= 0x10;
+		*po |= 0x01;
 	else
-		((uint8_t*)(&call))[6] &= ~0x10;
-	return call;
+		*po &= ~0x01;
 }
 
 /**
@@ -156,13 +158,13 @@ static inline bool getCBit(callsign call)
  * @param c Value of C-Bit to set.
  * @return Modified callsign.
  */
-static inline callsign setCBit(callsign call, bool c)
+static inline void setCBit(callsign *call, bool c)
 {
+	uint8_t *po = &(((uint8_t*)(call))[6]);
 	if (c)
-		((uint8_t*)(&call))[6] |= 0x80;
+		*po |= 0x80;
 	else
-		((uint8_t*)(&call))[6] &= ~0x80;
-	return call;
+		*po &= ~0x80;
 }
 
 /**

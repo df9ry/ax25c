@@ -71,9 +71,17 @@ install: all
 	
 run: all
 	@echo "Executing $(TARGET)"
-	cp /usr/local/lib/libstringc.$(SOEXT) .
-	cp /usr/local/lib/libmapc.$(SOEXT) .
-	LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:DEBUG" "--pid:$(TARGET).pid" \
+	@cp /usr/local/lib/libstringc.$(SOEXT) .
+	@cp /usr/local/lib/libmapc.$(SOEXT) .
+	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:DEBUG" "--pid:$(TARGET).pid" \
+		"../$(TARGET).xml"
+	@echo "OK"
+	
+test: all
+	@echo "Executing $(TARGET)"
+	@cp /usr/local/lib/libstringc.$(SOEXT) .
+	@cp /usr/local/lib/libmapc.$(SOEXT) .
+	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:NONE" "--pid:$(TARGET).pid" \
 		"../$(TARGET).xml"
 	@echo "OK"
 	

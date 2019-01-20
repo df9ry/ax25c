@@ -55,32 +55,45 @@ static uint8_t getOctetOfChar(char ch)
 	return 0;
 }
 
-callsign callsignFromString(const char *str, struct exception *ex)
+static const char *__skipWhitespace(const char *str)
+{
+	while ((*str) && isspace(*str))
+		++str;
+	return str;
+}
+
+callsign callsignFromString(const char *str, const char **next,
+							struct exception *ex)
 {
 	size_t i = 0;
 	uint8_t octet;
 	long int _ssid;
 	char *_call;
+	const char *_str = str;
 	union _callsign c;
+	bool with_uuid = false;
 
 	assert(str);
 	c.encoded = 0;
 	while (*str != '\0') {
-		if (i == 6) {
-			if (*str == '-') {
-				++str;
-				++i;
-				break;
+		if (isspace(*str)) {
+			break;
+		}
+		if (*str == '-') {
+			if (i > 6) {
+				fillEx(ex, "callsignFromString",
+						"Callsign too long (max. 6 characters)", _str,
+						EXIT_FAILURE);
+				return 0;
 			}
-			fillEx(ex, "callsignFromString",
-					"Callsign too long (max. 6 characters)", str,
-					EXIT_FAILURE);
-			return 0;
+			++str;
+			with_uuid = true;
+			break;
 		}
 		octet = getOctetOfChar(*str);
 		if (octet == 0) {
 			fillEx(ex, "callsignFromString",
-					"Invalid callsign character", str,
+					"Invalid callsign character", _str,
 					EXIT_FAILURE);
 			return 0;
 		}
@@ -90,28 +103,29 @@ callsign callsignFromString(const char *str, struct exception *ex)
 	} /* end while */
 	if (i == 0) {
 		fillEx(ex, "callsignFromString",
-				"Callsign too short (min. 1 character)", str,
+				"Callsign too short (min. 1 character)", _str,
 				EXIT_FAILURE);
 		return 0;
 	}
-	while (i++ < 6)
+	while (i < 6) {
 		c.octets[i] = 0x40;
-	if (*str != '\0') {
+		++i;
+	} /* end while */
+	if (with_uuid) {
 		_ssid = strtol(str, &_call, 0);
 		if ((_ssid < 0) || (_ssid >= 16)) {
 			fillEx(ex, "callsignFromString",
-					"SSID is out of range (0 .. 15)", str,
+					"SSID is out of range (0..15)", _str,
 					EXIT_FAILURE);
 			return 0;
 		}
-	}
-	if (*_call != '\0') {
-		fillEx(ex, "callsignFromString",
-				"Extra characters after callsign", str,
-				EXIT_FAILURE);
-		return 0;
+	} else {
+		_call = (char*)str;
+		_ssid = 0;
 	}
 	c.octets[6] = 0x60 | (_ssid << 1);
+	if (next)
+		*next = __skipWhitespace(_call);
 	return c.encoded;
 }
 
@@ -122,14 +136,19 @@ static int __tooShort(const char *func, struct exception *ex)
 	return -1;
 }
 
-int callsignToString(callsign call, char *pb, size_t cb,
-							struct exception *ex)
+int callsignToString(callsign call, char *pb, size_t cb, struct exception *ex)
 {
 	union _callsign c;
 	char ch;
 	size_t i, cb1;
 	int ssid;
 
+	if (!call) {
+		if (cb < 7)
+			return __tooShort("callsignToString", ex);
+		strcpy(pb, "<NULL>");
+		return 6;
+	}
 	assert(call);
 	assert(pb);
 	assert(cb);
@@ -148,9 +167,8 @@ int callsignToString(callsign call, char *pb, size_t cb,
 	*pb++ = '-';
 	ssid = (c.octets[6] & 0x1e) >> 1;
 	i = snprintf(pb, cb, "%i", ssid);
-	if (i > cb)
+	if (i >= cb)
 		return __tooShort("callsignToString", ex);
-	i -= 1;
 	cb -= i;
 	pb += i;
 	if (getHBit(call)) {
@@ -161,27 +179,14 @@ int callsignToString(callsign call, char *pb, size_t cb,
 	if (cb-- == 0)
 		return __tooShort("callsignToString", ex);
 	*pb++ = '\0';
-	return cb1 - cb;
-}
-
-static const char *__skipWhitespace(const char *str)
-{
-	while ((*str) && isspace(*str))
-		++str;
-	return str;
-}
-
-static const char *__skipNoWhitespace(const char *str)
-{
-	while ((*str) && (!isspace(*str)))
-		++str;
-	return str;
+	return cb1 - cb - 1;
 }
 
 bool addressFieldFromString(callsign source, const char *dest,
-		struct addressField *af, struct exception *ex)
+							struct addressField *af, struct exception *ex)
 {
-	assert(source);
+	const char *next;
+
 	assert(dest);
 	assert(af);
 	memset(af, 0x00, sizeof(struct addressField));
@@ -189,32 +194,32 @@ bool addressFieldFromString(callsign source, const char *dest,
 	dest = __skipWhitespace(dest);
 
 	/* Read destination */
-	af->destination = callsignFromString(dest, ex);
+	af->destination = callsignFromString(dest, &next, ex);
 	if (!af->destination)
 		return false;
-	dest = __skipWhitespace(__skipNoWhitespace(dest));
+	dest = __skipWhitespace(next);
 	if (!(*dest)) {
-		af->source = setXBit(af->source, true);
+		setXBit(&af->source, true);
 		return true;
 	}
 
 	/* Read repeater 1 */
-	af->repeaters[0] = callsignFromString(dest, ex);
+	af->repeaters[0] = callsignFromString(dest, &next, ex);
 	if (!af->repeaters[0])
 		return false;
-	dest = __skipWhitespace(__skipNoWhitespace(dest));
+	dest = __skipWhitespace(next);
 	if (!(*dest)) {
-		af->repeaters[0] = setXBit(af->repeaters[0], true);
+		setXBit(&af->repeaters[0], true);
 		return true;
 	}
 
 	/* Read repeater 2 */
-	af->repeaters[1] = callsignFromString(dest, ex);
+	af->repeaters[1] = callsignFromString(dest, &next, ex);
 	if (!af->repeaters[1])
 		return false;
-	dest = __skipWhitespace(__skipNoWhitespace(dest));
+	dest = __skipWhitespace(next);
 	if (!(*dest)) {
-		af->repeaters[1] = setXBit(af->repeaters[1], true);
+		setXBit(&af->repeaters[1], true);
 		return true;
 	}
 
@@ -248,20 +253,12 @@ bool addressFieldToString(const struct addressField *af,
 	pb += cb1;
 	if (cb++ == 0)
 		return (__tooShort("addressFieldToString", ex) == 0);
-	*pb++ = ' ';
-
-	cb1 = callsignToString(af->source, pb, cb, ex);
-	if (cb1 < 0)
-		return false;
-	cb -= cb1;
-	pb += cb1;
-	if (cb++ == 0)
-		return (__tooShort("addressFieldToString", ex) == 0);
 	if (getXBit(af->source)) {
-		*pb++ = '\0';
+		*pb = '\0';
 		return true;
+	} else {
+		*pb++ = ' ';
 	}
-	*pb++ = ' ';
 
 	cb1 = callsignToString(af->repeaters[0], pb, cb, ex);
 	if (cb1 < 0)
@@ -273,8 +270,9 @@ bool addressFieldToString(const struct addressField *af,
 	if (getXBit(af->repeaters[0])) {
 		*pb++ = '\0';
 		return true;
+	} else {
+		*pb++ = ' ';
 	}
-	*pb++ = ' ';
 
 	cb1 = callsignToString(af->repeaters[1], pb, cb, ex);
 	if (cb1 < 0)

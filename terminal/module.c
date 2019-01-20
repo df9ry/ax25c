@@ -32,17 +32,18 @@
 static struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
-		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256"  },
-		{ "rx_bufsize",   SIZE_T, offsetof(struct plugin_handle, rx_bufsize),   "256"  },
-		{ "rx_threshold", SIZE_T, offsetof(struct plugin_handle, rx_threshold), "32"   },
-		{ "tx_threshold", SIZE_T, offsetof(struct plugin_handle, tx_threshold), "32"   },
-		{ "s_out_buf",    SIZE_T, offsetof(struct plugin_handle, s_out_buf),    "1024" },
-		{ "mycall",       CSTR_T, offsetof(struct plugin_handle, mycall),       NULL   },
-		{ "lead_txt",     CSTR_T, offsetof(struct plugin_handle, lead_txt),     ":"    },
-		{ "lead_cmd",     CSTR_T, offsetof(struct plugin_handle, lead_cmd),     ">"    },
-		{ "lead_inf",     CSTR_T, offsetof(struct plugin_handle, lead_inf),     "+"    },
-		{ "lead_err",     CSTR_T, offsetof(struct plugin_handle, lead_err),     "!"    },
-		{ "prompt",       CSTR_T, offsetof(struct plugin_handle, prompt),       "cmd>" },
+		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256"    },
+		{ "rx_bufsize",   SIZE_T, offsetof(struct plugin_handle, rx_bufsize),   "256"    },
+		{ "rx_threshold", SIZE_T, offsetof(struct plugin_handle, rx_threshold), "32"     },
+		{ "tx_threshold", SIZE_T, offsetof(struct plugin_handle, tx_threshold), "32"     },
+		{ "s_out_buf",    SIZE_T, offsetof(struct plugin_handle, s_out_buf),    "1024"   },
+		{ "mycall",       CALL_T, offsetof(struct plugin_handle, mycall),       "NOCALL" },
+		{ "remote",       ADDR_T, offsetof(struct plugin_handle, addr),         "NOCALL" },
+		{ "lead_txt",     CSTR_T, offsetof(struct plugin_handle, lead_txt),     ":"      },
+		{ "lead_cmd",     CSTR_T, offsetof(struct plugin_handle, lead_cmd),     ">"      },
+		{ "lead_inf",     CSTR_T, offsetof(struct plugin_handle, lead_inf),     "+"      },
+		{ "lead_err",     CSTR_T, offsetof(struct plugin_handle, lead_err),     "!"      },
+		{ "prompt",       CSTR_T, offsetof(struct plugin_handle, prompt),       "cmd>"   },
 		{ NULL }
 };
 

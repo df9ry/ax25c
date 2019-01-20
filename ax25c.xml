@@ -49,14 +49,16 @@
 				<!-- Block tx, when less buffers are left. -->
 				<Setting name="tx_threshold">20</Setting>
 				<!-- My own call sign. -->
-				<Setting name="mycall">DF9RY-9</Setting>
+				<Setting name="mycall">DF9RY</Setting>
+				<!-- Remote address -->
+				<Setting name="remote">DB0FHN DB0FHN-15</Setting>
 				<!-- Output ring buffer size -->
 				<Setting name="s_out_buf">1024</Setting>
 				<!-- Lead ins -->
 				<Setting name="lead_txt">\033[0m\033[47m\033[30m</Setting>
 				<Setting name="lead_cmd">\033[1m\033[42m\033[30m</Setting>
-				<Setting name="lead_inf">\033[1m\033[43m\033[32m</Setting>
-				<Setting name="lead_err">\033[1m\033[43m\033[31m</Setting>
+				<Setting name="lead_inf">\033[1m\033[106m\033[30m</Setting>
+				<Setting name="lead_err">\033[1m\033[43m\033[32m</Setting>
 				<Setting name="prompt">Command:> </Setting>
 			</Settings>
 		</Plugin>
