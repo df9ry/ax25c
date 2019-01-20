@@ -92,7 +92,9 @@ enum setting_type_t {
 	UINT_T  = 1,   /**< Setting is an 'unsigned int' */
 	SIZE_T  = 2,   /**< Setting is a 'size_t'        */
 	CSTR_T  = 3,   /**< Setting is a 'char*'         */
-	DEBUG_T = 4    /**< Setting is a 'debug_level_t' */
+	DEBUG_T = 4,   /**< Setting is a 'debug_level_t' */
+	CALL_T  = 5,   /**< Setting is a 'callsign'      */
+	ADDR_T  = 6,   /**< Setting is a 'addressField'. */
 };
 
 /**
