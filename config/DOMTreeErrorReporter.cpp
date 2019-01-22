@@ -17,8 +17,6 @@
 
 #include <iostream>
 
-#include <xercesc/sax/SAXParseException.hpp>
-
 #include "DOMTreeErrorReporter.hpp"
 #include "StrX.hpp"
 

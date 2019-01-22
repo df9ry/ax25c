@@ -21,7 +21,7 @@ else
 VPATH    =  $(SRCDIR)
 CFLAGS   =  -Wall -Werror -g -ggdb -fmessage-length=0 -pthread
 
-LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF) -lax25c_runtime \
+LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF) -lax25c_runtime -lringbuffer \
 			-lpthread
 TARGET   =  ax25c
 OBJS     =  ax25c.o
@@ -73,6 +73,7 @@ run: all
 	@echo "Executing $(TARGET)"
 	@cp /usr/local/lib/libstringc.$(SOEXT) .
 	@cp /usr/local/lib/libmapc.$(SOEXT) .
+	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
 	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:DEBUG" "--pid:$(TARGET).pid" \
 		"../$(TARGET).xml"
 	@echo "OK"
@@ -81,6 +82,7 @@ test: all
 	@echo "Executing $(TARGET)"
 	@cp /usr/local/lib/libstringc.$(SOEXT) .
 	@cp /usr/local/lib/libmapc.$(SOEXT) .
+	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
 	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:NONE" "--pid:$(TARGET).pid" \
 		"../$(TARGET).xml"
 	@echo "OK"

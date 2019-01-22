@@ -121,8 +121,8 @@ static int compare(const void *o1, const void *o2)
 #endif
 
 static struct setting_descriptor settings_descriptor[] = {
-		{ "tick",     UINT_T,  offsetof(struct configuration, tick),     "10" },
-		{ "loglevel", DEBUG_T, offsetof(struct configuration, loglevel), "-"  },
+		{ "tick",       UINT_T,  offsetof(struct configuration, tick),        "10" },
+		{ "loglevel",   DEBUG_T, offsetof(struct configuration, loglevel),    "-"  },
 		{ NULL }
 };
 

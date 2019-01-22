@@ -18,6 +18,7 @@
 #ifndef CONFIG_DOMTREEERRORREPORTER_HPP_
 #define CONFIG_DOMTREEERRORREPORTER_HPP_
 
+#include <xercesc/sax/SAXParseException.hpp>
 #include <xercesc/util/XercesDefs.hpp>
 #include <xercesc/sax/ErrorHandler.hpp>
 
