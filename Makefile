@@ -29,10 +29,15 @@ TARGET   =  ax25c
 OBJS     =  ax25c.o
 
 all: runtime config terminal mm_simple $(TARGET)
-	$(MAKE) -C $(SRCDIR)/config all
-	$(MAKE) -C $(SRCDIR)/terminal all
-	$(MAKE) -C $(SRCDIR)/mm_simple all
-	echo "Build OK"
+	@$(MAKE) -C $(SRCDIR)/config all
+	@$(MAKE) -C $(SRCDIR)/terminal all
+	@$(MAKE) -C $(SRCDIR)/mm_simple all
+	@echo "Build OK"
+
+sub:
+	@( cd $(SRCDIR)/user_kernel_interface/ && make all )
+	@( cd $(SRCDIR)/mapc/                  && make all )
+	@( cd $(SRCDIR)/ringbuffer/            && make all )
 	
 $(TARGET): runtime $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
@@ -64,13 +69,23 @@ doc:
 		
 clean:
 	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
-	$(MAKE) -C $(SRCDIR)/runtime clean
-	$(MAKE) -C $(SRCDIR)/config clean
-	$(MAKE) -C $(SRCDIR)/terminal clean
-	$(MAKE) -C $(SRCDIR)/mm_simple clean
+	@$(MAKE) -C $(SRCDIR)/runtime clean
+	@$(MAKE) -C $(SRCDIR)/config clean
+	@$(MAKE) -C $(SRCDIR)/terminal clean
+	@$(MAKE) -C $(SRCDIR)/mm_simple clean
+
+cleansub:
+	@( cd $(SRCDIR)/user_kernel_interface/ && make clean )
+	@( cd $(SRCDIR)/mapc/                  && make clean )
+	@( cd $(SRCDIR)/ringbuffer/            && make clean )
 	
-install: all
-	
+install:
+
+installsub:
+	@( cd $(SRCDIR)/user_kernel_interface/ && make install )
+	@( cd $(SRCDIR)/mapc/                  && make install )
+	@( cd $(SRCDIR)/ringbuffer/            && make install )
+
 run: all
 	@echo "Executing $(TARGET)"
 	@cp /usr/local/lib/libstringc.$(SOEXT) .
