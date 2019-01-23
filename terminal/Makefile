@@ -21,11 +21,12 @@ else
 #----- End Boilerplate
 
 VPATH = $(SRCDIR)
-CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
+CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
+			-I/usr/local/include/
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
 
-TARGET   =  ax25c_terminal.$(SOEXT)
+TARGET   =  ax25c_terminal.so
 OBJS     =  module.o terminal.o
 LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
 			-lpthread

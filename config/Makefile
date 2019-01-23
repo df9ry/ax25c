@@ -19,19 +19,14 @@ ifeq (,$(filter _%,$(notdir $(CURDIR))))
 include ../target.mk
 else
 
-ifeq ($(OS),Cygwin)
-	XERCESLIB := -L/usr/bin/ -lxerces-c-3-1
-else
-	XERCESLIB := -lxerces-c
-endif
-
 VPATH    = $(SRCDIR)
-CXXFLAGS = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
+CXXFLAGS = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
+			-I/usr/local/include/
 
-TARGET   = ax25c_config.$(SOEXT)
+TARGET   = ax25c_config.so
 OBJS     = DOMTreeErrorReporter.o ax25c_config.o
 LIBS     = -L$(SRCDIR)/../_$(_CONF) -lax25c_runtime \
-			$(XERCESLIB) \
+			-lxerces-c \
 			-L/usr/local/lib -lmapc \
 			-lpthread
 

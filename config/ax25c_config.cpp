@@ -56,32 +56,32 @@ const char *strbuf(const char *s) {
 	return buf;
 }
 
-static const string str(int i) {
+static const string str_int(int i) {
 	stringstream oss;
 	oss << i;
 	return oss.str();
 }
 
-static const string str(unsigned int u) {
+static const string str_uint(unsigned int u) {
 	stringstream oss;
 	oss << u;
 	return oss.str();
 }
 
-static const string str(size_t s) {
+static const string str_size(size_t s) {
 	stringstream oss;
 	oss << s;
 	return oss.str();
 }
 
-static const string str(debug_level_t t) {
+static const string str_debug_level(debug_level_t t) {
 	switch (t) {
 	case DEBUG_LEVEL_NONE:    return "NONE";
 	case DEBUG_LEVEL_ERROR:   return "ERROR";
 	case DEBUG_LEVEL_WARNING: return "WARNING";
 	case DEBUG_LEVEL_INFO:    return "INFO";
 	case DEBUG_LEVEL_DEBUG:   return "DEBUG";
-	default: return "???" + str((int)t);
+	default: return "???" + str_int((int)t);
 	}
 }
 
@@ -220,10 +220,11 @@ static bool getUInt(DOMNodeList *nodeList, const char *name,
 
 static bool decodeSize(const char *s, size_t *val, struct ::exception *ex)
 {
+	const char *fmt = (sizeof(int*) == 8) ? "%lu" : "%u";
 	assert(s);
 	assert(val);
 	assert(ex);
-	if (sscanf(s, "%lu", val) != 1) {
+	if (sscanf(s, fmt, val) != 1) {
 		ex->erc = EXIT_FAILURE;
 		ex->module = MODULE_NAME;
 		ex->function = "decodeSize";
@@ -416,17 +417,17 @@ static bool configurator(void *handle, struct setting_descriptor *descriptor,
 			case INT_T:
 				if (!getInt(nodeList, name, (int*)ptr, def, ex))
 					return false;
-				DEBUG(name, str(*(int*)ptr).c_str());
+				DEBUG(name, str_int(*(int*)ptr).c_str());
 				break;
 			case UINT_T:
 				if (!getUInt(nodeList, name, (unsigned int*)ptr, def, ex))
 					return false;
-				DEBUG(name, str(*(unsigned int*)ptr).c_str());
+				DEBUG(name, str_uint(*(unsigned int*)ptr).c_str());
 				break;
 			case SIZE_T:
 				if (!getSize(nodeList, name, (size_t*)ptr, def, ex))
 					return false;
-				DEBUG(name, str(*(size_t*)ptr).c_str());
+				DEBUG(name, str_size(*(size_t*)ptr).c_str());
 				break;
 			case CSTR_T:
 				if (!getCString(nodeList, name, (const char **)ptr, def, ex))
@@ -437,7 +438,7 @@ static bool configurator(void *handle, struct setting_descriptor *descriptor,
 			case DEBUG_T:
 				if (!getDebugLevel(nodeList, name, (debug_level_t*)ptr, def, ex))
 						return false;
-				DEBUG(name, str(*(debug_level_t*)ptr).c_str());
+				DEBUG(name, str_debug_level(*(debug_level_t*)ptr).c_str());
 				break;
 			case CALL_T:
 				if (!getCall(nodeList, name, (callsign*)ptr, def, ex))

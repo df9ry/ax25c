@@ -21,7 +21,7 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
-#include <termios.h>
+//#include <termios.h>
 #include <unistd.h>
 #include <stdbool.h>
 #include <string.h>
@@ -39,8 +39,8 @@
 #define BEL 7
 
 static volatile bool initialized = false;
-static struct termios termios_save;
-static bool hasTerminal;
+//static struct termios termios_save;
+//static bool hasTerminal;
 static char *ringbuffer = NULL;
 static size_t head, tail = 0;
 static struct tick_listener tl;
@@ -848,36 +848,36 @@ static bool onTick(void *user_data, struct exception *ex)
 
 void initialize(struct plugin_handle *h)
 {
-	struct termios t;
-	int erc, flags;
+//	struct termios t;
+//	int erc, flags;
 
 	assert(!initialized);
 	assert(h);
 	plugin_handle = h;
 	/* Switch off echo and line processing: */
-	hasTerminal = (tcgetattr(STDIN_FILENO, &t) == 0);
-	if (hasTerminal) {
-		termios_save = t;
-		t.c_lflag &= ~(ICANON | ECHO | ISIG);
-		assert(tcsetattr(STDIN_FILENO, TCSANOW, &t) == 0);
-	} else {
-		erc = errno;
-		if (configuration.loglevel >= DEBUG_LEVEL_WARNING) {
-			ax25c_log(DEBUG_LEVEL_WARNING,
-					"Unable to get terminal. Error %i: %s",
-					erc, strerror(erc));
-		}
-	}
+//	hasTerminal = (tcgetattr(STDIN_FILENO, &t) == 0);
+//	if (hasTerminal) {
+//		termios_save = t;
+//		t.c_lflag &= ~(ICANON | ECHO | ISIG);
+//		assert(tcsetattr(STDIN_FILENO, TCSANOW, &t) == 0);
+//	} else {
+//		erc = errno;
+//		if (configuration.loglevel >= DEBUG_LEVEL_WARNING) {
+//			ax25c_log(DEBUG_LEVEL_WARNING,
+//					"Unable to get terminal. Error %i: %s",
+//					erc, strerror(erc));
+//		}
+//	}
 	ringbuffer = malloc(h->s_out_buf);
 	assert(ringbuffer);
 	head = tail = 0;
 
 	i_read_buf = 0;
 
-	flags = fcntl(STDIN_FILENO, F_GETFL);
-	assert(flags != -1);
-	flags |= O_NONBLOCK;
-	assert(fcntl(STDIN_FILENO, F_SETFL, flags) != -1);
+//	flags = fcntl(STDIN_FILENO, F_GETFL);
+//	assert(flags != -1);
+//	flags |= O_NONBLOCK;
+//	assert(fcntl(STDIN_FILENO, F_SETFL, flags) != -1);
 	initialized = true;
 	state = S_INF;
 	new_line();
@@ -891,19 +891,19 @@ void initialize(struct plugin_handle *h)
 
 void terminate(struct plugin_handle *h)
 {
-	int flags;
+//	int flags;
 
 	assert(initialized);
 	assert(h);
 	plugin_handle = NULL;
-	flags = fcntl(STDIN_FILENO, F_GETFL);
-	assert(flags != -1);
-	flags &= ~O_NONBLOCK;
-	assert(fcntl(STDIN_FILENO, F_SETFL, flags) != -1);
-	if (hasTerminal) {
-		/* Restore terminal settings */
-		assert(tcsetattr(STDIN_FILENO, TCSANOW, &termios_save) == 0);
-	}
+//	flags = fcntl(STDIN_FILENO, F_GETFL);
+//	assert(flags != -1);
+//	flags &= ~O_NONBLOCK;
+//	assert(fcntl(STDIN_FILENO, F_SETFL, flags) != -1);
+//	if (hasTerminal) {
+//		/* Restore terminal settings */
+//		assert(tcsetattr(STDIN_FILENO, TCSANOW, &termios_save) == 0);
+//	}
 	initialized = false;
 	assert(ringbuffer);
 	free(ringbuffer);

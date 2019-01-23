@@ -19,9 +19,11 @@ include target.mk
 else
 
 VPATH    =  $(SRCDIR)
-CFLAGS   =  -Wall -Werror -g -ggdb -fmessage-length=0 -pthread
+CFLAGS   =  -Wall -Werror -g -ggdb -fmessage-length=0 -pthread \
+			-I/usr/local/include/
 
-LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF) -lax25c_runtime -lringbuffer \
+LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF)/ -lax25c_runtime \
+			-L/usr/local/lib/ -lringbuffer \
 			-lpthread
 TARGET   =  ax25c
 OBJS     =  ax25c.o
