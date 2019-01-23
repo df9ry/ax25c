@@ -23,7 +23,7 @@ endif
 
 OS := $(shell uname -o)
 export OS
-ifneq ($(OS),Linux)
+ifneq ($(OS),GNU/Linux)
 	SOEXT := dll
 else
 	SOEXT := so
