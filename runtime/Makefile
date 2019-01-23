@@ -20,11 +20,12 @@ include ../target.mk
 else
 
 VPATH    = $(SRCDIR)
-CFLAGS   = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
+CFLAGS   = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
+			-I/usr/local/include/
 			
 TARGET   = libax25c_runtime.$(SOEXT)
 OBJS     = ax25c_runtime.o memory.o log.o tick.o callsign.o
-LIBS     = -L/usr/local/lib -lmapc -ldl -lpthread
+LIBS     = -L/usr/local/lib -lmapc -lringbuffer -ldl -lpthread
 
 all: $(TARGET)
 	cp $(TARGET) $(SRCDIR)/../_$(_CONF)

@@ -24,7 +24,7 @@
 
 #include <sys/types.h>
 #include <fcntl.h>
-#include <termios.h>
+//#include <termios.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +34,7 @@
 
 static void exit_handler(void)
 {
+#if 0
 	struct termios t;
 	int flags = fcntl(STDIN_FILENO, F_GETFL);
 	flags &= ~O_NONBLOCK;
@@ -41,40 +42,29 @@ static void exit_handler(void)
 	flags = tcgetattr(STDIN_FILENO, &t);
 	t.c_lflag |= (ICANON | ECHO | ISIG);
 	tcsetattr(STDIN_FILENO, TCSANOW, &t);
+#endif
 }
 
 static void handle_signal(int signal) {
-    switch (signal) {
-        case SIGHUP:
-        	DEBUG("SIGHUP", "");
-            break;
-        case SIGUSR1:
-        	DEBUG("SIGUSR1", "");
-            break;
-        case SIGINT:
-        	DEBUG("SIGINT", "");
-            die();
-            break;
-        default:
-        	DEBUG("SIG???", "");
-            return;
-    } /* end switch */
+	if (signal == SIGINT)
+		die();
 }
 
 int main(int argc, char *argv[]) {
 	struct exception ex;
-	struct sigaction sa;
+//	struct sigaction sa;
 
 	ax25c_log_init();
 	ax25c_tick_init();
 
 	/* Catch signals */
 	atexit(exit_handler);
+#if 0
 	sa.sa_handler = &handle_signal;
 	sigfillset(&sa.sa_mask);
-	assert(sigaction(SIGHUP, &sa, NULL) == 0);
-	assert(sigaction(SIGUSR1, &sa, NULL) == 0);
 	assert(sigaction(SIGINT, &sa, NULL) == 0);
+#endif
+	signal(SIGINT, handle_signal);
 
 	/* Configure: */
 	{

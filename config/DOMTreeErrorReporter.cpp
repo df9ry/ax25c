@@ -25,12 +25,12 @@ using namespace XERCES_CPP_NAMESPACE;
 
 namespace XMLIO {
 
-void DOMTreeErrorReporter::warning(const SAXParseException&)
+void DOMTreeErrorReporter::warning(const SAXParseException& toCatch)
 {
-    //
-    // Ignore all warnings.
-    //
-}
+    cerr << "Warning at file \"" << StrX(toCatch.getSystemId())
+		 << "\", line " << toCatch.getLineNumber()
+		 << ", column " << toCatch.getColumnNumber()
+         << "\n   Message: " << StrX(toCatch.getMessage()) << endl;}
 
 void DOMTreeErrorReporter::error(const SAXParseException& toCatch)
 {
