@@ -24,7 +24,6 @@ VPATH = $(SRCDIR)
 CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
 			-I/usr/local/include/
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
-			
 
 TARGET   =  ax25c_mm_simple.so
 OBJS     =  module.o
