@@ -18,24 +18,30 @@
 #ifndef TERMINAL__INTERNAL_H_
 #define TERMINAL__INTERNAL_H_
 
-#include "../callsign.h"
-
 #include <stdlib.h>
 
 struct plugin_handle {
 	const char *name;
-	size_t              line_length;
-	size_t              rx_bufsize;
-	size_t              rx_threshold;
-	size_t              tx_threshold;
-	size_t              s_out_buf;
-	callsign            mycall;
-	struct addressField addr;
-	const char         *lead_txt;
-	const char         *lead_cmd;
-	const char         *lead_inf;
-	const char         *lead_err;
-	const char         *prompt;
+	size_t      line_length;
+	const char *loc_addr;
+	const char *rem_addr;
+	const char *lead_txt;
+	const char *lead_cmd;
+	const char *lead_inf;
+	const char *lead_err;
+	const char *prompt;
 };
+
+extern void stdin_initialize(struct plugin_handle *h);
+
+extern void stdin_terminate(struct plugin_handle *h);
+
+extern void stdout_initialize(struct plugin_handle *h);
+
+extern void stdout_terminate(struct plugin_handle *h);
+
+extern void aquire_stdout_lock(void);
+
+extern void release_stdout_lock(void);
 
 #endif /* TERMINAL__INTERNAL_H_ */
