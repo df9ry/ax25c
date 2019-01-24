@@ -23,6 +23,7 @@
 #include <pthread.h>
 #include <assert.h>
 #include <ringbuffer.h>
+#include <signal.h>
 
 #define FORMAT_BUFSIZE 72
 static char format_buffer[FORMAT_BUFSIZE];
@@ -111,10 +112,9 @@ void ax25c_log_init(void)
 
 void ax25c_log_term(void)
 {
-	void *status;
-
 	assert(initialized);
 	initialized = false;
-	assert(pthread_join(thread, &status) == 0);
+	assert(pthread_kill(thread, SIGINT) == 0);
+
 	assert(rb_destroy(&ring_buffer) == 0);
 }
