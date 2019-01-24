@@ -255,15 +255,13 @@ static void onCmdI(void)
 	assert(plugin_handle);
 	assert(pc);
 	if (!(*pc)) {
-		pc = plugin_handle->rem_addr;
+		pc = string_c(&plugin_handle->loc_addr);
 		state = S_INF;
 		new_line();
 		out_str("I ");
-		out_str(plugin_handle->loc_addr);
+		out_str(pc);
 	} else {
-		if (plugin_handle->loc_addr)
-			free((char*)plugin_handle->loc_addr);
-		plugin_handle->loc_addr = strdup(pc);
+		string_set_c(&plugin_handle->loc_addr, pc);
 		state = S_INF;
 		new_line();
 		out_str("I ");
@@ -281,15 +279,13 @@ static void onCmdR(void)
 	assert(plugin_handle);
 	assert(pc);
 	if (!(*pc)) {
-		pc = plugin_handle->rem_addr;
+		pc = string_c(&plugin_handle->rem_addr);
 		state = S_INF;
 		new_line();
 		out_str("Remote ");
-		out_str(plugin_handle->rem_addr);
+		out_str(pc);
 	} else {
-		if (plugin_handle->rem_addr)
-			free((char*)plugin_handle->rem_addr);
-		plugin_handle->rem_addr = strdup(pc);
+		string_set_c(&plugin_handle->rem_addr, pc);
 		state = S_INF;
 		new_line();
 		out_str("Remote ");
@@ -307,15 +303,13 @@ static void onCmdC(void)
 	assert(plugin_handle);
 	assert(pc);
 	if (!(*pc)) {
-		pc = plugin_handle->rem_addr;
+		pc = string_c(&plugin_handle->rem_addr);
 		state = S_INF;
 		new_line();
 		out_str("Connect ");
 		out_str(pc);
 	} else {
-		if (plugin_handle->rem_addr)
-			free((char*)plugin_handle->rem_addr);
-		plugin_handle->rem_addr = strdup(pc);
+		string_set_c(&plugin_handle->rem_addr, pc);
 		state = S_INF;
 		new_line();
 		out_str("Remote ");
@@ -334,15 +328,13 @@ static void onCmdT(void)
 	assert(plugin_handle);
 	assert(pc);
 	if (!(*pc)) {
-		pc = plugin_handle->rem_addr;
+		pc = string_c(&plugin_handle->rem_addr);
 		state = S_INF;
 		new_line();
 		out_str("Connect ");
 		out_str(pc);
 	} else {
-		if (plugin_handle->rem_addr)
-			free((char*)plugin_handle->rem_addr);
-		plugin_handle->rem_addr = strdup(pc);
+		string_set_c(&plugin_handle->rem_addr, pc);
 		state = S_INF;
 		new_line();
 		out_str("Remote ");
@@ -361,11 +353,9 @@ static void onCmdU(void)
 	assert(plugin_handle);
 	assert(pc);
 	if (!(*pc)) {
-		pc = plugin_handle->rem_addr;
+		pc = string_c(&plugin_handle->rem_addr);
 	} else {
-		if (plugin_handle->rem_addr)
-			free((char*)plugin_handle->rem_addr);
-		plugin_handle->rem_addr = strdup(pc);
+		string_set_c(&plugin_handle->rem_addr, pc);
 	}
 	state = S_INF;
 	new_line();

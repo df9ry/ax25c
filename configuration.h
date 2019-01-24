@@ -95,6 +95,7 @@ enum setting_type_t {
 	DEBUG_T = 4,   /**< Setting is a 'debug_level_t' */
 	CALL_T  = 5,   /**< Setting is a 'callsign'      */
 	ADDR_T  = 6,   /**< Setting is a 'addressField'. */
+	STR_T   = 7,   /**< Setting is a 'string_t'.     */
 };
 
 /**

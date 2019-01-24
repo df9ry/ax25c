@@ -27,7 +27,7 @@ TARGET   = ax25c_config.so
 OBJS     = DOMTreeErrorReporter.o ax25c_config.o
 LIBS     = -L$(SRCDIR)/../_$(_CONF) -lax25c_runtime \
 			-lxerces-c \
-			-L/usr/local/lib -lmapc \
+			-L/usr/local/lib -lmapc -lstringc \
 			-lpthread
 
 all: $(TARGET)

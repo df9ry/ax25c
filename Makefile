@@ -32,10 +32,11 @@ all: runtime config terminal mm_simple $(TARGET)
 	@$(MAKE) -C $(SRCDIR)/config all
 	@$(MAKE) -C $(SRCDIR)/terminal all
 	@$(MAKE) -C $(SRCDIR)/mm_simple all
-	@echo "Build OK"
+	@echo "** Build ax25c OK ***"
 
 sub:
 	@( cd $(SRCDIR)/user_kernel_interface/ && make all )
+	@( cd $(SRCDIR)/stringc/               && make all )
 	@( cd $(SRCDIR)/mapc/                  && make all )
 	@( cd $(SRCDIR)/ringbuffer/            && make all )
 	
@@ -75,14 +76,16 @@ clean:
 	@$(MAKE) -C $(SRCDIR)/mm_simple clean
 
 cleansub:
-	@( cd $(SRCDIR)/user_kernel_interface/ && make clean )
-	@( cd $(SRCDIR)/mapc/                  && make clean )
-	@( cd $(SRCDIR)/ringbuffer/            && make clean )
+	( cd $(SRCDIR)/user_kernel_interface/ && make clean )
+	( cd $(SRCDIR)/stringc/               && make clean )
+	( cd $(SRCDIR)/mapc/                  && make clean )
+	( cd $(SRCDIR)/ringbuffer/            && make clean )
 	
 install:
 
 installsub:
 	@( cd $(SRCDIR)/user_kernel_interface/ && make install )
+	@( cd $(SRCDIR)/stringc/               && make install )
 	@( cd $(SRCDIR)/mapc/                  && make install )
 	@( cd $(SRCDIR)/ringbuffer/            && make install )
 
