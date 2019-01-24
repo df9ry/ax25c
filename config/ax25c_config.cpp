@@ -30,6 +30,8 @@
 #include <sstream>
 #include <fstream>
 
+#include <stringc/stringc.h>
+
 #include <stddef.h>
 #include <unistd.h>
 
@@ -56,25 +58,25 @@ const char *strbuf(const char *s) {
 	return buf;
 }
 
-static const string str_int(int i) {
+static const std::string str_int(int i) {
 	stringstream oss;
 	oss << i;
 	return oss.str();
 }
 
-static const string str_uint(unsigned int u) {
+static const std::string str_uint(unsigned int u) {
 	stringstream oss;
 	oss << u;
 	return oss.str();
 }
 
-static const string str_size(size_t s) {
+static const std::string str_size(size_t s) {
 	stringstream oss;
 	oss << s;
 	return oss.str();
 }
 
-static const string str_debug_level(debug_level_t t) {
+static const std::string str_debug_level(debug_level_t t) {
 	switch (t) {
 	case DEBUG_LEVEL_NONE:    return "NONE";
 	case DEBUG_LEVEL_ERROR:   return "ERROR";
@@ -99,13 +101,13 @@ static inline const XMLCh* toX(const char *cs) {
 	return XMLString::transcode(cs);
 }
 
-static inline string fmX1(const XMLCh* x) {
-	string s(XMLString::transcode(x));
+static inline std::string fmX1(const XMLCh* x) {
+	std::string s(XMLString::transcode(x));
 	return s;
 }
 
 static inline char *fmX2(const XMLCh* x) {
-	string s(fmX1(x));
+	std::string s(fmX1(x));
 	return strdup(s.c_str());
 }
 
@@ -132,7 +134,7 @@ static DOMElement *findElement(DOMNodeList *nodeList, const char *name)
 			return NULL;
 	for (uint32_t i = 0; i < nodeList->getLength(); ++i) {
 		auto instanceNode = static_cast<DOMElement*>(nodeList->item(i));
-		string _name  = fmX1(instanceNode->getAttribute(toX("name")));
+		std::string _name  = fmX1(instanceNode->getAttribute(toX("name")));
 		if (strcmp(_name.c_str(), name) == 0) {
 			return instanceNode;
 		}
@@ -165,7 +167,7 @@ static bool getInt(DOMNodeList *nodeList, const char *name,
 	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
 	if (element) {
-		string s(fmX1(element->getTextContent()));
+		std::string s(fmX1(element->getTextContent()));
 		return decodeInt(s.c_str(), val, ex);
 	}
 	if (def) {
@@ -204,7 +206,7 @@ static bool getUInt(DOMNodeList *nodeList, const char *name,
 	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
 	if (element) {
-		string s(fmX1(element->getTextContent()));
+		std::string s(fmX1(element->getTextContent()));
 		return decodeUInt(s.c_str(), val, ex);
 	}
 	if (def) {
@@ -244,7 +246,7 @@ static size_t getSize(DOMNodeList *nodeList, const char *name,
 	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
 	if (element) {
-		string s(fmX1(element->getTextContent()));
+		std::string s(fmX1(element->getTextContent()));
 		return decodeSize(s.c_str(), val, ex);
 	}
 	if (def) {
@@ -290,7 +292,7 @@ static bool getDebugLevel(DOMNodeList *nodeList, const char *name,
 	assert(val);
 	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
-	string _val = "";
+	std::string _val = "";
 	if (element) {
 		_val = fmX1(element->getTextContent());
 	} else if (def) {
@@ -326,7 +328,7 @@ static bool getCall(DOMNodeList *nodeList, const char *name,
 	assert(val);
 	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
-	string _val = "";
+	std::string _val = "";
 	if (element) {
 		_val = fmX1(element->getTextContent());
 	} else if (def) {
@@ -365,7 +367,7 @@ static bool getAddr(DOMNodeList *nodeList, const char *name,
 	assert(val);
 	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
-	string _val = "";
+	std::string _val = "";
 	if (element) {
 		_val = fmX1(element->getTextContent());
 	} else if (def) {
@@ -385,6 +387,30 @@ static bool getAddr(DOMNodeList *nodeList, const char *name,
 		memcpy(val, &af, sizeof(struct addressField));
 	}
 	return true;
+}
+
+static bool getString(DOMNodeList *nodeList, const char *name,
+		struct ::string *val, const char *def, struct ::exception *ex)
+{
+	assert(nodeList);
+	assert(name);
+	assert(val);
+	assert(ex);
+	DOMElement *element = findElement(nodeList, name);
+	if (element) {
+		string_set_c(val, fmX2(element->getTextContent()));
+		return true;
+	}
+	if (def) {
+		string_set_c(val, def);
+		return true;
+	}
+	ex->erc = EXIT_FAILURE;
+	ex->module = MODULE_NAME;
+	ex->function = "getCString";
+	ex->message = "Missing mandatory setting";
+	ex->param = name;
+	return false;
 }
 
 static bool configurator(void *handle, struct setting_descriptor *descriptor,
@@ -458,6 +484,11 @@ static bool configurator(void *handle, struct setting_descriptor *descriptor,
 							buf, 60, NULL));
 					ax25c_log(DEBUG_LEVEL_DEBUG, "%s:%s", name, buf);
 				}
+				break;
+			case STR_T:
+				if (!getString(nodeList, name, (struct ::string*)ptr, def, ex))
+					return false;
+				DEBUG(name, ::string_c((struct ::string*)ptr));
 				break;
 			default:
 				ex->erc = EXIT_FAILURE;
@@ -658,13 +689,13 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 
 	// Get the XML file path. This is either specified as an argument
 	// argv[1] or can be deduced by argv[0]:
-	string xmlpath{};
+	std::string xmlpath{};
 	if (argc > 1) {
 		xmlpath.append(argv[1]);
 	} else {
 		xmlpath.append(argv[0]);
 		unsigned int pos = xmlpath.find_last_of('/');
-		if (pos != string::npos) xmlpath.erase(0, pos + 1);
+		if (pos != std::string::npos) xmlpath.erase(0, pos + 1);
 		xmlpath.append(".xml");
 	}
 	// Load configuration:

@@ -19,12 +19,13 @@
 #define TERMINAL__INTERNAL_H_
 
 #include <stdlib.h>
+#include <stringc/stringc.h>
 
 struct plugin_handle {
 	const char *name;
-	size_t      line_length;
-	const char *loc_addr;
-	const char *rem_addr;
+	size_t line_length;
+	string_t   loc_addr;
+	string_t   rem_addr;
 	const char *lead_txt;
 	const char *lead_cmd;
 	const char *lead_inf;

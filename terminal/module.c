@@ -33,8 +33,8 @@ static struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
 		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256"    },
-		{ "loc_addr",     CSTR_T, offsetof(struct plugin_handle, loc_addr),     "NOCALL" },
-		{ "rem_addr",     CSTR_T, offsetof(struct plugin_handle, rem_addr),     "NOCALL" },
+		{ "loc_addr",     STR_T,  offsetof(struct plugin_handle, loc_addr),     "NOCALL" },
+		{ "rem_addr",     STR_T,  offsetof(struct plugin_handle, rem_addr),     "NOCALL" },
 		{ "lead_txt",     CSTR_T, offsetof(struct plugin_handle, lead_txt),     ":"      },
 		{ "lead_cmd",     CSTR_T, offsetof(struct plugin_handle, lead_cmd),     ">"      },
 		{ "lead_inf",     CSTR_T, offsetof(struct plugin_handle, lead_inf),     "+"      },
@@ -48,7 +48,10 @@ static void *get_plugin(const char *name,
 {
 	assert(name);
 	assert(configurator);
+	memset(&plugin, 0x00, sizeof(struct plugin_handle));
 	plugin.name = name;
+	STRING_INIT(plugin.loc_addr);
+	STRING_INIT(plugin.rem_addr);
 	if (!configurator(&plugin, plugin_settings_descriptor, context, ex)) {
 		return NULL;
 	}
