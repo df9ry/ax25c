@@ -16,6 +16,7 @@
  */
 
 #include "../runtime.h"
+#include "../dlsap.h"
 #include "_internal.h"
 
 #include <stdio.h>
@@ -261,11 +262,18 @@ static void onCmdI(void)
 		out_str("I ");
 		out_str(pc);
 	} else {
-		string_set_c(&plugin_handle->loc_addr, pc);
-		state = S_INF;
-		new_line();
-		out_str("I ");
-		out_str(pc);
+		exception_t ex;
+		if (dlsap_set_default_local_addr(peerDLS(), pc, &plugin.loc_addr, &ex))
+		{
+			state = S_INF;
+			new_line();
+			out_str("I ");
+			out_str(string_c(&plugin.loc_addr));
+		} else {
+			state = S_ERR;
+			new_line();
+			out_str(ex.message);
+		}
 	}
 	i_read_buf = 0;
 	state = S_TXT;
@@ -285,11 +293,18 @@ static void onCmdR(void)
 		out_str("Remote ");
 		out_str(pc);
 	} else {
-		string_set_c(&plugin_handle->rem_addr, pc);
-		state = S_INF;
-		new_line();
-		out_str("Remote ");
-		out_str(pc);
+		exception_t ex;
+		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))
+		{
+			state = S_INF;
+			new_line();
+			out_str("Remote ");
+			out_str(string_c(&plugin.rem_addr));
+		} else {
+			state = S_ERR;
+			new_line();
+			out_str(ex.message);
+		}
 	}
 	i_read_buf = 0;
 	state = S_TXT;
@@ -309,11 +324,18 @@ static void onCmdC(void)
 		out_str("Connect ");
 		out_str(pc);
 	} else {
-		string_set_c(&plugin_handle->rem_addr, pc);
-		state = S_INF;
-		new_line();
-		out_str("Remote ");
-		out_str(pc);
+		exception_t ex;
+		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))
+		{
+			state = S_INF;
+			new_line();
+			out_str("Remote ");
+			out_str(string_c(&plugin.rem_addr));
+		} else {
+			state = S_ERR;
+			new_line();
+			out_str(ex.message);
+		}
 	}
 	connect();
 	i_read_buf = 0;
@@ -334,11 +356,18 @@ static void onCmdT(void)
 		out_str("Connect ");
 		out_str(pc);
 	} else {
-		string_set_c(&plugin_handle->rem_addr, pc);
-		state = S_INF;
-		new_line();
-		out_str("Remote ");
-		out_str(pc);
+		exception_t ex;
+		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))
+		{
+			state = S_INF;
+			new_line();
+			out_str("Remote ");
+			out_str(string_c(&plugin.rem_addr));
+		} else {
+			state = S_ERR;
+			new_line();
+			out_str(ex.message);
+		}
 	}
 	test();
 	i_read_buf = 0;
@@ -355,7 +384,18 @@ static void onCmdU(void)
 	if (!(*pc)) {
 		pc = string_c(&plugin_handle->rem_addr);
 	} else {
-		string_set_c(&plugin_handle->rem_addr, pc);
+		exception_t ex;
+		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))
+		{
+			state = S_INF;
+			new_line();
+			out_str("Remote ");
+			out_str(string_c(&plugin.rem_addr));
+		} else {
+			state = S_ERR;
+			new_line();
+			out_str(ex.message);
+		}
 	}
 	state = S_INF;
 	new_line();
@@ -818,13 +858,14 @@ extern void stdin_terminate(struct plugin_handle *h)
 	struct termios t;
 
 	assert(h);
+	tcgetattr(STDIN_FILENO, &t);
+	t.c_lflag |= (ICANON | ECHO | ISIG);
+	tcsetattr(STDIN_FILENO, TCSANOW, &t);
+	if (!initialized)
+		return;
 	assert(initialized);
 	initialized = false;
 	assert(pthread_kill(thread, SIGINT) == 0);
 	plugin_handle = NULL;
-
-	tcgetattr(STDIN_FILENO, &t);
-	t.c_lflag |= (ICANON | ECHO | ISIG);
-	tcsetattr(STDIN_FILENO, TCSANOW, &t);
 }
 

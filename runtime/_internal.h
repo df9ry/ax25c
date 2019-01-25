@@ -1,5 +1,5 @@
 /*
- *  Project: ax25c - File: terminal.h
+ *  Project: ax25c - File: _internal.h
  *  Copyright (C) 2019 - Tania Hagn - tania@df9ry.de
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -15,24 +15,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TERMINAL_TERMINAL_H_
-#define TERMINAL_TERMINAL_H_
+#ifndef RUNTIME__INTERNAL_H_
+#define RUNTIME__INTERNAL_H_
 
-#include <stdbool.h>
+#define MODULE_NAME "RUNTIME"
 
-struct plugin_handle;
-struct exception;
+extern void ax25c_dlsap_init(void);
+extern void ax25c_dlsap_term(void);
 
-/**
- * @brief Initialize the terminal system.
- * @param h Plugin handle.
- */
-extern bool terminal_start(struct plugin_handle *h, struct exception *ex);
-
-/**
- * @brief Terminate the terminal system.
- * @param h Plugin handle.
- */
-extern bool terminal_stop(struct plugin_handle *h, struct exception *ex);
-
-#endif /* TERMINAL_TERMINAL_H_ */
+#endif /* RUNTIME__INTERNAL_H_ */

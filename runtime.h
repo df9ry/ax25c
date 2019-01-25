@@ -37,6 +37,16 @@ extern "C" {
 #include <stdbool.h>
 
 /**
+ * @brief Initialize the runtime.
+ */
+extern void runtime_initialize(void);
+
+/**
+ * @brief Terminate the runtime.
+ */
+extern void runtime_terminate(void);
+
+/**
  * @brief Print an exception to stderr and return the error code.
  * @param ex The exception to print.
  * @return The error code of the exception.

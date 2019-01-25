@@ -49,8 +49,7 @@ static void handle_signal(int signal) {
 int main(int argc, char *argv[]) {
 	struct exception ex;
 
-	ax25c_log_init();
-	ax25c_tick_init();
+	runtime_initialize();
 
 	/* Catch signals */
 	atexit(exit_handler);
@@ -93,8 +92,7 @@ int main(int argc, char *argv[]) {
 	/* Shutdown: */
 	INFO("Shutdown", "");
 	stop(&ex);
-	ax25c_tick_term();
-	ax25c_log_term();
+	runtime_terminate();
 
 	if (configuration.loglevel >= DEBUG_LEVEL_INFO) {
 		return print_ex(&ex);

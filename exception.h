@@ -38,6 +38,31 @@ struct exception {
 	const char *param;    /**< Additional information, if available.     */
 };
 
+/**
+ * @brief Exception type.
+ */
+typedef struct exception exception_t;
+
+/**
+ * @brief fill in an exception, if specified.
+ * @param erc      Error code.
+ * @param module   Name of the module causing the exception./
+ * @param function Name of the function that failed.
+ * @param message  Error message text.
+ * @param param    Additional information, if available.
+ */
+static inline void exception_fill(exception_t *ex, int erc, const char *module,
+		const char *function, const char *message, const char *param)
+{
+	if (ex) {
+		ex->erc = erc;
+		ex->module = module ? module : "Unknown";
+		ex->function = function ? function : "Unknown";
+		ex->message = message ? message : "No message";
+		ex->param = param ? param : "None";
+	}
+}
+
 #ifdef __cplusplus
 }
 #endif

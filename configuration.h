@@ -88,14 +88,12 @@ struct configuration {
  * @brief Supported types for <Setting>.
  */
 enum setting_type_t {
-	INT_T   = 0,   /**< Setting is an 'int'          */
-	UINT_T  = 1,   /**< Setting is an 'unsigned int' */
-	SIZE_T  = 2,   /**< Setting is a 'size_t'        */
-	CSTR_T  = 3,   /**< Setting is a 'char*'         */
-	DEBUG_T = 4,   /**< Setting is a 'debug_level_t' */
-	CALL_T  = 5,   /**< Setting is a 'callsign'      */
-	ADDR_T  = 6,   /**< Setting is a 'addressField'. */
-	STR_T   = 7,   /**< Setting is a 'string_t'.     */
+	INT_T,   /**< Setting is an 'int'          */
+	UINT_T,  /**< Setting is an 'unsigned int' */
+	SIZE_T,  /**< Setting is a 'size_t'        */
+	CSTR_T,  /**< Setting is a 'char*'         */
+	DEBUG_T, /**< Setting is a 'debug_level_t' */
+	STR_T,   /**< Setting is a 'string_t'.     */
 };
 
 /**

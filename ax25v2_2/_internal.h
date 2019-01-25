@@ -1,5 +1,5 @@
 /*
- *  Project: ax25c - File: terminal.h
+ *  Project: ax25c - File: _internal.h
  *  Copyright (C) 2019 - Tania Hagn - tania@df9ry.de
  *  This program is free software: you can redistribute it and/or modify
  *  it under the terms of the GNU Affero General Public License as
@@ -15,24 +15,26 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef TERMINAL_TERMINAL_H_
-#define TERMINAL_TERMINAL_H_
+#ifndef AX25V2_2__INTERNAL_H_
+#define AX25V2_2__INTERNAL_H_
+
+#define MODULE_NAME "AX25V2_2"
+
+#include "callsign.h"
 
 #include <stdbool.h>
 
-struct plugin_handle;
 struct exception;
 
-/**
- * @brief Initialize the terminal system.
- * @param h Plugin handle.
- */
-extern bool terminal_start(struct plugin_handle *h, struct exception *ex);
+struct plugin_handle {
+	const char *name;
+	addressField_t default_addr;
+};
 
-/**
- * @brief Terminate the terminal system.
- * @param h Plugin handle.
- */
-extern bool terminal_stop(struct plugin_handle *h, struct exception *ex);
+extern struct plugin_handle plugin;
 
-#endif /* TERMINAL_TERMINAL_H_ */
+extern bool ax25v2_2_initialize(struct plugin_handle *h, struct exception *ex);
+extern bool ax25v2_2_start(struct plugin_handle *h, struct exception *ex);
+extern bool ax25v2_2_stop(struct plugin_handle *h, struct exception *ex);
+
+#endif /* AX25V2_2__INTERNAL_H_ */

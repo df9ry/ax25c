@@ -19,12 +19,8 @@
  * @file callsign.h
  * @brief Support for managing callsigns.
  */
-#ifndef CALLSIGN_H_
-#define CALLSIGN_H_
-
-#ifdef __cplusplus
-extern "C" {
-#endif
+#ifndef AX25V2_2_CALLSIGN_H_
+#define AX25V2_2_CALLSIGN_H_
 
 #include <stdint.h>
 #include <string.h>
@@ -43,6 +39,8 @@ struct addressField {
 	callsign source;
 	callsign repeaters[2];
 };
+
+typedef struct addressField addressField_t;
 
 /**
  * @brief Encode a callsign from string notation.
@@ -182,8 +180,4 @@ static inline int getNRepeaters(struct addressField *af)
 		return 2;
 }
 
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* CALLSIGN_H_ */
+#endif /* AX25V2_2_CALLSIGN_H_ */

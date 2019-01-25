@@ -19,6 +19,11 @@
 
 #include "../runtime.h"
 
+#include "log.h"
+#include "tick.h"
+
+#include "_internal.h"
+
 #include <uki/kernel.h>
 
 #include <stdio.h>
@@ -27,8 +32,6 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <assert.h>
-
-#define MODULE_NAME "RUNTIME"
 
 struct configuration configuration = {
 		.name = NULL,
@@ -62,6 +65,20 @@ int print_ex(struct exception *ex)
 			(ex->param)    ? ex->param    : "",
 			ex->erc, erm);
 	return ex->erc;
+}
+
+void runtime_initialize(void)
+{
+	ax25c_log_init();
+	ax25c_dlsap_init();
+	ax25c_tick_init();
+}
+
+void runtime_terminate(void)
+{
+	ax25c_tick_term();
+	ax25c_dlsap_term();
+	ax25c_log_term();
 }
 
 bool load_so(const char *name, void **handle, struct exception *ex)
@@ -223,8 +240,10 @@ bool start(struct exception *ex)
 	mapc_foreach(&configuration.plugins, start_plugin, ex);
 	if (ex->erc != EXIT_SUCCESS) {
 		struct exception ex1;
+		ex1.erc = EXIT_SUCCESS;
 		stop(&ex1);
-		print_ex(&ex1);
+		if (ex1.erc != EXIT_SUCCESS)
+			print_ex(&ex1);
 		return false;
 	}
 	return (ex->erc == EXIT_SUCCESS);

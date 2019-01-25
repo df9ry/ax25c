@@ -28,18 +28,17 @@ LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF)/ -lax25c_runtime \
 TARGET   =  ax25c
 OBJS     =  ax25c.o
 
-all: runtime config terminal mm_simple $(TARGET)
-	@$(MAKE) -C $(SRCDIR)/config all
-	@$(MAKE) -C $(SRCDIR)/terminal all
-	@$(MAKE) -C $(SRCDIR)/mm_simple all
+.PHONY: all
+all: runtime config terminal mm_simple ax25v2_2 $(TARGET)
 	@echo "** Build ax25c OK ***"
 
+.PHONY: sub
 sub:
 	@( cd $(SRCDIR)/user_kernel_interface/ && make all )
 	@( cd $(SRCDIR)/stringc/               && make all )
 	@( cd $(SRCDIR)/mapc/                  && make all )
 	@( cd $(SRCDIR)/ringbuffer/            && make all )
-	
+
 $(TARGET): runtime $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
 
@@ -59,30 +58,39 @@ terminal:
 mm_simple:
 	$(MAKE) -C $(SRCDIR)/mm_simple all
 
+.PHONY: ax25v2_2
+ax25v2_2:
+	$(MAKE) -C $(SRCDIR)/ax25v2_2 all
+
 %.o: %.c %.h Makefile
 	$(CC) $(CFLAGS) -c $<	
-	
+
+.PHONY: doc	
 doc:
 	doxygen $(SRCDIR)/doxygen.conf
 	( cd $(SRCDIR)/$(DOCDIR)/latex && make )
 	cp $(SRCDIR)/$(DOCDIR)/latex/refman.pdf \
 		$(SRCDIR)/$(DOCDIR)/$(TARGET).pdf
-		
+
+.PHONY: clean
 clean:
 	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
 	@$(MAKE) -C $(SRCDIR)/runtime clean
 	@$(MAKE) -C $(SRCDIR)/config clean
 	@$(MAKE) -C $(SRCDIR)/terminal clean
 	@$(MAKE) -C $(SRCDIR)/mm_simple clean
+	@$(MAKE) -C $(SRCDIR)/ax25v2_2 clean
 
+.PHONY: cleansub
 cleansub:
 	( cd $(SRCDIR)/user_kernel_interface/ && make clean )
 	( cd $(SRCDIR)/stringc/               && make clean )
 	( cd $(SRCDIR)/mapc/                  && make clean )
 	( cd $(SRCDIR)/ringbuffer/            && make clean )
-	
-install:
 
+install: all
+
+.PHONY: installsub
 installsub:
 	@( cd $(SRCDIR)/user_kernel_interface/ && make install )
 	@( cd $(SRCDIR)/stringc/               && make install )

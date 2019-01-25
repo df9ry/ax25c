@@ -40,6 +40,8 @@
 		-->
 		<Plugin name="Terminal" file="ax25c_terminal.so">
 			<Settings>
+				<!-- Name of ServiceAccessPoint to use -->
+				<Setting name="peer">AX25</Setting>
 				<!-- Max. length of a line -->
 				<Setting name="line_length">132</Setting>
 				<!-- Local address -->
@@ -54,6 +56,13 @@
 				<Setting name="prompt">Command:> </Setting>
 			</Settings>
 		</Plugin>
+		
+		<!--
+			AX25 V2.2 state machine.
+		-->
+		<Plugin name="AX25" file="ax25v2_2.so">
+		</Plugin>
+		
 	</Plugins>
 	
 </Configuration>
