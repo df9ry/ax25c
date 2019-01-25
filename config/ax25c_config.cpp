@@ -18,7 +18,6 @@
 #include "ax25c_config.h"
 #include "../runtime.h"
 #include "../configuration.h"
-#include "../callsign.h"
 #include "DOMTreeErrorReporter.hpp"
 
 #include <xercesc/dom/DOM.hpp>
@@ -320,75 +319,6 @@ static bool getDebugLevel(DOMNodeList *nodeList, const char *name,
 	return true;
 }
 
-static bool getCall(DOMNodeList *nodeList, const char *name,
-		callsign *val, const char *def, struct ::exception *ex)
-{
-	assert(nodeList);
-	assert(name);
-	assert(val);
-	assert(ex);
-	DOMElement *element = findElement(nodeList, name);
-	std::string _val = "";
-	if (element) {
-		_val = fmX1(element->getTextContent());
-	} else if (def) {
-		_val = def;
-	} else {
-		ex->erc = EXIT_FAILURE;
-		ex->module = MODULE_NAME;
-		ex->function = "getCall";
-		ex->message = "Missing mandatory setting";
-		ex->param = name;
-		return false;
-	}
-	if (_val != "-") {
-		const char *next;
-		callsign call = callsignFromString(_val.c_str(), &next, ex);
-		if (!call)
-			return false;
-		if (*next != '\0') {
-			ex->erc = EXIT_FAILURE;
-			ex->module = MODULE_NAME;
-			ex->function = "getCall";
-			ex->message = "Extra characters after callsign";
-			ex->param = name;
-			return false;
-		}
-		*val = call;
-	}
-	return true;
-}
-
-static bool getAddr(DOMNodeList *nodeList, const char *name,
-		struct addressField *val, const char *def, struct ::exception *ex)
-{
-	assert(nodeList);
-	assert(name);
-	assert(val);
-	assert(ex);
-	DOMElement *element = findElement(nodeList, name);
-	std::string _val = "";
-	if (element) {
-		_val = fmX1(element->getTextContent());
-	} else if (def) {
-		_val = def;
-	} else {
-		ex->erc = EXIT_FAILURE;
-		ex->module = MODULE_NAME;
-		ex->function = "getAddr";
-		ex->message = "Missing mandatory setting";
-		ex->param = name;
-		return false;
-	}
-	if (_val != "-") {
-		struct addressField af;
-		if (!addressFieldFromString(0, _val.c_str(), &af, ex))
-			return false;
-		memcpy(val, &af, sizeof(struct addressField));
-	}
-	return true;
-}
-
 static bool getString(DOMNodeList *nodeList, const char *name,
 		struct ::string *val, const char *def, struct ::exception *ex)
 {
@@ -465,25 +395,6 @@ static bool configurator(void *handle, struct setting_descriptor *descriptor,
 				if (!getDebugLevel(nodeList, name, (debug_level_t*)ptr, def, ex))
 						return false;
 				DEBUG(name, str_debug_level(*(debug_level_t*)ptr).c_str());
-				break;
-			case CALL_T:
-				if (!getCall(nodeList, name, (callsign*)ptr, def, ex))
-					return false;
-				if (configuration.loglevel >= DEBUG_LEVEL_DEBUG) {
-					char buf[20];
-					assert(callsignToString(*(callsign*)ptr, buf, 20, NULL) != -1);
-					ax25c_log(DEBUG_LEVEL_DEBUG, "%s:%s", name, buf);
-				}
-				break;
-			case ADDR_T:
-				if (!getAddr(nodeList, name, (struct addressField*)ptr, def, ex))
-					return false;
-				if (configuration.loglevel >= DEBUG_LEVEL_DEBUG) {
-					char buf[60];
-					assert(addressFieldToString((struct addressField*)ptr,
-							buf, 60, NULL));
-					ax25c_log(DEBUG_LEVEL_DEBUG, "%s:%s", name, buf);
-				}
 				break;
 			case STR_T:
 				if (!getString(nodeList, name, (struct ::string*)ptr, def, ex))

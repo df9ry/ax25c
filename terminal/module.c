@@ -29,12 +29,13 @@
 
 #define PLUGIN_NAME "Terminal";
 
-static struct plugin_handle plugin;
+struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
 		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256"    },
 		{ "loc_addr",     STR_T,  offsetof(struct plugin_handle, loc_addr),     "NOCALL" },
 		{ "rem_addr",     STR_T,  offsetof(struct plugin_handle, rem_addr),     "NOCALL" },
+		{ "peer",         CSTR_T, offsetof(struct plugin_handle, peer),         "AX25"   },
 		{ "lead_txt",     CSTR_T, offsetof(struct plugin_handle, lead_txt),     ":"      },
 		{ "lead_cmd",     CSTR_T, offsetof(struct plugin_handle, lead_cmd),     ">"      },
 		{ "lead_inf",     CSTR_T, offsetof(struct plugin_handle, lead_inf),     "+"      },
@@ -61,16 +62,14 @@ static void *get_plugin(const char *name,
 static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	DEBUG("terminal start", plugin->name);
-	initialize(plugin);
-	return true;
+	return terminal_start(plugin, ex);
 }
 
 static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	assert(ex);
 	DEBUG("terminal stop", plugin->name);
-	terminate(plugin);
-	return true;
+	return terminal_stop(plugin, ex);
 }
 
 #if 0

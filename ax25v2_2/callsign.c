@@ -15,16 +15,16 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../callsign.h"
 #include "../exception.h"
+
+#include "callsign.h"
+#include "_internal.h"
 
 #include <stdlib.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <ctype.h>
 #include <assert.h>
-
-#define MODULE_NAME "callsign"
 
 union _callsign {
 	callsign encoded;

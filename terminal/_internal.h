@@ -18,11 +18,14 @@
 #ifndef TERMINAL__INTERNAL_H_
 #define TERMINAL__INTERNAL_H_
 
+#define MODULE_NAME "TERMINAL"
+
 #include <stdlib.h>
 #include <stringc/stringc.h>
 
 struct plugin_handle {
 	const char *name;
+	const char *peer;
 	size_t line_length;
 	string_t   loc_addr;
 	string_t   rem_addr;
@@ -33,16 +36,16 @@ struct plugin_handle {
 	const char *prompt;
 };
 
+struct dls;
+extern struct dls  local_dls;
+extern struct dls *peerDLS(void);
+extern struct plugin_handle plugin;
+
 extern void stdin_initialize(struct plugin_handle *h);
-
 extern void stdin_terminate(struct plugin_handle *h);
-
 extern void stdout_initialize(struct plugin_handle *h);
-
 extern void stdout_terminate(struct plugin_handle *h);
-
 extern void aquire_stdout_lock(void);
-
 extern void release_stdout_lock(void);
 
 #endif /* TERMINAL__INTERNAL_H_ */

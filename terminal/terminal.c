@@ -15,31 +15,85 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../runtime.h"
+#include "../dlsap.h"
 #include "terminal.h"
 #include "_internal.h"
-#include "../runtime.h"
 
+#include <errno.h>
 #include <assert.h>
 
 #define S_INBUF 64
-#define MODULE_NAME "Terminal"
 
 static volatile bool initialized = false;
 
-void initialize(struct plugin_handle *h)
+static bool on_write(dls_t *dls, primitive_t *prim, bool expedited,
+			struct exception *ex)
+{
+	return true;
+}
+
+struct dls local_dls = {
+		.set_default_local_addr  = NULL,
+		.set_default_remote_addr = NULL,
+		.open                    = NULL,
+		.close                   = NULL,
+		.on_write                = on_write,
+		.get_queue_stats         = NULL,
+		.name                    = NULL,
+		.peer                    = NULL,
+};
+
+struct dls *peerDLS(void)
+{
+	return local_dls.peer;
+}
+
+bool terminal_start(struct plugin_handle *h, struct exception *ex)
 {
 	assert(!initialized);
 	assert(h);
-	initialized = true;
+	local_dls.name = h->name;
+
+	local_dls.peer = dlsap_lookup_dls(h->peer);
+	if (!local_dls.peer) {
+		exception_fill(ex, ENOENT, MODULE_NAME, "terminal_start",
+				"SAP not found", h->peer);
+		return false;
+	}
+
+	if (!dlsap_set_default_local_addr(local_dls.peer, string_c(&h->loc_addr),
+			&h->loc_addr, ex))
+	{
+		return false;
+	}
+
+	if (!dlsap_set_default_remote_addr(local_dls.peer, string_c(&h->rem_addr),
+			&h->rem_addr, ex))
+	{
+		return false;
+	}
+
+	if (!dlsap_open(local_dls.peer, &local_dls, ex))
+	{
+		return false;
+	}
+
 	stdout_initialize(h);
 	stdin_initialize(h);
+	initialized = true;
+	return true;
 }
 
-void terminate(struct plugin_handle *h)
+bool terminal_stop(struct plugin_handle *h, struct exception *ex)
 {
-	assert(initialized);
 	assert(h);
+	if (!initialized)
+		return false;
 	initialized = false;
 	stdin_terminate(h);
 	stdout_terminate(h);
+	dlsap_close(local_dls.peer);
+	local_dls.peer = NULL;
+	return true;
 }
