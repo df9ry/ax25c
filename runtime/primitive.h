@@ -29,6 +29,8 @@
  */
 #define MAX_PAYLOAD_SIZE 32768
 
+struct exception;
+
 /**
  * @brief List of known protocols. There might be more.
  */
@@ -49,49 +51,18 @@ typedef enum protocol protocol_t;
  * @brief Base for data primitives.
  */
 struct primitive {
-	uint16_t size;        /**< Total size of the primitive.   */
-	uint8_t  protocol;    /**< Protocol, value of protocol_t. */
-	uint8_t  cmd;         /**< Protocol specific command.     */
-	uint8_t  payload[0];  /**< Specific payload.              */
+	uint16_t size;         /**< Total size of the primitive.   */
+	uint8_t  protocol;     /**< Protocol, value of protocol_t. */
+	uint8_t  cmd;          /**< Protocol specific command.     */
+	uint16_t clientHandle; /**< Handle assigned by the client. */
+	uint16_t serverHandle; /**< Handle assigned by the server. */
+	uint8_t  payload[0];   /**< Specific payload.              */
 };
 
 /**
  * @brief Type for primitives.
  */
 typedef struct primitive primitive_t;
-
-/**
- * @brief Get size of a primitive.
- * @param prim Pointer to the primitive.
- * @return Size of the primitive.
- */
-static inline uint16_t get_prim_size(primitive_t *prim)
-{
-	assert(prim);
-	return prim->size;
-}
-
-/**
- * @brief Get protocol of a primitive.
- * @param prim Pointer to the primitive.
- * @return Protocol of the primitive.
- */
-static inline protocol_t get_prim_protocol(primitive_t *prim)
-{
-	assert(prim);
-	return (protocol_t)prim->protocol;
-}
-
-/**
- * @brief Get protocol specific command of a primitive.
- * @param prim Pointer to the primitive.
- * @return Protocol specific command of the primitive.
- */
-static inline uint8_t get_prim_cmd(primitive_t *prim)
-{
-	assert(prim);
-	return prim->cmd;
-}
 
 /**
  * @brief Get pointer to payload of a primitive.
@@ -109,20 +80,26 @@ static inline void* get_prim_payload(primitive_t *prim)
  * @param payload_size Size of the payload.
  * @param protocol Protocol of the prim.
  * @param cmd Protocol specific command.
+ * @param clientHandle Client handle.
+ * @param serverHandle Server handle.
+ * @param ex Exception structure.
  * @return Pointer to the new prim or NULL, if the payload was too large
  *         or no more memory is available.
  */
 static inline primitive_t *new_prim(uint16_t payload_size, protocol_t protocol,
-		uint8_t cmd)
+		uint8_t cmd, uint16_t clientHandle, uint16_t serverHandle,
+		struct exception *ex)
 {
 	if (payload_size > MAX_PAYLOAD_SIZE)
 		return NULL;
-	uint16_t size = sizeof(primitive_t) + payload_size;
-	primitive_t *prim = mem_alloc(size, NULL);
+	uint16_t size = sizeof(struct primitive) + payload_size;
+	primitive_t *prim = mem_alloc(size, ex);
 	if (prim) {
 		prim->size = size;
 		prim->protocol = protocol;
 		prim->cmd = cmd;
+		prim->clientHandle = clientHandle;
+		prim->serverHandle = serverHandle;
 	}
 	return prim;
 }
