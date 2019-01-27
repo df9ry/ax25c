@@ -39,24 +39,21 @@ struct mem {
 	uint16_t head;
 	uint16_t c_locks;
 	uint32_t size;
-	uint64_t data[0];
+	uint8_t  data[0];
 };
 
-static inline struct mem *getContainer(void *mem) {
-	struct mem *p = container_of(mem, struct mem, data);
-	void *addr_tail;
+static inline struct mem *getContainer(void *ptr) {
+	struct mem *mem = container_of(ptr, struct mem, data);
 
-	assert(p->head == HEAD);
-	addr_tail = (&p->data) + p->size;
-	assert(*((uint16_t*)addr_tail) == TAIL);
-	return p;
+	assert(mem->head == HEAD);
+	assert(*((uint16_t*)(&mem->data[mem->size])) == TAIL);
+	return mem;
 }
 
 static void *mem_alloc_impl(uint32_t cb, struct exception *ex)
 {
 	uint32_t size = (cb > 0) ? (((cb - 1) / ALIGN) + 1) * ALIGN : 0;
 	struct mem *mem;
-	void *addr_tail;
 
 	assert(pthread_mutex_lock(&lock) == 0);
 	mem = malloc(sizeof(struct mem) + size + sizeof(uint16_t));
@@ -72,47 +69,46 @@ static void *mem_alloc_impl(uint32_t cb, struct exception *ex)
 	mem->c_locks = 1;
 	mem->size = size;
 	memset(&mem->data, 0x00, size);
-	addr_tail = (&mem->data) + size;
-	*((uint16_t*)addr_tail) = TAIL;
+	*((uint16_t*)(&mem->data[mem->size])) = TAIL;
 	return &mem->data;
 }
 
-static uint32_t mem_size_impl(void *mem)
+static uint32_t mem_size_impl(void *ptr)
 {
-	struct mem *p;
+	struct mem *mem;
 	uint32_t size;
 
-	if (!mem)
+	if (!ptr)
 		return 0;
 	assert(pthread_mutex_lock(&lock) == 0);
-	p = getContainer(mem);
-	size = p->size;
+	mem = getContainer(ptr);
+	size = mem->size;
 	assert(pthread_mutex_unlock(&lock) == 0);
 	return size;
 }
 
-static void mem_lock_impl(void *mem)
+static void mem_lock_impl(void *ptr)
 {
-	struct mem *p;
+	struct mem *mem;
 
-	if (!mem)
+	if (!ptr)
 		return;
 	assert(pthread_mutex_lock(&lock) == 0);
-	p = getContainer(mem);
-	p->c_locks += 1;
+	mem = getContainer(ptr);
+	mem->c_locks += 1;
 	assert(pthread_mutex_unlock(&lock) == 0);
 }
 
-static void mem_free_impl(void *mem) {
-	struct mem *p;
+static void mem_free_impl(void *ptr) {
+	struct mem *mem;
 
-	if (!mem)
+	if (!ptr)
 		return;
 	assert(pthread_mutex_lock(&lock) == 0);
-	p = getContainer(mem);
-	assert(p->c_locks--);
-	if (!p->c_locks)
-		free(p);
+	mem = getContainer(ptr);
+	assert(mem->c_locks--);
+	if (!mem->c_locks)
+		free(mem);
 	assert(pthread_mutex_unlock(&lock) == 0);
 }
 

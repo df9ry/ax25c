@@ -30,6 +30,7 @@ static volatile bool initialized = false;
 static bool on_write(dls_t *dls, primitive_t *prim, bool expedited,
 			struct exception *ex)
 {
+	DEBUG("GOT XXX", "");
 	return true;
 }
 

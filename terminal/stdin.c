@@ -17,6 +17,7 @@
 
 #include "../runtime/runtime.h"
 #include "../runtime/dlsap.h"
+#include "../runtime/dl_prim.h"
 #include "_internal.h"
 
 #include <stdio.h>
@@ -32,11 +33,11 @@
 
 #define S_IOBUF 256
 
-#define STOP 3
-#define BEL  7
-#define BS   8
-#define LF   10
-#define ESC  27
+#define STOP   3
+#define BEL    7
+#define BS     8
+#define LF    10
+#define ESC   27
 #define DEL  127
 
 static volatile bool initialized = false;
@@ -220,21 +221,65 @@ static void connect(void)
 	i_read_buf = 0;
 }
 
+static int16_t cTest = 0;
+
 static void test(void)
 {
-	state = S_ERR;
-	new_line();
-	out_str("Test not implemented!");
+	exception_t ex;
+	const char *pc = getStr();
+	const char *dstAddr = string_c(&plugin.rem_addr);
+	const char *srcAddr = string_c(&plugin.loc_addr);
+	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
+		ax25c_log(DEBUG_LEVEL_DEBUG, "TX TEST: %s -> %s: %s", srcAddr, dstAddr, pc);
+	primitive_t *prim = new_DL_TEST_Request(++cTest,
+			(uint8_t*)dstAddr, strlen(dstAddr),
+			(uint8_t*)srcAddr, strlen(srcAddr),
+			(uint8_t*)pc, strlen(pc), &ex);
+	if (!prim) {
+		state = S_ERR;
+		new_line();
+		out_str(ex.message);
+		goto done;
+	}
+	if (!dlsap_write(peerDLS(), prim, false, &ex)) {
+		state = S_ERR;
+		new_line();
+		out_str(ex.message);
+	}
+	del_prim(prim);
+done:
 	state = S_TXT;
 	new_line();
 	i_read_buf = 0;
 }
 
+static int16_t cUI = 0;
+
 static void ui(void)
 {
-	state = S_ERR;
-	new_line();
-	out_str("UI not implemented!");
+	exception_t ex;
+	const char *pc = getStr();
+	const char *dstAddr = string_c(&plugin.rem_addr);
+	const char *srcAddr = string_c(&plugin.loc_addr);
+	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
+		ax25c_log(DEBUG_LEVEL_DEBUG, "TX UI: %s -> %s: %s", srcAddr, dstAddr, pc);
+	primitive_t *prim = new_DL_UNIT_DATA_Request(++cUI,
+			(uint8_t*)dstAddr, strlen(dstAddr),
+			(uint8_t*)srcAddr, strlen(srcAddr),
+			(uint8_t*)pc, strlen(pc), &ex);
+	if (!prim) {
+		state = S_ERR;
+		new_line();
+		out_str(ex.message);
+		goto done;
+	}
+	if (!dlsap_write(peerDLS(), prim, false, &ex)) {
+		state = S_ERR;
+		new_line();
+		out_str(ex.message);
+	}
+	del_prim(prim);
+done:
 	state = S_TXT;
 	new_line();
 	i_read_buf = 0;
@@ -388,6 +433,10 @@ static void onCmdU(void)
 	assert(pc);
 	if (!(*pc)) {
 		pc = string_c(&plugin_handle->rem_addr);
+		state = S_INF;
+		new_line();
+		out_str("UI ");
+		out_str(pc);
 	} else {
 		exception_t ex;
 		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))

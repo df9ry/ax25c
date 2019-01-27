@@ -17,6 +17,7 @@
 
 #include "../runtime/runtime.h"
 #include "../runtime/dlsap.h"
+#include "../runtime/dl_prim.h"
 
 #include "_internal.h"
 
@@ -124,15 +125,102 @@ static void dls_close(dls_t *_dls)
 	dls.peer = NULL;
 }
 
+static bool on_write_dl_unit_data_request(dls_t *_dls, primitive_t *prim,
+		struct exception *ex)
+{
+	bool res = false;
+	primitive_t *resp;
+
+	if (!_dls->peer) {
+		res = true;
+		goto exit;
+	}
+	resp = new_DL_UNIT_DATA_Indication(0,
+			(uint8_t*)"DEST", 4,
+			(uint8_t*)"SOUR", 4,
+			(uint8_t*)"OKIDOKI", 7, ex);
+	if (!resp) {
+		res = false;
+		goto del_prim;
+	}
+	res = dlsap_write(dls.peer, resp, false, ex);
+del_prim:
+	del_prim(resp);
+exit:
+	return res;
+}
+
+static bool on_write_dl_test_request(dls_t *_dls, primitive_t *prim,
+		struct exception *ex)
+{
+	bool res = false;
+	primitive_t *resp;
+
+	if (!_dls->peer) {
+		res = true;
+		goto exit;
+	}
+	resp = new_DL_TEST_Confirmation(prim->clientHandle, 0,
+			(uint8_t*)"DEST", 4,
+			(uint8_t*)"SOUR", 4,
+			(uint8_t*)"OKIDOKI", 7, ex);
+	if (!resp) {
+		res = false;
+		goto del_prim;
+	}
+	res = dlsap_write(dls.peer, resp, false, ex);
+del_prim:
+	del_prim(resp);
+exit:
+	return res;
+}
+
+static bool on_write_dl(dls_t *_dls, primitive_t *prim, struct exception *ex)
+{
+	bool res = false;
+
+	switch (prim->cmd) {
+	case DL_UNIT_DATA_REQUEST:
+		res = on_write_dl_unit_data_request(_dls, prim, ex);
+		break;
+	case DL_TEST_REQUEST:
+		res = on_write_dl_test_request(_dls, prim, ex);
+		break;
+	default:
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
+				"on_write_dl", "Unimplemented Command", "");
+		res = false;
+		break;
+	} /* end switch */
+	return res;
+}
+
 static bool on_write(dls_t *_dls, primitive_t *prim, bool expedited,
 		struct exception *ex)
 {
+	bool res = false;
+
 	if (_dls != &dls) {
 		exception_fill(ex, EINVAL, MODULE_NAME,
 				"on_write", "Channel disruption", "");
 		return false;
 	}
-	return true;
+	if (!prim) {
+		exception_fill(ex, EINVAL, MODULE_NAME,
+				"on_write", "Primitive is NULL", "");
+		return false;
+	}
+	switch (prim->protocol) {
+	case DL:
+		res = on_write_dl(_dls, prim, ex);
+		break;
+	default:
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
+				"on_write", "Unhandled Protocol", "");
+		res = false;
+		break;
+	} /* end switch */
+	return res;
 }
 
 static void dls_queue_stats(dls_t *_dls, dls_stats_t *stats)

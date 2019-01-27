@@ -16,11 +16,210 @@
  */
 
 #include "dl_prim.h"
+#include "primitive.h"
 
 primitive_t *new_DL_CONNECT_Request(
-		uint16_t localHandle,
-		const uint8_t *dstAddrPtr, uint16_t dstAddrSize,
-		const uint8_t *srcAddrPtr, uint16_t srcAddrSize)
+		uint16_t clientHandle,
+		const uint8_t *dstAddrPtr, uint8_t dstAddrSize,
+		const uint8_t *srcAddrPtr, uint8_t srcAddrSize,
+		struct exception *ex)
 {
-	return NULL;
+	int i = 0;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + 2;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_CONNECT_REQUEST,
+			clientHandle, 0, ex);
+	if (!prim)
+		return NULL;
+
+	prim->payload[i++] = dstAddrSize;
+	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
+	i += dstAddrSize;
+	prim->payload[i++] = srcAddrSize;
+	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	return prim;
+}
+
+primitive_t *new_DL_CONNECT_Indication(
+		uint16_t serverHandle,
+		const uint8_t *dstAddrPtr, uint8_t dstAddrSize,
+		const uint8_t *srcAddrPtr, uint8_t srcAddrSize,
+		struct exception *ex)
+{
+	int i = 0;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + 2;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_CONNECT_INDICATION,
+			0, serverHandle, ex);
+	if (!prim)
+		return NULL;
+
+	prim->payload[i++] = dstAddrSize;
+	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
+	i += dstAddrSize;
+	prim->payload[i++] = srcAddrSize;
+	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	return prim;
+}
+
+primitive_t *new_DL_DATA_Request(
+		uint16_t clientHandle, uint16_t serverHandle,
+		const uint8_t *pData, uint16_t sData,
+		struct exception *ex)
+{
+	int i = 0;
+	uint32_t payloadSize = sData + 2;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_DATA_REQUEST,
+			clientHandle, serverHandle, ex);
+		return NULL;
+
+	memcpy(&prim->payload[i], &sData, 2);
+	i += 2;
+	memcpy(&prim->payload[i], pData, sData);
+	return prim;
+}
+
+primitive_t *new_DL_DATA_Indication(
+		uint16_t clientHandle, uint16_t serverHandle,
+		const uint8_t *pData, uint16_t sData,
+		struct exception *ex)
+{
+	int i = 0;
+	uint32_t payloadSize = sData + 2;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_DATA_INDICATION,
+			clientHandle, serverHandle, ex);
+		return NULL;
+
+	memcpy(&prim->payload[i], &sData, 2);
+	i += 2;
+	memcpy(&prim->payload[i], pData, sData);
+	return prim;
+}
+
+primitive_t *new_DL_UNIT_DATA_Request(
+		uint16_t clientHandle,
+		const uint8_t *dstAddrPtr, uint8_t dstAddrSize,
+		const uint8_t *srcAddrPtr, uint8_t srcAddrSize,
+		const uint8_t *pData, uint16_t sData,
+		struct exception *ex)
+{
+	int i = 0;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 4;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_UNIT_DATA_REQUEST,
+			clientHandle, 0, ex);
+	if (!prim)
+		return NULL;
+
+	prim->payload[i++] = dstAddrSize;
+	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
+	i += dstAddrSize;
+	prim->payload[i++] = srcAddrSize;
+	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	i += srcAddrSize;
+	memcpy(&prim->payload[i], &sData, 2);
+	i += 2;
+	memcpy(&prim->payload[i], pData, sData);
+	return prim;
+}
+
+primitive_t *new_DL_UNIT_DATA_Indication(
+		uint16_t serverHandle,
+		const uint8_t *dstAddrPtr, uint8_t dstAddrSize,
+		const uint8_t *srcAddrPtr, uint8_t srcAddrSize,
+		const uint8_t *pData, uint16_t sData,
+		struct exception *ex)
+{
+	int i = 0;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 4;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_UNIT_DATA_INDICATION,
+			0, serverHandle, ex);
+	if (!prim)
+		return NULL;
+
+	prim->payload[i++] = dstAddrSize;
+	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
+	i += dstAddrSize;
+	prim->payload[i++] = srcAddrSize;
+	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	i += srcAddrSize;
+	memcpy(&prim->payload[i], &sData, 2);
+	i += 2;
+	memcpy(&prim->payload[i], pData, sData);
+	return prim;
+}
+
+primitive_t *new_DL_TEST_Request(
+		uint16_t clientHandle,
+		const uint8_t *dstAddrPtr, uint8_t dstAddrSize,
+		const uint8_t *srcAddrPtr, uint8_t srcAddrSize,
+		const uint8_t *pData, uint16_t sData,
+		struct exception *ex)
+{
+	int i = 0;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 4;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_TEST_REQUEST,
+			clientHandle, 0, ex);
+	if (!prim)
+		return NULL;
+
+	prim->payload[i++] = dstAddrSize;
+	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
+	i += dstAddrSize;
+	prim->payload[i++] = srcAddrSize;
+	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	i += srcAddrSize;
+	memcpy(&prim->payload[i], &sData, 2);
+	i += 2;
+	memcpy(&prim->payload[i], pData, sData);
+	return prim;
+}
+
+primitive_t *new_DL_TEST_Indication(
+		uint16_t serverHandle,
+		const uint8_t *dstAddrPtr, uint8_t dstAddrSize,
+		const uint8_t *srcAddrPtr, uint8_t srcAddrSize,
+		const uint8_t *pData, uint16_t sData,
+		struct exception *ex)
+{
+	int i = 0;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 4;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_TEST_INDICATION,
+			0, serverHandle, ex);
+	if (!prim)
+		return NULL;
+
+	prim->payload[i++] = dstAddrSize;
+	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
+	i += dstAddrSize;
+	prim->payload[i++] = srcAddrSize;
+	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	i += srcAddrSize;
+	memcpy(&prim->payload[i], &sData, 2);
+	i += 2;
+	memcpy(&prim->payload[i], pData, sData);
+	return prim;
+}
+
+primitive_t *new_DL_TEST_Confirmation(
+		uint16_t clientHandle, uint16_t serverHandle,
+		const uint8_t *dstAddrPtr, uint8_t dstAddrSize,
+		const uint8_t *srcAddrPtr, uint8_t srcAddrSize,
+		const uint8_t *pData, uint16_t sData,
+		struct exception *ex)
+{
+	int i = 0;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 6;
+	primitive_t *prim = new_prim(payloadSize, DL, DL_TEST_INDICATION,
+			clientHandle, serverHandle, ex);
+	if (!prim)
+		return NULL;
+
+	prim->payload[i++] = dstAddrSize;
+	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
+	i += dstAddrSize;
+	prim->payload[i++] = srcAddrSize;
+	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	i += srcAddrSize;
+	memcpy(&prim->payload[i], &sData, 2);
+	i += 2;
+	memcpy(&prim->payload[i], pData, sData);
+	return prim;
 }
