@@ -26,6 +26,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <assert.h>
 
 struct exception;
 
@@ -89,6 +90,19 @@ extern bool addressFieldFromString(callsign source, const char *dest,
 extern bool addressFieldToString(const struct addressField *af,
 									char *pb, size_t cb,
 									struct exception *ex);
+
+/**
+ * @brief Copy addressField.
+ * @param dst Pointer to destination addressField.
+ * @param src Pointer to source addressField.
+ */
+static inline void addressFieldCopy(struct addressField *dst,
+		const struct addressField *src)
+{
+	assert(src);
+	assert(dst);
+	memcpy(dst, src, sizeof(struct addressField));
+}
 
 /**
  * @brief Get the H-Bit of a callsign.

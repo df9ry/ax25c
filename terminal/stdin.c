@@ -353,7 +353,7 @@ static void onCmdT(void)
 		pc = string_c(&plugin_handle->rem_addr);
 		state = S_INF;
 		new_line();
-		out_str("Connect ");
+		out_str("Test ");
 		out_str(pc);
 	} else {
 		exception_t ex;
@@ -361,18 +361,23 @@ static void onCmdT(void)
 		{
 			state = S_INF;
 			new_line();
-			out_str("Remote ");
+			out_str("Test ");
 			out_str(string_c(&plugin.rem_addr));
 		} else {
 			state = S_ERR;
 			new_line();
 			out_str(ex.message);
+			state = S_TXT;
+			new_line();
+			return;
 		}
 	}
-	test();
-	i_read_buf = 0;
-	state = S_TXT;
+	state = S_INF;
 	new_line();
+	out_str("> ");
+	state = S_CMD_T;
+	substate = 2;
+	i_read_buf = 0;
 }
 
 static void onCmdU(void)
@@ -389,18 +394,18 @@ static void onCmdU(void)
 		{
 			state = S_INF;
 			new_line();
-			out_str("Remote ");
+			out_str("UI ");
 			out_str(string_c(&plugin.rem_addr));
 		} else {
 			state = S_ERR;
 			new_line();
 			out_str(ex.message);
+			state = S_TXT;
+			new_line();
+			return;
 		}
 	}
 	state = S_INF;
-	new_line();
-	out_str("UI ");
-	out_str(pc);
 	new_line();
 	out_str("> ");
 	state = S_CMD_U;
@@ -514,6 +519,28 @@ static void inputCmdT1(char ch)
 		break;
 	case LF:
 		onCmdT();
+		break;
+	case ESC:
+		onEsc();
+		break;
+	case STOP:
+		onQuit();
+		break;
+	default :
+		if (isprint(ch))
+			inputCh(ch);
+		break;
+	} /* end switch */
+}
+
+static void inputCmdT2(char ch)
+{
+	switch (ch) {
+	case DEL:
+		onDel();
+		break;
+	case LF:
+		test();
 		break;
 	case ESC:
 		onEsc();
@@ -658,6 +685,9 @@ static void inputCmdT(char ch)
 		break;
 	case 1:
 		inputCmdT1(ch);
+		break;
+	case 2:
+		inputCmdT2(ch);
 		break;
 	default:
 		break;
