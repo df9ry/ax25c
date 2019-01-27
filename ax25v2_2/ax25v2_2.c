@@ -15,8 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../runtime.h"
-#include "../dlsap.h"
+#include "../runtime/runtime.h"
+#include "../runtime/dlsap.h"
 
 #include "_internal.h"
 

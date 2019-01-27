@@ -15,10 +15,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef DLSAP_H_
-#define DLSAP_H_
+#ifndef RUNTIME_DLSAP_H_
+#define RUNTIME_DLSAP_H_
 
-#include "runtime/dls.h"
+#include "dls.h"
 #include "exception.h"
 #include "primitive.h"
 #include <stringc/stringc.h>
@@ -108,4 +108,4 @@ extern bool dlsap_write(dls_t *dls, primitive_t *prim, bool expedited,
  */
 extern void get_queue_stats(dls_t *dls, dls_stats_t *stats);
 
-#endif /* DLSAP_H_ */
+#endif /* RUNTIME_DLSAP_H_ */

@@ -15,8 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef RUNTIME_H_
-#define RUNTIME_H_
+#ifndef RUNTIME_RUNTIME_H_
+#define RUNTIME_RUNTIME_H_
 
 /**
  * @file
@@ -27,8 +27,9 @@
 extern "C" {
 #endif
 
-#include "configuration.h"
-#include "exception.h"
+#include "../config/configuration.h"
+
+#include "../runtime/exception.h"
 
 #include <uki/list.h>
 
@@ -221,4 +222,4 @@ extern void unregisterTickListener(struct tick_listener *l);
 }
 #endif
 
-#endif /* RUNTIME_AX25C_RUNTIME_H_ */
+#endif /* RUNTIME_RUNTIME_H_ */

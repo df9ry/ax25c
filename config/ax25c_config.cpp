@@ -15,9 +15,10 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../runtime/runtime.h"
+
 #include "ax25c_config.h"
-#include "../runtime.h"
-#include "../configuration.h"
+#include "configuration.h"
 #include "DOMTreeErrorReporter.hpp"
 
 #include <xercesc/dom/DOM.hpp>

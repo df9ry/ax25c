@@ -18,7 +18,8 @@
 #ifndef RUNTIME_DLS_H_
 #define RUNTIME_DLS_H_
 
-#include "../primitive.h"
+#include "primitive.h"
+
 #include <mapc/mapc.h>
 #include <stdint.h>
 

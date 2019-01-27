@@ -15,8 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../configuration.h"
-#include "../runtime.h"
+#include "../config/configuration.h"
+#include "../runtime/runtime.h"
 #include "../runtime/memory.h"
 
 #include <uki/kernel.h>

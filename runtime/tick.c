@@ -16,8 +16,8 @@
  */
 
 #include "tick.h"
-#include "../exception.h"
-#include "../runtime.h"
+#include "exception.h"
+#include "runtime.h"
 
 #include <assert.h>
 #include <pthread.h>

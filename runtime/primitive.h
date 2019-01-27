@@ -15,10 +15,11 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef PRIMITIVE_H_
-#define PRIMITIVE_H_
+#ifndef RUNTIME_PRIMITIVE_H_
+#define RUNTIME_PRIMITIVE_H_
 
 #include "runtime.h"
+
 #include <stdint.h>
 #include <unistd.h>
 #include <assert.h>
@@ -149,4 +150,4 @@ static inline void del_prim(primitive_t *prim)
 		mem_free(prim);
 }
 
-#endif /* PRIMITIVE_H_ */
+#endif /* RUNTIME_PRIMITIVE_H_ */

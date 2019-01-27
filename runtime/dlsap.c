@@ -15,9 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../dlsap.h"
-#include "../exception.h"
-
+#include "dlsap.h"
+#include "exception.h"
 #include "_internal.h"
 #include "dls.h"
 

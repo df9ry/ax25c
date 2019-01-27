@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../runtime.h"
+#include "runtime.h"
 
 #include <stdio.h>
 #include <unistd.h>

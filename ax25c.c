@@ -15,12 +15,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "configuration.h"
-#include "exception.h"
-#include "runtime.h"
+#include "config/configuration.h"
+#include "config/ax25c_config.h"
+#include "runtime/exception.h"
+#include "runtime/runtime.h"
 #include "runtime/log.h"
 #include "runtime/tick.h"
-#include "config/ax25c_config.h"
 
 #include <sys/types.h>
 #include <unistd.h>

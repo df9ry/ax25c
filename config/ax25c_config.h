@@ -23,8 +23,8 @@
 #ifndef CONFIG_AX25C_CONFIG_H_
 #define CONFIG_AX25C_CONFIG_H_
 
-#include "../configuration.h"
-#include "../exception.h"
+#include "../config/configuration.h"
+#include "../runtime/exception.h"
 
 #include <stdbool.h>
 
