@@ -80,15 +80,15 @@ callsign callsignFromString(const char *str, const char **next,
 			break;
 		}
 		if (*str == '-') {
-			if (i > 6) {
-				fillEx(ex, "callsignFromString",
-						"Callsign too long (max. 6 characters)", _str,
-						EXIT_FAILURE);
-				return 0;
-			}
 			++str;
 			with_uuid = true;
 			break;
+		}
+		if (i > 5) {
+			fillEx(ex, "callsignFromString",
+					"Callsign too long (max. 6 characters)", _str,
+					EXIT_FAILURE);
+			return 0;
 		}
 		octet = getOctetOfChar(*str);
 		if (octet == 0) {
@@ -200,7 +200,7 @@ bool addressFieldFromString(callsign source, const char *dest,
 	dest = __skipWhitespace(next);
 	if (!(*dest)) {
 		setXBit(&af->source, true);
-		return true;
+		goto done;
 	}
 
 	/* Read repeater 1 */
@@ -210,7 +210,7 @@ bool addressFieldFromString(callsign source, const char *dest,
 	dest = __skipWhitespace(next);
 	if (!(*dest)) {
 		setXBit(&af->repeaters[0], true);
-		return true;
+		goto done;
 	}
 
 	/* Read repeater 2 */
@@ -220,7 +220,7 @@ bool addressFieldFromString(callsign source, const char *dest,
 	dest = __skipWhitespace(next);
 	if (!(*dest)) {
 		setXBit(&af->repeaters[1], true);
-		return true;
+		goto done;
 	}
 
 	/* Error */
@@ -230,9 +230,22 @@ bool addressFieldFromString(callsign source, const char *dest,
 		ex->function = "addressFieldFromString";
 		ex->message = "Too many repeaters (max. 2)";
 		ex->param = dest;
-		return false;
 	}
+	return false;
 
+done:
+	if (next[0]) {
+		/* Error */
+		if (ex) {
+			ex->erc = EXIT_FAILURE;
+			ex->module = MODULE_NAME;
+			ex->function = "addressFieldFromString";
+			ex->message = "Exceeding characters after callsign";
+			ex->param = dest;
+		}
+		return false;
+
+	}
 	return true;
 }
 
