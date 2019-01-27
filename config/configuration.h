@@ -20,14 +20,14 @@
  * @brief Configuration of the AX25C system.
  */
 
-#ifndef CONFIGURATION_H_
-#define CONFIGURATION_H_
+#ifndef CONFIG_CONFIGURATION_H_
+#define CONFIG_CONFIGURATION_H_
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "exception.h"
+#include "../runtime/exception.h"
 
 #include <mapc/mapc.h>
 
@@ -161,4 +161,4 @@ struct plugin_descriptor {
 }
 #endif
 
-#endif /* CONFIGURATION_H_ */
+#endif /* CONFIG_CONFIGURATION_H_ */

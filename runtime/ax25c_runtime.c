@@ -17,8 +17,7 @@
 
 #define _POSIX_SOURCE 1
 
-#include "../runtime.h"
-
+#include "runtime.h"
 #include "log.h"
 #include "tick.h"
 

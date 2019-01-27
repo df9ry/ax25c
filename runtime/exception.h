@@ -20,8 +20,8 @@
  * @brief Structure to use in very simple exception like mechanism.
  */
 
-#ifndef EXCEPTION_H_
-#define EXCEPTION_H_
+#ifndef RUNTIME_EXCEPTION_H_
+#define RUNTIME_EXCEPTION_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -67,4 +67,4 @@ static inline void exception_fill(exception_t *ex, int erc, const char *module,
 }
 #endif
 
-#endif /* EXCEPTION_H_ */
+#endif /* RUNTIME_EXCEPTION_H_ */

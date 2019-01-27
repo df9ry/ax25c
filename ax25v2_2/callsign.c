@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../exception.h"
+#include "../runtime/exception.h"
 
 #include "callsign.h"
 #include "_internal.h"
