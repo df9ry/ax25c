@@ -75,7 +75,7 @@ void ax25c_log(enum debug_level_t dl, const char *fmt, ...)
 		msg_size = FORMAT_BUFSIZE - 3;
 	}
 	strcpy(&format_buffer[msg_size++], "\n");
-	written = rb_write_asy_ch(&ring_buffer, format_buffer, strlen(format_buffer));
+	written = rb_write_nonblock_ch(&ring_buffer, format_buffer, strlen(format_buffer));
 	if (written < 0)
 		rb_loose(&ring_buffer, msg_size);
 }
@@ -91,7 +91,7 @@ void *worker(void *id)
 				fprintf(stderr, "W:Debug lost: %i characters\n", res);
 			}
 		}
-		res = rb_read_syn_ch(&ring_buffer, pump_buffer, PUMP_BUFSIZE);
+		res = rb_read_block_ch(&ring_buffer, pump_buffer, PUMP_BUFSIZE);
 		if (res > 0)
 			write(STDERR_FILENO, pump_buffer, res);
 	} /* end while */
