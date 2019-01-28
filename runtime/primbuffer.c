@@ -138,7 +138,7 @@ bool primbuffer_write_nonblock(primbuffer_t *pb, struct primitive *prim,
 	} else {
 		pe = list_first_entry(&pb->free_list, struct primentry, list);
 		pe->prim = prim;
-		use_prim(&pe->prim);
+		use_prim(pe->prim);
 		pb->free -= 1;
 		if (expedited)
 			list_move(&pb->expedited_list, &pe->list);
