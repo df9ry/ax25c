@@ -18,6 +18,8 @@
 #ifndef AXUDP__INTERNAL_H_
 #define AXUDP__INTERNAL_H_
 
+#include "../runtime/dlsap.h"
+
 #define MODULE_NAME "AXUDP"
 
 struct plugin_handle {
@@ -26,6 +28,8 @@ struct plugin_handle {
 
 struct instance_handle {
 	const char  *name;
+	/***/
+	dls_t dls;
 };
 
 #endif /* AXUDP__INTERNAL_H_ */

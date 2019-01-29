@@ -50,6 +50,7 @@ struct dls {
 			struct exception *ex);
 	void (*get_queue_stats)(dls_t *dls, dls_stats_t *stats);
 	struct dls *peer;
+	void *session;
 };
 
 #endif /* RUNTIME_DLS_H_ */

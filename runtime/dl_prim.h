@@ -22,7 +22,7 @@
 
 #include <stdint.h>
 
-enum CMD {
+enum DL_CMD {
 	DL_CONNECT_REQUEST       =  0,
 	DL_CONNECT_INDICATION    =  1,
 	DL_CONNECT_CONFIRM       =  2,

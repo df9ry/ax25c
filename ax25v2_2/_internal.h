@@ -29,6 +29,7 @@ struct exception;
 struct plugin_handle {
 	const char *name;
 	addressField_t default_addr;
+	const char *peer;
 };
 
 extern struct plugin_handle plugin;

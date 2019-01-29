@@ -20,41 +20,55 @@
 #include "../runtime/dl_prim.h"
 
 #include "_internal.h"
+#include "ax25v2_2.h"
 
 #include <errno.h>
 #include <assert.h>
 
-static bool set_default_local_addr(dls_t *_dls, const char *addr,
+static bool set_client_local_addr(dls_t *_dls, const char *addr,
 		string_t *norm, exception_t *ex);
 
-static bool set_default_remote_addr(dls_t *_dls, const char *addr,
+static bool set_client_remote_addr(dls_t *_dls, const char *addr,
 		string_t *norm, exception_t *ex);
 
-static bool dls_open(dls_t *_dls, dls_t *receiver, struct exception *ex);
+static bool client_dls_open(dls_t *_dls, dls_t *receiver, struct exception *ex);
 
-static void dls_close(dls_t *_dls);
+static void client_dls_close(dls_t *_dls);
 
-static bool on_write(dls_t *_dls, primitive_t *prim, bool expedited,
+static bool on_client_write(dls_t *_dls, primitive_t *prim, bool expedited,
 		struct exception *ex);
 
-static void dls_queue_stats(dls_t *_dls, dls_stats_t *stats);
+static void client_dls_queue_stats(dls_t *_dls, dls_stats_t *stats);
 
-static dls_t dls = {
-		.set_default_local_addr  = set_default_local_addr,
-		.set_default_remote_addr = set_default_remote_addr,
-		.open                    = dls_open,
-		.close                   = dls_close,
-		.on_write                = on_write,
-		.get_queue_stats         = dls_queue_stats,
+static bool on_server_write(dls_t *_dls, primitive_t *prim, bool expedited,
+		struct exception *ex);
+
+static dls_t client_dls = {
+		.set_default_local_addr  = set_client_local_addr,
+		.set_default_remote_addr = set_client_remote_addr,
+		.open                    = client_dls_open,
+		.close                   = client_dls_close,
+		.on_write                = on_client_write,
+		.get_queue_stats         = client_dls_queue_stats,
 		.peer                    = NULL
 };
 
-static bool set_default_local_addr(dls_t *_dls, const char *addr,
+static dls_t server_dls = {
+		.set_default_local_addr  = NULL,
+		.set_default_remote_addr = NULL,
+		.open                    = NULL,
+		.close                   = NULL,
+		.on_write                = on_server_write,
+		.get_queue_stats         = NULL,
+		.peer                    = NULL
+};
+
+static bool set_client_local_addr(dls_t *_dls, const char *addr,
 		string_t *norm, exception_t *ex)
 {
 	const char *next;
 
-	if (_dls != &dls) {
+	if (_dls != &client_dls) {
 		exception_fill(ex, EINVAL, MODULE_NAME,
 				"set_default_local_addr", "Channel disruption", "");
 		return false;
@@ -79,12 +93,12 @@ static bool set_default_local_addr(dls_t *_dls, const char *addr,
 	return true;
 }
 
-static bool set_default_remote_addr(dls_t *_dls, const char *addr,
+static bool set_client_remote_addr(dls_t *_dls, const char *addr,
 		string_t *norm, exception_t *ex)
 {
 	addressField_t af;
 
-	if (_dls != &dls) {
+	if (_dls != &client_dls) {
 		exception_fill(ex, EINVAL, MODULE_NAME,
 				"set_default_remote_addr", "Channel disruption", "");
 		return false;
@@ -102,27 +116,27 @@ static bool set_default_remote_addr(dls_t *_dls, const char *addr,
 	return true;
 }
 
-static bool dls_open(dls_t *_dls, dls_t *receiver, struct exception *ex)
+static bool client_dls_open(dls_t *_dls, dls_t *receiver, struct exception *ex)
 {
-	if (_dls != &dls) {
+	if (_dls != &client_dls) {
 		exception_fill(ex, EINVAL, MODULE_NAME,
 				"dls_open", "Channel disruption", "");
 		return false;
 	}
-	if (receiver && dls.peer) {
+	if (receiver && client_dls.peer) {
 		exception_fill(ex, EEXIST, MODULE_NAME,
 				"dls_open", "Channel already connected", "");
 		return false;
 	}
-	dls.peer = receiver;
+	client_dls.peer = receiver;
 	return true;
 }
 
-static void dls_close(dls_t *_dls)
+static void client_dls_close(dls_t *_dls)
 {
-	if (_dls != &dls)
+	if (_dls != &client_dls)
 		return;
-	dls.peer = NULL;
+	client_dls.peer = NULL;
 }
 
 static bool on_write_dl_unit_data_request(dls_t *_dls, primitive_t *prim,
@@ -145,7 +159,7 @@ static bool on_write_dl_unit_data_request(dls_t *_dls, primitive_t *prim,
 				get_prim_param_data(dstAddr), get_prim_param_size(dstAddr),
 				get_prim_param_data(data),    get_prim_param_size(data), ex);
 		if (resp)
-			res = dlsap_write(dls.peer, resp, false, ex);
+			res = dlsap_write(client_dls.peer, resp, false, ex);
 		else
 			res = false;
 	}
@@ -174,7 +188,7 @@ static bool on_write_dl_test_request(dls_t *_dls, primitive_t *prim,
 				get_prim_param_data(dstAddr), get_prim_param_size(dstAddr),
 				get_prim_param_data(data),    get_prim_param_size(data), ex);
 		if (resp)
-			res = dlsap_write(dls.peer, resp, false, ex);
+			res = dlsap_write(client_dls.peer, resp, false, ex);
 		else
 			res = false;
 	}
@@ -202,12 +216,12 @@ static bool on_write_dl(dls_t *_dls, primitive_t *prim, struct exception *ex)
 	return res;
 }
 
-static bool on_write(dls_t *_dls, primitive_t *prim, bool expedited,
+static bool on_client_write(dls_t *_dls, primitive_t *prim, bool expedited,
 		struct exception *ex)
 {
 	bool res = false;
 
-	if (_dls != &dls) {
+	if (_dls != &client_dls) {
 		exception_fill(ex, EINVAL, MODULE_NAME,
 				"on_write", "Channel disruption", "");
 		return false;
@@ -230,25 +244,41 @@ static bool on_write(dls_t *_dls, primitive_t *prim, bool expedited,
 	return res;
 }
 
-static void dls_queue_stats(dls_t *_dls, dls_stats_t *stats)
+static void client_dls_queue_stats(dls_t *_dls, dls_stats_t *stats)
 {
-	if (_dls != &dls)
+	if (_dls != &client_dls)
 		return;
+}
+
+static bool on_server_write(dls_t *_dls, primitive_t *prim, bool expedited,
+		struct exception *ex)
+{
+	return true;
 }
 
 bool ax25v2_2_initialize(struct plugin_handle *h, struct exception *ex)
 {
-	dls.name = h->name;
+	client_dls.name = h->name;
 	INFO("Register Service Access Point", h->name);
-	return dlsap_register_dls(&dls, ex);
+	return dlsap_register_dls(&client_dls, ex);
 }
 
 bool ax25v2_2_start(struct plugin_handle *h, struct exception *ex)
 {
+	server_dls.peer = dlsap_lookup_dls(h->peer);
+	if (!server_dls.peer) {
+		exception_fill(ex, ENOENT, MODULE_NAME, "ax25v2_2_start",
+				"SAP not found", h->peer);
+		return false;
+	}
+	if (!dlsap_open(server_dls.peer, &server_dls, ex))
+		return false;
 	return true;
 }
 
 bool ax25v2_2_stop(struct plugin_handle *h, struct exception *ex)
 {
+	dlsap_close(server_dls.peer);
+	server_dls.peer = NULL;
 	return true;
 }

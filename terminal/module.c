@@ -72,21 +72,6 @@ static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	return terminal_stop(plugin, ex);
 }
 
-#if 0
-struct instance_handle {
-	const char  *name;
-	size_t       line_length;
-	unsigned int port;
-};
-
-static struct setting_descriptor instance_settings_descriptor[] = {
-		{ "line_length", SIZE_T, offsetof(struct instance_handle, line_length), "256" },
-		{ "port",        UINT_T, offsetof(struct instance_handle, port),        NULL  },
-		{ NULL }
-};
-
- #endif
-
 struct plugin_descriptor plugin_descriptor = {
 		get_plugin,	  (start_func)start_plugin, (stop_func)stop_plugin,
 		NULL,         NULL,                     NULL

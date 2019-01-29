@@ -30,6 +30,7 @@
 struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
+		{ "peer", CSTR_T, offsetof(struct plugin_handle, peer), "ROUTER" },
 		{ NULL }
 };
 
