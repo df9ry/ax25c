@@ -17,6 +17,7 @@
 
 #include "../runtime/runtime.h"
 #include "../runtime/dlsap.h"
+#include "../runtime/primbuffer.h"
 #include "terminal.h"
 #include "_internal.h"
 
@@ -30,7 +31,9 @@ static volatile bool initialized = false;
 static bool on_write(dls_t *dls, primitive_t *prim, bool expedited,
 			struct exception *ex)
 {
-	DEBUG("GOT XXX", "");
+	assert(primbuffer);
+	if (!primbuffer_write_nonblock(primbuffer, prim, false))
+		WARNING("Lost one primitive in Terminal", "");
 	return true;
 }
 
@@ -96,5 +99,6 @@ bool terminal_stop(struct plugin_handle *h, struct exception *ex)
 	stdout_terminate(h);
 	dlsap_close(local_dls.peer);
 	local_dls.peer = NULL;
+	printf("Terminal Stop\n");
 	return true;
 }

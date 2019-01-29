@@ -45,6 +45,42 @@ enum CMD {
 };
 
 /**
+ * @brief Get destination param of a DL primitive.
+ * @param Pointer to DL primitive.
+ * @return Destination param.
+ */
+static inline prim_param_t *get_DL_dst_param(primitive_t *prim)
+{
+	if ((prim == NULL) || (prim->protocol != DL))
+		return NULL;
+	return get_prim_param(prim, 0);
+}
+
+/**
+ * @brief Get source param of a DL primitive.
+ * @param Pointer to DL primitive.
+ * @return Source param.
+ */
+static inline prim_param_t *get_DL_src_param(primitive_t *prim)
+{
+	if ((prim == NULL) || (prim->protocol != DL))
+		return NULL;
+	return get_prim_param(prim, 1);
+}
+
+/**
+ * @brief Get data param of a DL primitive.
+ * @param Pointer to DL primitive.
+ * @return Data param.
+ */
+static inline prim_param_t *get_DL_data_param(primitive_t *prim)
+{
+	if ((prim == NULL) || (prim->protocol != DL))
+		return NULL;
+	return get_prim_param(prim, 2);
+}
+
+/**
  * @brief Create a new DL_CONNECT Request.
  * @param clientHandle Handle that will be returned in the response.
  * @param dstAddrPtr Pointer to destination address.

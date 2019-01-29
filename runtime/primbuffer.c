@@ -89,7 +89,7 @@ primbuffer_t *primbuffer_new(size_t size, struct exception *ex)
 
 void primbuffer_del(primbuffer_t *pb)
 {
-	int erc, i;
+	int i;
 	struct primentry *pe;
 
 	if (!pb)
@@ -99,12 +99,9 @@ void primbuffer_del(primbuffer_t *pb)
 			del_prim(pe->prim);
 		pe->prim = NULL;
 	} /* end for */
-	erc = pthread_cond_destroy(&pb->cond);
-	assert(erc == 0);
-	erc = pthread_mutex_destroy(&pb->cond_lock);
-	assert(erc == 0);
-	erc = pthread_spin_destroy(&pb->spinlock);
-	assert(erc == 0);
+	pthread_cond_destroy(&pb->cond);
+	pthread_mutex_destroy(&pb->cond_lock);
+	pthread_spin_destroy(&pb->spinlock);
 	free(pb);
 }
 
@@ -131,20 +128,21 @@ bool primbuffer_write_nonblock(primbuffer_t *pb, struct primitive *prim,
 
 	assert(pb);
 	assert(prim);
+	mem_chck(prim);
 	erc = pthread_spin_lock(&pb->spinlock); /*-------------------------------v*/
 	assert(erc == 0);
-	if (list_empty(&pb->free_list)) {
-		res = false;
-	} else {
-		pe = list_first_entry(&pb->free_list, struct primentry, list);
+	pe = list_first_entry_or_null(&pb->free_list, struct primentry, list);
+	if (pe) {
+		use_prim(prim);
 		pe->prim = prim;
-		use_prim(pe->prim);
 		pb->free -= 1;
 		if (expedited)
-			list_move(&pb->expedited_list, &pe->list);
+			list_move_tail(&pe->list, &pb->expedited_list);
 		else
-			list_move(&pb->normal_list, &pe->list);
+			list_move_tail(&pe->list, &pb->normal_list);
 		res = true;
+	} else {
+		res = false;
 	}
 	erc = pthread_spin_unlock(&pb->spinlock); /*-----------------------------^*/
 	assert(erc == 0);
@@ -160,27 +158,23 @@ extern struct primitive *primbuffer_read_block(primbuffer_t *pb, bool *expedited
 	primitive_t *prim = NULL;
 
 	assert(pb);
-	while (true) {
+	while (!prim) {
 		erc = pthread_spin_lock(&pb->spinlock); /*---------------------------v*/
 		assert(erc == 0);
-		if (!list_empty(&pb->expedited_list)) {
-			pe = list_first_entry(&pb->expedited_list, struct primentry, list);
-			list_move(&pb->free_list, &pe->list);
-			prim = pe->prim;
-			pe->prim = NULL;
-			pb->free += 1;
-		} else if (!list_empty(&pb->normal_list)) {
-			pe = list_first_entry(&pb->normal_list, struct primentry, list);
-			list_move(&pb->free_list, &pe->list);
+		pe = list_first_entry_or_null(&pb->expedited_list, struct primentry, list);
+		if (!pe)
+			pe = list_first_entry_or_null(&pb->normal_list, struct primentry, list);
+		if (pe) {
+			list_move(&pe->list, &pb->free_list);
 			prim = pe->prim;
 			pe->prim = NULL;
 			pb->free += 1;
 		}
 		erc = pthread_spin_unlock(&pb->spinlock); /*-------------------------^*/
 		assert(erc == 0);
-		if (prim)
-			break;
-		_cond_wait(pb);
+		if (!prim)
+			_cond_wait(pb);
 	} /* end while */
+	mem_chck(prim);
 	return prim;
 }

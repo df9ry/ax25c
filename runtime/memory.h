@@ -27,6 +27,7 @@ struct mm_interface {
 	uint32_t (*mem_size)(void *mem);
 	void (*mem_lock)(void *mem);
 	void (*mem_free)(void *mem);
+	void (*mem_chck)(void *mem);
 };
 
 /**

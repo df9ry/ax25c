@@ -58,7 +58,6 @@ static char read_buf[S_IOBUF];
 static size_t i_read_buf = 0;
 
 static bool monitor = false;
-static bool have_stdout_lock = false;
 
 static void send_line(const char *pb, size_t cb)
 {
@@ -73,19 +72,13 @@ static void setMonitor(bool f)
 
 static void out_str(const char *str)
 {
-	if (!have_stdout_lock) {
-		aquire_stdout_lock();
-		have_stdout_lock = true;
-	}
+	aquire_stdout_lock(STDIN_thread);
 	write(STDOUT_FILENO, str, strlen(str));
 }
 
 static void out_ch(char ch)
 {
-	if (!have_stdout_lock) {
-		aquire_stdout_lock();
-		have_stdout_lock = true;
-	}
+	aquire_stdout_lock(STDIN_thread);
 	write(STDOUT_FILENO, &ch, 1);
 }
 
@@ -110,39 +103,42 @@ static void out_ctrl(const char *ctrl)
 
 static void out_lead(void)
 {
-	switch (state) {
-	case S_TXT:
-		out_ctrl(plugin_handle->lead_txt);
-		break;
-	case S_CMD:
-		out_ctrl(plugin_handle->lead_cmd);
-		break;
-	case S_INF:
-		out_ctrl(plugin_handle->lead_inf);
-		break;
-	case S_ERR:
-		out_ctrl(plugin_handle->lead_err);
-		break;
-	default:
-		break;
-	} /* end switch */
+	if (writeLeads) {
+		switch (state) {
+		case S_TXT:
+			out_ctrl(plugin_handle->lead_txt);
+			break;
+		case S_CMD:
+			out_ctrl(plugin_handle->lead_cmd);
+			break;
+		case S_INF:
+			out_ctrl(plugin_handle->lead_inf);
+			break;
+		case S_ERR:
+			out_ctrl(plugin_handle->lead_err);
+			break;
+		default:
+			break;
+		} /* end switch */
+	}
 }
 
 static void new_line(void)
 {
 	out_lead();
 	out_ch('\n');
-	if (have_stdout_lock) {
+	i_read_buf = 0;
+	if (state == S_TXT)
 		release_stdout_lock();
-		have_stdout_lock = false;
-	}
 }
 
-static const char *getStr(void)
+static const char *getStr(bool add_nl)
 {
 	const char *p;
 
-	assert(i_read_buf + 1 < S_IOBUF);
+	assert(i_read_buf + 2 < S_IOBUF);
+	if (add_nl)
+		read_buf[i_read_buf++] = '\n';
 	read_buf[i_read_buf] = '\0';
 	p = read_buf;
 	while ((*p) && isspace(*p))
@@ -171,10 +167,6 @@ static void onDel(void)
 	out_ch(' ');
 	out_ch(BS);
 	--i_read_buf;
-	if (have_stdout_lock && (i_read_buf == 0)) {
-		release_stdout_lock();
-		have_stdout_lock = false;
-	}
 }
 
 static void onEsc(void)
@@ -226,7 +218,7 @@ static int16_t cTest = 0;
 static void test(void)
 {
 	exception_t ex;
-	const char *pc = getStr();
+	const char *pc = getStr(true);
 	const char *dstAddr = string_c(&plugin.rem_addr);
 	const char *srcAddr = string_c(&plugin.loc_addr);
 	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
@@ -258,7 +250,7 @@ static int16_t cUI = 0;
 static void ui(void)
 {
 	exception_t ex;
-	const char *pc = getStr();
+	const char *pc = getStr(true);
 	const char *dstAddr = string_c(&plugin.rem_addr);
 	const char *srcAddr = string_c(&plugin.loc_addr);
 	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
@@ -296,7 +288,7 @@ static void onQuit(void)
 
 static void onCmdI(void)
 {
-	const char *pc = getStr();
+	const char *pc = getStr(true);
 
 	assert(plugin_handle);
 	assert(pc);
@@ -327,7 +319,7 @@ static void onCmdI(void)
 
 static void onCmdR(void)
 {
-	const char *pc = getStr();
+	const char *pc = getStr(false);
 
 	assert(plugin_handle);
 	assert(pc);
@@ -358,7 +350,7 @@ static void onCmdR(void)
 
 static void onCmdC(void)
 {
-	const char *pc = getStr();
+	const char *pc = getStr(false);
 
 	assert(plugin_handle);
 	assert(pc);
@@ -390,7 +382,7 @@ static void onCmdC(void)
 
 static void onCmdT(void)
 {
-	const char *pc = getStr();
+	const char *pc = getStr(true);
 
 	assert(plugin_handle);
 	assert(pc);
@@ -427,7 +419,7 @@ static void onCmdT(void)
 
 static void onCmdU(void)
 {
-	const char *pc = getStr();
+	const char *pc = getStr(true);
 
 	assert(plugin_handle);
 	assert(pc);
@@ -805,6 +797,10 @@ static void inputTxt(char ch)
 
 static void inputCmd0(char ch)
 {
+	if (ch == escapeChar) {
+		onEsc();
+		return;
+	}
 	switch (ch) {
 	case ESC:
 		onEsc();
@@ -866,6 +862,10 @@ static void inputCmd(char ch)
 
 static void input(char ch)
 {
+	if (ch == escapeChar) {
+		onEsc();
+		return;
+	}
 	switch (state) {
 	case S_TXT :
 		inputTxt(ch);
@@ -910,6 +910,7 @@ static void *worker(void *id)
 void stdin_initialize(struct plugin_handle *h)
 {
 	struct termios t;
+	int erc;
 
 	assert(h);
 	assert(!initialized);
@@ -928,13 +929,15 @@ void stdin_initialize(struct plugin_handle *h)
 	new_line();
 	pthread_attr_init(&thread_args);
 	pthread_attr_setdetachstate(&thread_args, PTHREAD_CREATE_JOINABLE);
-	assert(pthread_create(&thread, &thread_args, worker, NULL) == 0);
+	erc = pthread_create(&thread, &thread_args, worker, NULL);
+	assert(erc == 0);
 	pthread_attr_destroy(&thread_args);
 }
 
 extern void stdin_terminate(struct plugin_handle *h)
 {
 	struct termios t;
+	int erc;
 
 	assert(h);
 	tcgetattr(STDIN_FILENO, &t);
@@ -944,7 +947,7 @@ extern void stdin_terminate(struct plugin_handle *h)
 		return;
 	assert(initialized);
 	initialized = false;
-	assert(pthread_kill(thread, SIGINT) == 0);
+	erc = pthread_kill(thread, SIGINT);
+	assert(erc == 0);
 	plugin_handle = NULL;
 }
-

@@ -37,6 +37,9 @@ struct configuration configuration = {
 		.loglevel = DEBUG_LEVEL_NONE
 };
 
+char escapeChar = '\0';
+bool writeLeads = true;
+
 int print_ex(struct exception *ex)
 {
 	if (!ex) {

@@ -25,17 +25,13 @@ primitive_t *new_DL_CONNECT_Request(
 		struct exception *ex)
 {
 	int i = 0;
-	uint32_t payloadSize = dstAddrSize + srcAddrSize + 2;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + 4;
 	primitive_t *prim = new_prim(payloadSize, DL, DL_CONNECT_REQUEST,
 			clientHandle, 0, ex);
 	if (!prim)
 		return NULL;
-
-	prim->payload[i++] = dstAddrSize;
-	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
-	i += dstAddrSize;
-	prim->payload[i++] = srcAddrSize;
-	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
+	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
 	return prim;
 }
 
@@ -46,17 +42,13 @@ primitive_t *new_DL_CONNECT_Indication(
 		struct exception *ex)
 {
 	int i = 0;
-	uint32_t payloadSize = dstAddrSize + srcAddrSize + 2;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + 4;
 	primitive_t *prim = new_prim(payloadSize, DL, DL_CONNECT_INDICATION,
 			0, serverHandle, ex);
 	if (!prim)
 		return NULL;
-
-	prim->payload[i++] = dstAddrSize;
-	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
-	i += dstAddrSize;
-	prim->payload[i++] = srcAddrSize;
-	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
+	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
+	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
 	return prim;
 }
 
@@ -69,11 +61,9 @@ primitive_t *new_DL_DATA_Request(
 	uint32_t payloadSize = sData + 2;
 	primitive_t *prim = new_prim(payloadSize, DL, DL_DATA_REQUEST,
 			clientHandle, serverHandle, ex);
+	if (!prim)
 		return NULL;
-
-	memcpy(&prim->payload[i], &sData, 2);
-	i += 2;
-	memcpy(&prim->payload[i], pData, sData);
+	i = put_prim_param(prim, i, pData, sData);
 	return prim;
 }
 
@@ -86,11 +76,9 @@ primitive_t *new_DL_DATA_Indication(
 	uint32_t payloadSize = sData + 2;
 	primitive_t *prim = new_prim(payloadSize, DL, DL_DATA_INDICATION,
 			clientHandle, serverHandle, ex);
+	if (!prim)
 		return NULL;
-
-	memcpy(&prim->payload[i], &sData, 2);
-	i += 2;
-	memcpy(&prim->payload[i], pData, sData);
+	i = put_prim_param(prim, i, pData, sData);
 	return prim;
 }
 
@@ -102,21 +90,14 @@ primitive_t *new_DL_UNIT_DATA_Request(
 		struct exception *ex)
 {
 	int i = 0;
-	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 4;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 6;
 	primitive_t *prim = new_prim(payloadSize, DL, DL_UNIT_DATA_REQUEST,
 			clientHandle, 0, ex);
 	if (!prim)
 		return NULL;
-
-	prim->payload[i++] = dstAddrSize;
-	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
-	i += dstAddrSize;
-	prim->payload[i++] = srcAddrSize;
-	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
-	i += srcAddrSize;
-	memcpy(&prim->payload[i], &sData, 2);
-	i += 2;
-	memcpy(&prim->payload[i], pData, sData);
+	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
+	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
+	i = put_prim_param(prim, i, pData, sData);
 	return prim;
 }
 
@@ -128,21 +109,14 @@ primitive_t *new_DL_UNIT_DATA_Indication(
 		struct exception *ex)
 {
 	int i = 0;
-	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 4;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 6;
 	primitive_t *prim = new_prim(payloadSize, DL, DL_UNIT_DATA_INDICATION,
 			0, serverHandle, ex);
 	if (!prim)
 		return NULL;
-
-	prim->payload[i++] = dstAddrSize;
-	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
-	i += dstAddrSize;
-	prim->payload[i++] = srcAddrSize;
-	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
-	i += srcAddrSize;
-	memcpy(&prim->payload[i], &sData, 2);
-	i += 2;
-	memcpy(&prim->payload[i], pData, sData);
+	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
+	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
+	i = put_prim_param(prim, i, pData, sData);
 	return prim;
 }
 
@@ -154,21 +128,14 @@ primitive_t *new_DL_TEST_Request(
 		struct exception *ex)
 {
 	int i = 0;
-	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 4;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 6;
 	primitive_t *prim = new_prim(payloadSize, DL, DL_TEST_REQUEST,
 			clientHandle, 0, ex);
 	if (!prim)
 		return NULL;
-
-	prim->payload[i++] = dstAddrSize;
-	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
-	i += dstAddrSize;
-	prim->payload[i++] = srcAddrSize;
-	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
-	i += srcAddrSize;
-	memcpy(&prim->payload[i], &sData, 2);
-	i += 2;
-	memcpy(&prim->payload[i], pData, sData);
+	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
+	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
+	i = put_prim_param(prim, i, pData, sData);
 	return prim;
 }
 
@@ -180,21 +147,14 @@ primitive_t *new_DL_TEST_Indication(
 		struct exception *ex)
 {
 	int i = 0;
-	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 4;
+	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 6;
 	primitive_t *prim = new_prim(payloadSize, DL, DL_TEST_INDICATION,
 			0, serverHandle, ex);
 	if (!prim)
 		return NULL;
-
-	prim->payload[i++] = dstAddrSize;
-	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
-	i += dstAddrSize;
-	prim->payload[i++] = srcAddrSize;
-	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
-	i += srcAddrSize;
-	memcpy(&prim->payload[i], &sData, 2);
-	i += 2;
-	memcpy(&prim->payload[i], pData, sData);
+	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
+	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
+	i = put_prim_param(prim, i, pData, sData);
 	return prim;
 }
 
@@ -207,19 +167,12 @@ primitive_t *new_DL_TEST_Confirmation(
 {
 	int i = 0;
 	uint32_t payloadSize = dstAddrSize + srcAddrSize + sData + 6;
-	primitive_t *prim = new_prim(payloadSize, DL, DL_TEST_INDICATION,
+	primitive_t *prim = new_prim(payloadSize, DL, DL_TEST_CONFIRM,
 			clientHandle, serverHandle, ex);
 	if (!prim)
 		return NULL;
-
-	prim->payload[i++] = dstAddrSize;
-	memcpy(&prim->payload[i], dstAddrPtr, dstAddrSize);
-	i += dstAddrSize;
-	prim->payload[i++] = srcAddrSize;
-	memcpy(&prim->payload[i], srcAddrPtr, srcAddrSize);
-	i += srcAddrSize;
-	memcpy(&prim->payload[i], &sData, 2);
-	i += 2;
-	memcpy(&prim->payload[i], pData, sData);
+	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
+	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
+	i = put_prim_param(prim, i, pData, sData);
 	return prim;
 }

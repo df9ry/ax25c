@@ -584,6 +584,10 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 				}
 				return false;
 			}
+		} else if (strncmp(argv[1], "--esc:", 6) == 0) {
+			escapeChar = argv[1][6];
+		} else if (strncmp(argv[1], "--noleads", 9) == 0) {
+			writeLeads = false;
 		} else {
 			if (ex) {
 				ex->erc = EXIT_FAILURE;

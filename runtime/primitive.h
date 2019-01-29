@@ -65,6 +65,11 @@ struct primitive {
 typedef struct primitive primitive_t;
 
 /**
+ * @brief Type for prim parameter.
+ */
+typedef const uint8_t prim_param_t;
+
+/**
  * @brief Get pointer to payload of a primitive.
  * @param prim Pointer to the primitive.
  * @return Pointer to payload of the primitive.
@@ -125,6 +130,72 @@ static inline void del_prim(primitive_t *prim)
 {
 	if (prim)
 		mem_free(prim);
+}
+
+/**
+ * @brief Get parameter from primitive.
+ * @param prim Prim to investigate.
+ * @param i Parameter number.
+ * @return Pointer to the parameter or NULL, when no such parameter was
+ *         specified.
+ */
+static inline prim_param_t *get_prim_param(primitive_t *prim, uint16_t i)
+{
+	uint16_t o = 0, s;
+	while (i-- > 0) {
+		if (o >= prim->size)
+			return NULL;
+		s = *((uint16_t*)(&prim->payload[o]));
+		o += (s + 2);
+	} /* end while */
+	return &prim->payload[o];
+}
+
+/**
+ * @brief Get size of a prim parameter.
+ * @param ptr Pointer to the prim parameter.
+ * @return Size of the prim parameter.
+ */
+static inline uint16_t get_prim_param_size(prim_param_t *ptr)
+{
+	if (ptr)
+		return *((uint16_t*)ptr);
+	else
+		return 0;
+}
+
+/**
+ * @brief Get data of a prim parameter.
+ * @param ptr Pointer to the prim parameter.
+ * @return Pointer to the data of the prim parameter.
+ */
+static inline const uint8_t *get_prim_param_data(prim_param_t *ptr)
+{
+	if (ptr)
+		return &ptr[2];
+	else
+		return NULL;
+}
+
+/**
+ * @brief Put a param into a prim.
+ * @param i Current index in prim.
+ * @param pp Pointer to the param.
+ * @param cp Size of the param.
+ * @return new index in the prim.
+ */
+static inline int put_prim_param(primitive_t *prim, int i, const uint8_t *pp,
+		uint16_t cp)
+{
+	assert(prim);
+	assert(i >= 0);
+	assert(pp);
+	assert(i + cp + 2 <= prim->size);
+	*((uint16_t*)(&prim->payload[i])) = cp;
+	i += 2;
+	memcpy(&prim->payload[i], pp, cp);
+	i += cp;
+	return i;
 }
 
 #endif /* RUNTIME_PRIMITIVE_H_ */

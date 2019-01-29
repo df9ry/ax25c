@@ -20,6 +20,8 @@
 
 #define MODULE_NAME "RUNTIME"
 
+extern struct primbuffer *primbuffer;
+
 extern void ax25c_dlsap_init(void);
 extern void ax25c_dlsap_term(void);
 

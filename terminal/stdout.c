@@ -15,26 +15,118 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "../runtime/primbuffer.h"
+#include "../runtime/dl_prim.h"
+
 #include "_internal.h"
 
 #include <stdbool.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <signal.h>
 #include <assert.h>
 
-static bool initialized = false;
+struct primbuffer *primbuffer;
+
+static volatile bool initialized = false;
 static struct plugin_handle *plugin_handle = NULL;
-static pthread_spinlock_t spinlock;
 static pthread_mutex_t mutex;
+static pthread_cond_t cond;
+static pthread_attr_t thread_args;
+static pthread_t thread;
+
+static inline void out_data(const uint8_t *po, size_t co)
+{
+	write(STDOUT_FILENO, po, co);
+}
+
+static inline void out_txt(const char *pd, size_t cd)
+{
+	out_data((uint8_t*)pd, cd);
+}
+
+static inline void out_str(const char *s)
+{
+	out_txt(s, strlen(s));
+}
+
+static void out_dl_prim(primitive_t *prim)
+{
+	prim_param_t *param;
+
+	switch (prim->cmd) {
+	case DL_UNIT_DATA_INDICATION:
+		aquire_stdout_lock(STDOUT_thread);
+		param = get_DL_data_param(prim);
+		out_str("UI: ");
+		out_data(get_prim_param_data(param), get_prim_param_size(param));
+		release_stdout_lock();
+		break;
+	case DL_TEST_REQUEST:
+		aquire_stdout_lock(STDOUT_thread);
+		param = get_DL_data_param(prim);
+		out_str("Test REQU: ");
+		out_data(get_prim_param_data(param), get_prim_param_size(param));
+		release_stdout_lock();
+		break;
+	case DL_TEST_INDICATION:
+		aquire_stdout_lock(STDOUT_thread);
+		param = get_DL_data_param(prim);
+		out_str("Test INDI: ");
+		out_data(get_prim_param_data(param), get_prim_param_size(param));
+		release_stdout_lock();
+		break;
+	case DL_TEST_CONFIRM:
+		aquire_stdout_lock(STDOUT_thread);
+		param = get_DL_data_param(prim);
+		out_str("Test CONF: ");
+		out_data(get_prim_param_data(param), get_prim_param_size(param));
+		release_stdout_lock();
+		break;
+	default:
+		break;
+	} /* end switch */
+}
+
+static void *worker(void *id)
+{
+	primitive_t *prim;
+
+	while (initialized) {
+		prim = primbuffer_read_block(primbuffer, NULL);
+		if (!prim)
+			continue;
+		switch (prim->protocol) {
+		case DL:
+			out_dl_prim(prim);
+			break;
+		default:
+			break;
+		} /* end switch */
+		del_prim(prim);
+	} /* end while */
+	return NULL;
+}
 
 void stdout_initialize(struct plugin_handle *h)
 {
+	int erc;
+
 	assert(h);
 	assert(!initialized);
 	initialized = true;
 	plugin_handle = h;
-	assert(pthread_spin_init(&spinlock, PTHREAD_PROCESS_PRIVATE) == 0);
-	assert(pthread_mutex_init(&mutex, NULL) == 0);
+	primbuffer = primbuffer_new(plugin_handle->buf_size, NULL);
+	assert(primbuffer);
+	erc = pthread_mutex_init(&mutex, NULL);
+	assert(erc == 0);
+	erc = pthread_cond_init(&cond, NULL);
+	assert(erc == 0);
+	pthread_attr_init(&thread_args);
+	pthread_attr_setdetachstate(&thread_args, PTHREAD_CREATE_JOINABLE);
+	erc = pthread_create(&thread, &thread_args, worker, NULL);
+	assert(erc == 0);
+	pthread_attr_destroy(&thread_args);
 }
 
 void stdout_terminate(struct plugin_handle *h)
@@ -43,20 +135,42 @@ void stdout_terminate(struct plugin_handle *h)
 	assert(initialized);
 	initialized = false;
 	plugin_handle = NULL;
-	assert(pthread_mutex_destroy(&mutex) == 0);
-	assert(pthread_spin_destroy(&spinlock) == 0);
+	pthread_cond_destroy(&cond);
+	pthread_mutex_destroy(&mutex);
+	pthread_kill(thread, SIGINT);
+	primbuffer_del(primbuffer);
+	primbuffer = NULL;
+	plugin_handle = NULL;
 }
 
-void aquire_stdout_lock(void)
+static volatile enum stdout_lock_id locked_id = NO_thread;
+
+void aquire_stdout_lock(enum stdout_lock_id id)
 {
-	pthread_spin_lock(&spinlock);
+	bool have_lock;
+
 	pthread_mutex_lock(&mutex);
-	pthread_spin_unlock(&spinlock);
+	have_lock = (locked_id == id);
+	pthread_mutex_unlock(&mutex);
+	while (!have_lock) {
+		pthread_mutex_lock(&mutex);
+		if (locked_id != NO_thread) {
+			pthread_cond_wait(&cond, &mutex);
+		}
+		if (locked_id == NO_thread) {
+			have_lock = true;
+			locked_id = id;
+		} else {
+			have_lock = false;
+		}
+		pthread_mutex_unlock(&mutex);
+	} /* end while */
 }
 
 void release_stdout_lock(void)
 {
-	pthread_spin_lock(&spinlock);
+	pthread_mutex_lock(&mutex);
+	locked_id = NO_thread;
+	pthread_cond_signal(&cond);
 	pthread_mutex_unlock(&mutex);
-	pthread_spin_unlock(&spinlock);
 }

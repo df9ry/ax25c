@@ -112,7 +112,7 @@ test: all
 	@cp /usr/local/lib/libmapc.$(SOEXT) .
 	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
 	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:NONE" "--pid:$(TARGET).pid" \
-		"../$(TARGET).xml"
+		"--esc:\\" "../$(TARGET).xml"
 	@echo "OK"
 	
 stop:

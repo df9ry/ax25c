@@ -26,9 +26,11 @@
 struct plugin_handle {
 	const char *name;
 	const char *peer;
-	size_t line_length;
-	string_t   loc_addr;
-	string_t   rem_addr;
+	size_t      buf_size;
+	size_t      buf_reserve;
+	size_t      line_length;
+	string_t    loc_addr;
+	string_t    rem_addr;
 	const char *lead_txt;
 	const char *lead_cmd;
 	const char *lead_inf;
@@ -36,16 +38,19 @@ struct plugin_handle {
 	const char *prompt;
 };
 
+enum stdout_lock_id { NO_thread, STDIN_thread, STDOUT_thread };
+
 struct dls;
 extern struct dls  local_dls;
 extern struct dls *peerDLS(void);
 extern struct plugin_handle plugin;
+extern struct primbuffer *primbuffer;
 
 extern void stdin_initialize(struct plugin_handle *h);
 extern void stdin_terminate(struct plugin_handle *h);
 extern void stdout_initialize(struct plugin_handle *h);
 extern void stdout_terminate(struct plugin_handle *h);
-extern void aquire_stdout_lock(void);
+extern void aquire_stdout_lock(enum stdout_lock_id id);
 extern void release_stdout_lock(void);
 
 #endif /* TERMINAL__INTERNAL_H_ */

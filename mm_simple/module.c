@@ -104,19 +104,29 @@ static void mem_free_impl(void *ptr) {
 
 	if (!ptr)
 		return;
-	assert(pthread_mutex_lock(&lock) == 0);
+	pthread_mutex_lock(&lock);
 	mem = getContainer(ptr);
 	assert(mem->c_locks--);
-	if (!mem->c_locks)
+	if (!mem->c_locks) {
+		memset(mem, 0x55, sizeof(struct mem) + mem->size + sizeof(uint16_t));
 		free(mem);
-	assert(pthread_mutex_unlock(&lock) == 0);
+	}
+	pthread_mutex_unlock(&lock);
+}
+
+static void mem_chck_impl(void *ptr) {
+	assert(ptr);
+	pthread_mutex_lock(&lock);
+	assert(getContainer(ptr));
+	pthread_mutex_unlock(&lock);
 }
 
 static struct mm_interface mmi = {
 		.mem_alloc = mem_alloc_impl,
 		.mem_free  = mem_free_impl,
 		.mem_lock  = mem_lock_impl,
-		.mem_size  = mem_size_impl
+		.mem_size  = mem_size_impl,
+		.mem_chck  = mem_chck_impl
 };
 
 static struct plugin_handle {

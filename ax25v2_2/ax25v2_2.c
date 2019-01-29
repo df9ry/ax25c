@@ -130,23 +130,26 @@ static bool on_write_dl_unit_data_request(dls_t *_dls, primitive_t *prim,
 {
 	bool res = false;
 	primitive_t *resp;
+	prim_param_t *dstAddr, *srcAddr, *data;
 
-	if (!_dls->peer) {
-		res = true;
-		goto exit;
+	assert(prim);
+	if (_dls->peer) {
+		dstAddr = get_DL_dst_param(prim);
+		assert(dstAddr);
+		srcAddr = get_DL_src_param(prim);
+		assert(srcAddr);
+		data = get_DL_data_param(prim);
+		assert(data);
+		resp = new_DL_UNIT_DATA_Indication(0,
+				get_prim_param_data(srcAddr), get_prim_param_size(srcAddr),
+				get_prim_param_data(dstAddr), get_prim_param_size(dstAddr),
+				get_prim_param_data(data),    get_prim_param_size(data), ex);
+		if (resp)
+			res = dlsap_write(dls.peer, resp, false, ex);
+		else
+			res = false;
 	}
-	resp = new_DL_UNIT_DATA_Indication(0,
-			(uint8_t*)"DEST", 4,
-			(uint8_t*)"SOUR", 4,
-			(uint8_t*)"OKIDOKI", 7, ex);
-	if (!resp) {
-		res = false;
-		goto del_prim;
-	}
-	res = dlsap_write(dls.peer, resp, false, ex);
-del_prim:
 	del_prim(resp);
-exit:
 	return res;
 }
 
@@ -155,23 +158,27 @@ static bool on_write_dl_test_request(dls_t *_dls, primitive_t *prim,
 {
 	bool res = false;
 	primitive_t *resp;
+	prim_param_t *dstAddr, *srcAddr, *data;
 
-	if (!_dls->peer) {
-		res = true;
-		goto exit;
+	assert(prim);
+	if (_dls->peer) {
+		dstAddr = get_DL_dst_param(prim);
+		assert(dstAddr);
+		srcAddr = get_DL_src_param(prim);
+		assert(srcAddr);
+		data = get_DL_data_param(prim);
+		assert(data);
+
+		resp = new_DL_TEST_Confirmation(prim->serverHandle, prim->clientHandle,
+				get_prim_param_data(srcAddr), get_prim_param_size(srcAddr),
+				get_prim_param_data(dstAddr), get_prim_param_size(dstAddr),
+				get_prim_param_data(data),    get_prim_param_size(data), ex);
+		if (resp)
+			res = dlsap_write(dls.peer, resp, false, ex);
+		else
+			res = false;
 	}
-	resp = new_DL_TEST_Confirmation(prim->clientHandle, 0,
-			(uint8_t*)"DEST", 4,
-			(uint8_t*)"SOUR", 4,
-			(uint8_t*)"OKIDOKI", 7, ex);
-	if (!resp) {
-		res = false;
-		goto del_prim;
-	}
-	res = dlsap_write(dls.peer, resp, false, ex);
-del_prim:
 	del_prim(resp);
-exit:
 	return res;
 }
 

@@ -56,3 +56,7 @@ void mem_free(void *mem) {
 		mm->mem_free(mem);
 }
 
+void mem_chck(void *mem) {
+	if (mm)
+		mm->mem_chck(mem);
+}

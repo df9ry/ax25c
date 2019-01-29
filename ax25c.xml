@@ -44,6 +44,9 @@
 				<Setting name="peer">AX25</Setting>
 				<!-- Max. length of a line -->
 				<Setting name="line_length">132</Setting>
+				<!-- Buffer sizes -->
+				<Setting name="buf_size">64</Setting>
+				<Setting name="buf_reserve">16</Setting>
 				<!-- Local address -->
 				<Setting name="loc_addr">DF9RY</Setting>
 				<!-- Remote address -->

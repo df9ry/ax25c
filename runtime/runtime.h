@@ -197,6 +197,13 @@ extern void mem_lock(void *mem);
 extern void mem_free(void *mem);
 
 /**
+ * @brief Check the integrity of a memory block. Asserts, when memory block is
+ *        overwritten.
+ * @param mem Pointer to the memory to check.
+ */
+extern void mem_chck(void *mem);
+
+/**
  * @brief Structure for registration of a tick listener.
  */
 struct tick_listener {
@@ -217,6 +224,16 @@ extern void registerTickListener(struct tick_listener *l);
  * @param l Tick listener to unregister.
  */
 extern void unregisterTickListener(struct tick_listener *l);
+
+/**
+ * @brief Escape character.
+ */
+extern char escapeChar;
+
+/**
+ * @brief Write leads to colorize output.
+ */
+extern bool writeLeads;
 
 #ifdef __cplusplus
 }
