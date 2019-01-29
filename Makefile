@@ -29,7 +29,7 @@ TARGET   =  ax25c
 OBJS     =  ax25c.o
 
 .PHONY: all
-all: runtime config terminal mm_simple ax25v2_2 $(TARGET)
+all: runtime config terminal mm_simple ax25v2_2 axudp $(TARGET)
 	@echo "** Build ax25c OK ***"
 
 .PHONY: sub
@@ -62,6 +62,10 @@ mm_simple:
 ax25v2_2:
 	$(MAKE) -C $(SRCDIR)/ax25v2_2 all
 
+.PHONY: axudp
+axudp:
+	$(MAKE) -C $(SRCDIR)/axudp all
+
 %.o: %.c %.h Makefile
 	$(CC) $(CFLAGS) -c $<	
 
@@ -80,6 +84,7 @@ clean:
 	@$(MAKE) -C $(SRCDIR)/terminal clean
 	@$(MAKE) -C $(SRCDIR)/mm_simple clean
 	@$(MAKE) -C $(SRCDIR)/ax25v2_2 clean
+	@$(MAKE) -C $(SRCDIR)/axudp clean
 
 .PHONY: cleansub
 cleansub:

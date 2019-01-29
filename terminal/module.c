@@ -27,8 +27,6 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define PLUGIN_NAME "Terminal";
-
 struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
@@ -87,27 +85,7 @@ static struct setting_descriptor instance_settings_descriptor[] = {
 		{ NULL }
 };
 
-static void *get_instance(const char *name,
-		configurator_func configurator, void *context, struct exception *ex)
-{
-	struct instance *instance;
-	assert(name);
-	assert(configurator);
-	instance = (struct instance*)malloc(sizeof(struct instance));
-	assert(instance);
-	instance->name = name;
-	if (!configurator(instance, instance_settings_descriptor, context, ex)) {
-		free(instance);
-		return NULL;
-	}
-	return instance;
-}
-
-
-static bool start_instance(struct instance_handle *plugin) {
-	return true;
-}
-#endif
+ #endif
 
 struct plugin_descriptor plugin_descriptor = {
 		get_plugin,	  (start_func)start_plugin, (stop_func)stop_plugin,

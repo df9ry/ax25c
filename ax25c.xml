@@ -64,6 +64,19 @@
 			AX25 V2.2 state machine.
 		-->
 		<Plugin name="AX25" file="ax25v2_2.so">
+			<Settings>
+				<Setting name="peer">AXUDP-1</Setting>
+			</Settings>
+		</Plugin>
+		
+		<!--
+			AXUDP Uplink.
+		-->
+		<Plugin name="AXUDP" file="ax25c_udp.so">
+			<Instances>
+				<Instance name="AXUDP-1">
+				</Instance>
+			</Instances>
 		</Plugin>
 		
 	</Plugins>
