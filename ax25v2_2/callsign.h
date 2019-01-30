@@ -194,4 +194,23 @@ static inline int getNRepeaters(struct addressField *af)
 		return 2;
 }
 
+/**
+ * @brief Get number of octets required for the address field in a AX25
+ *        frame.
+ * @param af AddressField to investigate.
+ * @return Number of octets.
+ */
+static inline size_t getFrameAddressLength(struct addressField *af)
+{
+	return 14 + getNRepeaters(af) * 7;
+}
+
+/**
+ * @brief Put address field into a frame.
+ * @param af Address Field to put.
+ * @param pframe Pointer to memory to put to.
+ * @return Number of bytes to put.
+ */
+extern size_t putFrameAddress(struct addressField *af, uint8_t *pframe);
+
 #endif /* AX25V2_2_CALLSIGN_H_ */

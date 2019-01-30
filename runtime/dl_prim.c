@@ -32,6 +32,7 @@ primitive_t *new_DL_CONNECT_Request(
 		return NULL;
 	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
 	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
+	mem_chck(prim);
 	return prim;
 }
 
@@ -49,6 +50,7 @@ primitive_t *new_DL_CONNECT_Indication(
 		return NULL;
 	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
 	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
+	mem_chck(prim);
 	return prim;
 }
 
@@ -64,6 +66,7 @@ primitive_t *new_DL_DATA_Request(
 	if (!prim)
 		return NULL;
 	i = put_prim_param(prim, i, pData, sData);
+	mem_chck(prim);
 	return prim;
 }
 
@@ -79,6 +82,7 @@ primitive_t *new_DL_DATA_Indication(
 	if (!prim)
 		return NULL;
 	i = put_prim_param(prim, i, pData, sData);
+	mem_chck(prim);
 	return prim;
 }
 
@@ -98,6 +102,7 @@ primitive_t *new_DL_UNIT_DATA_Request(
 	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
 	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
 	i = put_prim_param(prim, i, pData, sData);
+	mem_chck(prim);
 	return prim;
 }
 
@@ -117,6 +122,7 @@ primitive_t *new_DL_UNIT_DATA_Indication(
 	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
 	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
 	i = put_prim_param(prim, i, pData, sData);
+	mem_chck(prim);
 	return prim;
 }
 
@@ -136,6 +142,7 @@ primitive_t *new_DL_TEST_Request(
 	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
 	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
 	i = put_prim_param(prim, i, pData, sData);
+	mem_chck(prim);
 	return prim;
 }
 
@@ -155,6 +162,7 @@ primitive_t *new_DL_TEST_Indication(
 	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
 	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
 	i = put_prim_param(prim, i, pData, sData);
+	mem_chck(prim);
 	return prim;
 }
 
@@ -174,5 +182,6 @@ primitive_t *new_DL_TEST_Confirmation(
 	i = put_prim_param(prim, i, dstAddrPtr, dstAddrSize);
 	i = put_prim_param(prim, i, srcAddrPtr, srcAddrSize);
 	i = put_prim_param(prim, i, pData, sData);
+	mem_chck(prim);
 	return prim;
 }

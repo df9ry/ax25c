@@ -304,3 +304,26 @@ bool addressFieldToString(const struct addressField *af,
 	strncpy(pb, " ...", cb);
 	return true;
 }
+
+size_t putFrameAddress(struct addressField *af, uint8_t *pframe)
+{
+	size_t res = 14;
+
+	assert(af);
+	assert(pframe);
+	memcpy(pframe, &af->destination, 7);
+	pframe += 7;
+	memcpy(pframe, &af->source, 7);
+	pframe += 7;
+	if (!getXBit(af->source)) {
+		memcpy(pframe, &af->repeaters[0], 7);
+		pframe += 7;
+		res += 7;
+		if (!getXBit(af->repeaters[0])) {
+			memcpy(pframe, &af->repeaters[1], 7);
+			pframe += 7;
+			res += 7;
+		}
+	}
+	return res;
+}
