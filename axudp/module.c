@@ -97,6 +97,7 @@ static bool on_write(dls_t *dls, primitive_t *prim, bool expedited,
 				"on_write", "Session is NULL", "");
 		return false;
 	}
+	dump(DEBUG_LEVEL_DEBUG, prim->payload, prim->size);
 	return true;
 }
 

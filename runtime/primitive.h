@@ -20,6 +20,8 @@
 
 #include "runtime.h"
 
+#include <stringc/stringc.h>
+
 #include <stdint.h>
 #include <unistd.h>
 #include <assert.h>
@@ -51,7 +53,7 @@ typedef enum protocol protocol_t;
  * @brief Base for data primitives.
  */
 struct primitive {
-	uint16_t size;         /**< Total size of the primitive.   */
+	uint16_t size;         /**< Size of the payload.           */
 	uint8_t  protocol;     /**< Protocol, value of protocol_t. */
 	uint8_t  cmd;          /**< Protocol specific command.     */
 	uint16_t clientHandle; /**< Handle assigned by the client. */
@@ -70,17 +72,6 @@ typedef struct primitive primitive_t;
 typedef const uint8_t prim_param_t;
 
 /**
- * @brief Get pointer to payload of a primitive.
- * @param prim Pointer to the primitive.
- * @return Pointer to payload of the primitive.
- */
-static inline void* get_prim_payload(primitive_t *prim)
-{
-	assert(prim);
-	return &prim->payload;
-}
-
-/**
  * @brief Allocate a new prim.
  * @param payload_size Size of the payload.
  * @param protocol Protocol of the prim.
@@ -97,10 +88,10 @@ static inline primitive_t *new_prim(uint16_t payload_size, protocol_t protocol,
 {
 	if (payload_size > MAX_PAYLOAD_SIZE)
 		return NULL;
-	uint16_t size = sizeof(struct primitive) + payload_size;
-	primitive_t *prim = mem_alloc(size, ex);
+	uint16_t total_size = sizeof(struct primitive) + payload_size;
+	primitive_t *prim = mem_alloc(total_size, ex);
 	if (prim) {
-		prim->size = size;
+		prim->size = payload_size;
 		prim->protocol = protocol;
 		prim->cmd = cmd;
 		prim->clientHandle = clientHandle;
@@ -153,28 +144,47 @@ static inline prim_param_t *get_prim_param(primitive_t *prim, uint16_t i)
 
 /**
  * @brief Get size of a prim parameter.
- * @param ptr Pointer to the prim parameter.
+ * @param param Pointer to the prim parameter.
  * @return Size of the prim parameter.
  */
-static inline uint16_t get_prim_param_size(prim_param_t *ptr)
+static inline uint16_t get_prim_param_size(prim_param_t *param)
 {
-	if (ptr)
-		return *((uint16_t*)ptr);
+	if (param)
+		return *((uint16_t*)param);
 	else
 		return 0;
 }
 
 /**
  * @brief Get data of a prim parameter.
- * @param ptr Pointer to the prim parameter.
+ * @param param Pointer to the prim parameter.
  * @return Pointer to the data of the prim parameter.
  */
-static inline const uint8_t *get_prim_param_data(prim_param_t *ptr)
+static inline const uint8_t *get_prim_param_data(prim_param_t *param)
 {
-	if (ptr)
-		return &ptr[2];
+	if (param)
+		return &param[2];
 	else
 		return NULL;
+}
+
+/**
+ * @brief Get data of a prim parameter.
+ * @param param Pointer to the prim parameter.
+ * @param str Pointer to string_t.
+ * @return Pointer to const char *c-string.
+ */
+static inline const char *get_prim_param_cstr(prim_param_t *param,
+		string_t *str)
+{
+	const uint8_t *p = get_prim_param_data(param);
+	uint16_t c = get_prim_param_size(param);
+	assert(str);
+	if (!param)
+		return "";
+	while (c--)
+		string_add_char(str, (char)(*p++));
+	return string_c(str);
 }
 
 /**

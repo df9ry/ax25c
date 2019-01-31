@@ -110,6 +110,21 @@ extern struct configuration configuration;
  */
 extern void ax25c_log(enum debug_level_t dl, const char *fmt, ...);
 
+extern void _dump(enum debug_level_t loglevel, const uint8_t *p, uint32_t c);
+
+/**
+ * @brief Dump data block.
+ * @param loglevel Loglevel for the dump.
+ * @param p Pointer to data to dump.
+ * @param c Number of bytes to dump.
+ */
+static inline void dump (enum debug_level_t loglevel,
+		const uint8_t *p, uint32_t c)
+{
+	if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
+		_dump(loglevel, p, c);
+}
+
 /**
  * @brief DEBUG method.
  * @param msg Message to print.

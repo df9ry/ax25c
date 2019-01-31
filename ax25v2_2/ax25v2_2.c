@@ -20,7 +20,10 @@
 #include "../runtime/dl_prim.h"
 
 #include "_internal.h"
+#include "callsign.h"
 #include "ax25v2_2.h"
+
+#include <stringc/stringc.h>
 
 #include <errno.h>
 #include <assert.h>
@@ -171,28 +174,46 @@ static bool on_write_dl_test_request(dls_t *_dls, primitive_t *prim,
 		struct exception *ex)
 {
 	bool res = false;
-	primitive_t *resp;
+	primitive_t *frame;
 	prim_param_t *dstAddr, *srcAddr, *data;
+	STRING(dst);
+	STRING(src);
+	callsign source;
+	addressField_t af;
+	const char *next;
 
-	assert(prim);
-	if (_dls->peer) {
+	if (server_dls.peer) {
+		assert(prim);
 		dstAddr = get_DL_dst_param(prim);
 		assert(dstAddr);
+		get_prim_param_cstr(dstAddr, &dst);
 		srcAddr = get_DL_src_param(prim);
 		assert(srcAddr);
+		get_prim_param_cstr(srcAddr, &src);
 		data = get_DL_data_param(prim);
 		assert(data);
-
-		resp = new_DL_TEST_Confirmation(prim->serverHandle, prim->clientHandle,
-				get_prim_param_data(srcAddr), get_prim_param_size(srcAddr),
-				get_prim_param_data(dstAddr), get_prim_param_size(dstAddr),
-				get_prim_param_data(data),    get_prim_param_size(data), ex);
-		if (resp)
-			res = dlsap_write(client_dls.peer, resp, false, ex);
-		else
-			res = false;
+		source = callsignFromString(STRING_C(src), &next, ex);
+		if (!source)
+			goto exit;
+		if (*next) {
+			exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
+					"on_write_dl_test_request",
+					"Exceeding characters in source call", STRING_C(src));
+			goto exit;
+		}
+		if (!addressFieldFromString(source, STRING_C(dst), &af, ex))
+			return false;
+		frame = new_AX25_TEST(prim->clientHandle, 0, L3_NPROT, &af, true, true,
+				get_prim_param_data(data), get_prim_param_size(data), ex);
+		if (frame) {
+			res = dlsap_write(server_dls.peer, frame, false, ex);
+			del_prim(frame);
+			res = true;
+		}
 	}
-	del_prim(resp);
+exit:
+	STRING_RESET(dst);
+	STRING_RESET(src);
 	return res;
 }
 

@@ -41,10 +41,11 @@ static inline uint16_t getCrc(uint8_t *p, uint16_t c)
 
 primitive_t *new_AX25_I(
 		uint16_t cH, uint16_t sH,
+		enum L3_PROTOCOL pid,
 		bool modulo128,
 		struct addressField *af,
 		uint8_t nr, uint8_t ns,
-		uint8_t *data, size_t size,
+		const uint8_t *data, size_t size,
 		struct exception *ex)
 {
 	size_t frame_size;
@@ -74,6 +75,7 @@ primitive_t *new_AX25_I(
 		assert(ns < 8);
 		prim->payload[i++] = (nr << 5) | (ns << 1) | 0x10;
 	}
+	prim->payload[i++] = pid;
 	memcpy(&prim->payload[i], data, size);
 	i += size;
 	crc = getCrc(prim->payload, i);
@@ -87,6 +89,7 @@ primitive_t *new_AX25_I(
 primitive_t *new_AX25_Supervisory(
 		uint16_t cH, uint16_t sH,
 		AX25_CMD_t ax25_cmd,
+		enum L3_PROTOCOL pid,
 		bool modulo128,
 		struct addressField *af,
 		uint8_t nr,
@@ -117,6 +120,7 @@ primitive_t *new_AX25_Supervisory(
 		assert(nr < 8);
 		prim->payload[i++] = (nr << 5) | poll ? 0x80 : 0x00;
 	}
+	prim->payload[i++] = pid;
 	crc = getCrc(prim->payload, i);
 	prim->payload[i++] = crc / 0x0100;
 	prim->payload[i++] = crc % 0x0100;
@@ -128,9 +132,10 @@ primitive_t *new_AX25_Supervisory(
 primitive_t *new_AX25_Unnumbered(
 		uint16_t cH, uint16_t sH,
 		AX25_CMD_t ax25_cmd,
+		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		bool cmd, bool poll,
-		uint8_t *data, size_t size,
+		const uint8_t *data, size_t size,
 		struct exception *ex)
 {
 	size_t frame_size;
@@ -159,6 +164,8 @@ primitive_t *new_AX25_Unnumbered(
 		prim->payload[6]  &= 0xef;
 		prim->payload[13] |= 0x10;
 	}
+	prim->payload[i++] = pid;
+	memcpy(&prim->payload[i], data, size);
 	i += size;
 	crc = getCrc(prim->payload, i);
 	prim->payload[i++] = crc / 0x0100;
