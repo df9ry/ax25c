@@ -15,7 +15,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "ringbuffer.h"
+#include "../../runtime/ringbuffer.h"
 
 #include <stdlib.h>
 #include <string.h>
