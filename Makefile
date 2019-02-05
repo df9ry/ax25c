@@ -120,6 +120,26 @@ test: all
 		"--esc:\\" "../$(TARGET).xml"
 	@echo "OK"
 	
+testclient:
+	@echo "Executing Client in _Client"
+	@cp /usr/local/lib/libstringc.$(SOEXT) .
+	@cp /usr/local/lib/libmapc.$(SOEXT) .
+	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
+	@cp -rp ../_Debug ../_Client
+	@LD_LIBRARY_PATH=../_Client ../_Client/$(TARGET) \
+		"--loglevel:DEBUG" "../testclient.xml"
+	@echo "OK"
+	
+testserver:
+	@echo "Executing Server in _Server"
+	@cp /usr/local/lib/libstringc.$(SOEXT) .
+	@cp /usr/local/lib/libmapc.$(SOEXT) .
+	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
+	@cp -rp ../_Debug ../_Server
+	@LD_LIBRARY_PATH=../_Server ../_Server/$(TARGET) \
+		"--loglevel:DEBUG" "../testserver.xml"
+	@echo "OK"
+	
 stop:
 	@echo "Stopping $(TARGET)"
 	@bash -c "kill -s SIGINT `cat $(SRCDIR)/_$(_CONF)/$(TARGET).pid`"

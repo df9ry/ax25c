@@ -70,7 +70,7 @@ primbuffer_t *primbuffer_new(size_t size, struct exception *ex)
 	}
 	pb->size = size;
 	pb->free = size;
-	erc = pthread_spin_init(&pb->spinlock, PTHREAD_PROCESS_PRIVATE);
+	erc = pthread_spin_init(&pb->spinlock, PTHREAD_PROCESS_SHARED);
 	assert(erc == 0);
 	erc = pthread_mutex_init(&pb->cond_lock, NULL);
 	assert(erc == 0);

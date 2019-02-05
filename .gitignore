@@ -1,6 +1,8 @@
 # Project specific
 Documentation/
 _Debug/
+_Server/
+_Client/
 _Release/
 .settings/
 .cproject

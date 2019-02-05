@@ -51,13 +51,44 @@ static void *rx_worker(void *id)
 	struct instance_handle *instance = id;
 	assert(instance);
 	while (instance->alive) {
-		n = read(instance->sockfd, instance->rx_buf, instance->rx_buf_size);
-		if (n < 0) {
-			if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
-				ax25c_log(DEBUG_LEVEL_ERROR,
-						"AXUDP:rx_worker:read() error %i:%s",
-						errno, strerror(errno));
-			continue;
+		if (instance->server_mode) {
+			instance->peer_addr_len = sizeof(struct sockaddr_storage);
+			n = recvfrom(instance->sockfd, instance->rx_buf,
+					instance->rx_buf_size, 0,
+					(struct sockaddr*) &instance->peer_addr,
+					&instance->peer_addr_len);
+			if (n < 0) {
+				if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
+					ax25c_log(DEBUG_LEVEL_ERROR,
+							"AXUDP:rx_worker:recvfrom() error %i:%s",
+							n, gai_strerror(n));
+				continue;
+			}
+			if (configuration.loglevel >= DEBUG_LEVEL_INFO) {
+				char host[NI_MAXHOST], service[NI_MAXSERV];
+				int s = getnameinfo((struct sockaddr*) &instance->peer_addr,
+                        instance->peer_addr_len, host, NI_MAXHOST, service,
+						NI_MAXSERV, NI_NUMERICSERV);
+				if (s == 0) {
+					ax25c_log(DEBUG_LEVEL_INFO,
+							"AXUDP:rx_worker Got %i octets from %s:%s",
+							s, host, service);
+				} else if (configuration.loglevel >= DEBUG_LEVEL_ERROR) {
+					ax25c_log(DEBUG_LEVEL_ERROR,
+							"AXUDP:rx_worker:getnameinfo() error %i:%s",
+							s, gai_strerror(s));
+					continue;
+				}
+			}
+		} else {
+			n = read(instance->sockfd, instance->rx_buf, instance->rx_buf_size);
+			if (n < 0) {
+				if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
+					ax25c_log(DEBUG_LEVEL_ERROR,
+							"AXUDP:rx_worker:read() error %i:%s",
+							errno, strerror(errno));
+				continue;
+			}
 		}
 		if (configuration.loglevel >= DEBUG_LEVEL_DEBUG) {
 			ax25c_log(DEBUG_LEVEL_DEBUG, "Received UDP packet on %s",
@@ -109,18 +140,38 @@ static void *tx_worker(void *id)
 					instance->name);
 			dump(DEBUG_LEVEL_DEBUG, prim->payload, prim->size);
 		}
-		n = write(instance->sockfd, prim->payload, prim->size);
-		if ((n < 0) &&
-				(configuration.loglevel >= DEBUG_LEVEL_ERROR))
-		{
-			ax25c_log(DEBUG_LEVEL_ERROR,
-					"AXUDP:tx_worker:write() error %i:%s",
-					errno, strerror(errno));
-		} else if ((n != prim->size) &&
-				(configuration.loglevel >= DEBUG_LEVEL_ERROR))
-		{
-			ax25c_log(DEBUG_LEVEL_ERROR,
-					"AXUDP:tx_worker:write(): partial:%i <> %i", prim->size, n);
+		if (instance->server_mode) {
+			n = sendto(instance->sockfd, prim->payload, prim->size, 0,
+			                    (struct sockaddr*) &instance->peer_addr,
+			                    instance->peer_addr_len);
+			if ((n < 0) &&
+					(configuration.loglevel >= DEBUG_LEVEL_ERROR))
+			{
+				ax25c_log(DEBUG_LEVEL_ERROR,
+						"AXUDP:tx_worker:sendto() error %i:%s",
+						n, gai_strerror(n));
+			} else if ((n != prim->size) &&
+					(configuration.loglevel >= DEBUG_LEVEL_ERROR))
+			{
+				ax25c_log(DEBUG_LEVEL_ERROR,
+						"AXUDP:tx_worker:sendto(): partial:%i <> %i",
+						prim->size, n);
+			}
+		} else {
+			n = write(instance->sockfd, prim->payload, prim->size);
+			if ((n < 0) &&
+					(configuration.loglevel >= DEBUG_LEVEL_ERROR))
+			{
+				ax25c_log(DEBUG_LEVEL_ERROR,
+						"AXUDP:tx_worker:write() error %i:%s",
+						errno, strerror(errno));
+			} else if ((n != prim->size) &&
+					(configuration.loglevel >= DEBUG_LEVEL_ERROR))
+			{
+				ax25c_log(DEBUG_LEVEL_ERROR,
+						"AXUDP:tx_worker:write(): partial:%i <> %i",
+						prim->size, n);
+			}
 		}
 		del_prim(prim);
 	} /* end while */
@@ -263,7 +314,6 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 	int erc, ip_v;
 	struct addrinfo  hints;
 	struct addrinfo *addrinfo, *rp;
-	bool server_mode;
 
 	DEBUG("axudp instance start", instance->name);
 
@@ -272,9 +322,11 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 
 	/* Determine mode */
 	if (strcmp(instance->mode, "client") == 0) {
-		server_mode = false;
+		instance->server_mode = false;
 	} else if (strcmp(instance->mode, "server") == 0) {
-		server_mode = true;
+		instance->server_mode = true;
+		WARNING("Server mode is partially implemented only!", "");
+		instance->peer_addr_len = 0;
 	} else {
 		exception_fill(ex, EINVAL, MODULE_NAME, "start_instance",
 				"Invalid mode (server|client)", instance->mode);
@@ -339,7 +391,7 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 				rp->ai_protocol);
 		if (instance->sockfd == -1)
 			continue;
-		if (server_mode) {
+		if (instance->server_mode) {
 			if (bind(instance->sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
 				break; /* Success */
 		} else {
@@ -350,13 +402,13 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 	} /* end for */
 	if (!rp) {
 		exception_fill(ex, ENOENT, MODULE_NAME, "start_instance",
-				server_mode ? "bind" : "connect", instance->host);
+				instance->server_mode ? "bind" : "connect", instance->host);
 		return false;
 	}
 	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
 		ax25c_log(DEBUG_LEVEL_DEBUG, "Host \"%s:%s\" resolved to %s %s \"%s\"",
 				instance->host, instance->port,
-				(server_mode ? "server" : "client"),
+				(instance->server_mode ? "server" : "client"),
 				((rp->ai_family == AF_INET6) ? "AF_INET6" : "AF_INET"),
 				rp->ai_canonname);
 	freeaddrinfo(addrinfo);

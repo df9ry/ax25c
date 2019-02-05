@@ -17,7 +17,7 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<Configuration name="TestServer"
+<Configuration name="TestClient"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="http://df9ry.ampr.org/ax25c ax25c.xsd" 
 	xmlns="http://df9ry.ampr.org/ax25c">
@@ -52,7 +52,7 @@
 					<Settings>
 						<Setting name="host">localhost</Setting>
 						<Setting name="port">9300</Setting>
-						<Setting name="mode">server</Setting>
+						<Setting name="mode">client</Setting>
 						<Setting name="ip_version">ip_v4</Setting>
 						<Setting name="tx_buf_size">64</Setting>
 						<Setting name="rx_buf_size">1024</Setting>
