@@ -25,8 +25,8 @@ CFLAGS   = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
 			
 TARGET   = libax25c_runtime.$(SOEXT)
 OBJS     = ax25c_runtime.o memory.o log.o tick.o dlsap.o dl_prim.o \
-			primbuffer.o dump.o exception.o
-LIBS     = -L/usr/local/lib -lmapc -lringbuffer -lstringc -ldl -lpthread
+			primbuffer.o dump.o exception.o ringbuffer.o
+LIBS     = -L/usr/local/lib -lmapc -lstringc -ldl -lpthread
 
 all: $(TARGET)
 	cp $(TARGET) $(SRCDIR)/../_$(_CONF)

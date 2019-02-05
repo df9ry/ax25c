@@ -22,9 +22,7 @@ VPATH    =  $(SRCDIR)
 CFLAGS   =  -Wall -Werror -g -ggdb -fmessage-length=0 -pthread \
 			-I/usr/local/include/
 
-LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF)/ -lax25c_runtime \
-			-L/usr/local/lib/ -lringbuffer \
-			-lpthread
+LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF)/ -lax25c_runtime -lpthread
 TARGET   =  ax25c
 OBJS     =  ax25c.o
 
@@ -37,7 +35,6 @@ sub:
 	@( cd $(SRCDIR)/user_kernel_interface/ && make all )
 	@( cd $(SRCDIR)/stringc/               && make all )
 	@( cd $(SRCDIR)/mapc/                  && make all )
-	@( cd $(SRCDIR)/ringbuffer/            && make all )
 
 $(TARGET): runtime $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
@@ -91,7 +88,6 @@ cleansub:
 	( cd $(SRCDIR)/user_kernel_interface/ && make clean )
 	( cd $(SRCDIR)/stringc/               && make clean )
 	( cd $(SRCDIR)/mapc/                  && make clean )
-	( cd $(SRCDIR)/ringbuffer/            && make clean )
 
 install: all
 
@@ -100,13 +96,11 @@ installsub:
 	@( cd $(SRCDIR)/user_kernel_interface/ && make install )
 	@( cd $(SRCDIR)/stringc/               && make install )
 	@( cd $(SRCDIR)/mapc/                  && make install )
-	@( cd $(SRCDIR)/ringbuffer/            && make install )
 
 run: all
 	@echo "Executing $(TARGET)"
 	@cp /usr/local/lib/libstringc.$(SOEXT) .
 	@cp /usr/local/lib/libmapc.$(SOEXT) .
-	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
 	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:DEBUG" "--pid:$(TARGET).pid" \
 		"../$(TARGET).xml"
 	@echo "OK"
@@ -115,7 +109,6 @@ test: all
 	@echo "Executing $(TARGET)"
 	@cp /usr/local/lib/libstringc.$(SOEXT) .
 	@cp /usr/local/lib/libmapc.$(SOEXT) .
-	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
 	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:NONE" "--pid:$(TARGET).pid" \
 		"--esc:\\" "../$(TARGET).xml"
 	@echo "OK"
@@ -124,7 +117,6 @@ testclient:
 	@echo "Executing Client in _Client"
 	@cp /usr/local/lib/libstringc.$(SOEXT) .
 	@cp /usr/local/lib/libmapc.$(SOEXT) .
-	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
 	@cp -rp ../_Debug ../_Client
 	@LD_LIBRARY_PATH=../_Client ../_Client/$(TARGET) \
 		"--loglevel:DEBUG" "../testclient.xml"
@@ -134,7 +126,6 @@ testserver:
 	@echo "Executing Server in _Server"
 	@cp /usr/local/lib/libstringc.$(SOEXT) .
 	@cp /usr/local/lib/libmapc.$(SOEXT) .
-	@cp /usr/local/lib/libringbuffer.$(SOEXT) .
 	@cp -rp ../_Debug ../_Server
 	@LD_LIBRARY_PATH=../_Server ../_Server/$(TARGET) \
 		"--loglevel:DEBUG" "../testserver.xml"

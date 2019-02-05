@@ -21,8 +21,8 @@
  *        synchonous from asynchronous io.
  */
 
-#ifndef RINGBUFFER_H_
-#define RINGBUFFER_H_
+#ifndef RUNTIME_RINGBUFFER_H_
+#define RUNTIME_RINGBUFFER_H_
 
 #ifdef __cplusplus
 extern "C" {
@@ -196,4 +196,4 @@ extern size_t rb_loose(ringbuffer_t *rb, size_t loose);
 }
 #endif
 
-#endif /* RINGBUFFER_H_ */
+#endif /* RUNTIME_RINGBUFFER_H_ */

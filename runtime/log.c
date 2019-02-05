@@ -22,8 +22,9 @@
 #include <stdarg.h>
 #include <pthread.h>
 #include <assert.h>
-#include <ringbuffer.h>
 #include <signal.h>
+
+#include "../runtime/ringbuffer.h"
 
 #define FORMAT_BUFSIZE 72
 static char format_buffer[FORMAT_BUFSIZE];
