@@ -146,13 +146,9 @@ static bool decodeInt(const char *s, int *val, struct ::exception *ex)
 {
 	assert(s);
 	assert(val);
-	assert(ex);
 	if (sscanf(s, "%i", val) != 1) {
-		ex->erc = EXIT_FAILURE;
-		ex->module = MODULE_NAME;
-		ex->function = "decodeInt";
-		ex->message = "Invalid integer value";
-		ex->param = strbuf(s);
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "decodeInt",
+				"Invalid integer value", s);
 		return false;
 	}
 	return true;
@@ -161,10 +157,8 @@ static bool decodeInt(const char *s, int *val, struct ::exception *ex)
 static bool getInt(DOMNodeList *nodeList, const char *name,
 		int *val, const char *def, struct ::exception *ex)
 {
-	assert(nodeList);
 	assert(name);
 	assert(val);
-	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
 	if (element) {
 		std::string s(fmX1(element->getTextContent()));
@@ -173,11 +167,8 @@ static bool getInt(DOMNodeList *nodeList, const char *name,
 	if (def) {
 		return decodeInt(def, val, ex);
 	}
-	ex->erc = EXIT_FAILURE;
-	ex->module = MODULE_NAME;
-	ex->function = "getInt";
-	ex->message = "Missing mandatory setting";
-	ex->param = name;
+	exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "getInt",
+			"Missing mandatory setting", name);
 	return false;
 }
 
@@ -185,13 +176,9 @@ static bool decodeUInt(const char *s, unsigned int *val, struct ::exception *ex)
 {
 	assert(s);
 	assert(val);
-	assert(ex);
 	if (sscanf(s, "%u", val) != 1) {
-		ex->erc = EXIT_FAILURE;
-		ex->module = MODULE_NAME;
-		ex->function = "decodeUInt";
-		ex->message = "Invalid unsigned value";
-		ex->param = strbuf(s);
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "decodeUInt",
+				"Invalid unsigned value", s);
 		return false;
 	}
 	return true;
@@ -200,10 +187,8 @@ static bool decodeUInt(const char *s, unsigned int *val, struct ::exception *ex)
 static bool getUInt(DOMNodeList *nodeList, const char *name,
 		unsigned int *val, const char *def, struct ::exception *ex)
 {
-	assert(nodeList);
 	assert(name);
 	assert(val);
-	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
 	if (element) {
 		std::string s(fmX1(element->getTextContent()));
@@ -212,11 +197,8 @@ static bool getUInt(DOMNodeList *nodeList, const char *name,
 	if (def) {
 		return decodeUInt(def, val, ex);
 	}
-	ex->erc = EXIT_FAILURE;
-	ex->module = MODULE_NAME;
-	ex->function = "getUInt";
-	ex->message = "Missing mandatory setting";
-	ex->param = name;
+	exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "getUInt",
+			"Missing mandatory setting", name);
 	return false;
 }
 
@@ -225,13 +207,9 @@ static bool decodeSize(const char *s, size_t *val, struct ::exception *ex)
 	const char *fmt = (sizeof(int*) == 8) ? "%lu" : "%u";
 	assert(s);
 	assert(val);
-	assert(ex);
 	if (sscanf(s, fmt, val) != 1) {
-		ex->erc = EXIT_FAILURE;
-		ex->module = MODULE_NAME;
-		ex->function = "decodeSize";
-		ex->message = "Invalid size value";
-		ex->param = strbuf(s);
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "decodeSize",
+				"Invalid size value", s);
 		return false;
 	}
 	return true;
@@ -240,10 +218,8 @@ static bool decodeSize(const char *s, size_t *val, struct ::exception *ex)
 static size_t getSize(DOMNodeList *nodeList, const char *name,
 		size_t *val, const char *def, struct ::exception *ex)
 {
-	assert(nodeList);
 	assert(name);
 	assert(val);
-	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
 	if (element) {
 		std::string s(fmX1(element->getTextContent()));
@@ -252,21 +228,16 @@ static size_t getSize(DOMNodeList *nodeList, const char *name,
 	if (def) {
 		return decodeSize(def, val, ex);
 	}
-	ex->erc = EXIT_FAILURE;
-	ex->module = MODULE_NAME;
-	ex->function = "getSize";
-	ex->message = "Missing mandatory setting";
-	ex->param = name;
+	exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "getSize",
+			"Missing mandatory setting", name);
 	return false;
 }
 
 static bool getCString(DOMNodeList *nodeList, const char *name,
 		const char **val, const char *def, struct ::exception *ex)
 {
-	assert(nodeList);
 	assert(name);
 	assert(val);
-	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
 	if (element) {
 		*val = fmX2(element->getTextContent());
@@ -276,21 +247,16 @@ static bool getCString(DOMNodeList *nodeList, const char *name,
 		*val = strdup(def);
 		return true;
 	}
-	ex->erc = EXIT_FAILURE;
-	ex->module = MODULE_NAME;
-	ex->function = "getCString";
-	ex->message = "Missing mandatory setting";
-	ex->param = name;
+	exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "getCString",
+			"Missing mandatory setting", name);
 	return false;
 }
 
 static bool getDebugLevel(DOMNodeList *nodeList, const char *name,
 		debug_level_t *val, const char *def, struct ::exception *ex)
 {
-	assert(nodeList);
 	assert(name);
 	assert(val);
-	assert(ex);
 	DOMElement *element = findElement(nodeList, name);
 	std::string _val = "";
 	if (element) {
@@ -298,21 +264,15 @@ static bool getDebugLevel(DOMNodeList *nodeList, const char *name,
 	} else if (def) {
 		_val = def;
 	} else {
-		ex->erc = EXIT_FAILURE;
-		ex->module = MODULE_NAME;
-		ex->function = "getDebugLevel";
-		ex->message = "Missing mandatory setting";
-		ex->param = name;
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "getDebugLevel",
+				"Missing mandatory setting", name);
 		return false;
 	}
 	if (_val != "-") {
 		debug_level_t debug_level = decodeDebugLevel(_val.c_str());
 		if (debug_level < 0) {
-			ex->erc = EXIT_FAILURE;
-			ex->module = MODULE_NAME;
-			ex->function = "getDebugLevel";
-			ex->message = "Invalid debug level";
-			ex->param = strbuf(_val.c_str());
+			exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "getDebugLevel",
+					"Invalid debug level", _val.c_str());
 			return false;
 		}
 		*val = debug_level;
@@ -323,7 +283,6 @@ static bool getDebugLevel(DOMNodeList *nodeList, const char *name,
 static bool getString(DOMNodeList *nodeList, const char *name,
 		struct ::string *val, const char *def, struct ::exception *ex)
 {
-	assert(nodeList);
 	assert(name);
 	assert(val);
 	assert(ex);
@@ -336,11 +295,8 @@ static bool getString(DOMNodeList *nodeList, const char *name,
 		string_set_c(val, def);
 		return true;
 	}
-	ex->erc = EXIT_FAILURE;
-	ex->module = MODULE_NAME;
-	ex->function = "getCString";
-	ex->message = "Missing mandatory setting";
-	ex->param = name;
+	exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "getCString",
+			"Missing mandatory setting", name);
 	return false;
 }
 
@@ -403,20 +359,14 @@ static bool configurator(void *handle, struct setting_descriptor *descriptor,
 				DEBUG(name, ::string_c((struct ::string*)ptr));
 				break;
 			default:
-				ex->erc = EXIT_FAILURE;
-				ex->module = MODULE_NAME;
-				ex->function = "configurator";
-				ex->message = "Invalid data type";
-				ex->param = "";
+				exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configurator",
+						"Invalid data type", "");
 				return false;
 			} // end switch //
 		}
 		catch (std::exception& _ex) {
-			ex->erc = EXIT_FAILURE;
-			ex->module = MODULE_NAME;
-			ex->function = "configurator";
-			ex->message = _ex.what();
-			ex->param = "";
+			exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configurator",
+					_ex.what(), "");
 			return false;
 		}
 		++descriptor;
@@ -545,13 +495,8 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 			configuration.loglevel = decodeDebugLevel(s);
 			INFO("Set loglevel", s);
 			if (configuration.loglevel < 0) {
-				if (ex) {
-					ex->erc = EXIT_FAILURE;
-					ex->message = "Invalid debug level";
-					ex->param = s;
-					ex->module = MODULE_NAME;
-					ex->function = "configure";
-				}
+				exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configure",
+						"Invalid debug level", "");
 				return false;
 			}
 		} else if (strncmp(argv[1], "--pid:", 6) == 0) {
@@ -565,23 +510,13 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 				stream.close();
 			}
 			catch(std::exception &_ex) {
-				if (ex) {
-					ex->erc = EXIT_FAILURE;
-					ex->message = strbuf(_ex.what());
-					ex->param = s;
-					ex->module = MODULE_NAME;
-					ex->function = "configure";
-				}
+				exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configure",
+						_ex.what(), "");
 				return false;
 			}
 			catch(...) {
-				if (ex) {
-					ex->erc = EXIT_FAILURE;
-					ex->message = "IO Error";
-					ex->param = s;
-					ex->module = MODULE_NAME;
-					ex->function = "configure";
-				}
+				exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configure",
+						"IO_Error", "");
 				return false;
 			}
 		} else if (strncmp(argv[1], "--esc:", 6) == 0) {
@@ -589,13 +524,8 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 		} else if (strncmp(argv[1], "--noleads", 9) == 0) {
 			writeLeads = false;
 		} else {
-			if (ex) {
-				ex->erc = EXIT_FAILURE;
-				ex->message = "Invalid argument";
-				ex->param = argv[1];
-				ex->module = MODULE_NAME;
-				ex->function = "configure";
-			}
+			exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configure",
+					"Invalid argument", argv[1]);
 			return false;
 		}
 		DEBUG("argv[1]=", argv[1]);
@@ -644,23 +574,13 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 	    result = readConfig(element, conf, ex);
 	}
 	catch (const std::exception& _ex) {
-		if (ex) {
-			ex->erc = EXIT_FAILURE;
-			ex->message = _ex.what();
-			ex->param = "";
-			ex->module = MODULE_NAME;
-			ex->function = "configure";
-		}
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configure",
+				_ex.what(), argv[1]);
 		result = false;
 	}
 	catch (...) {
-		if (ex) {
-			ex->erc = EXIT_FAILURE;
-			ex->message = "Unknown error";
-			ex->param = "";
-			ex->module = MODULE_NAME;
-			ex->function = "configure";
-		}
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configure",
+				"Unknown error", argv[1]);
 		result = false;
 	}
 	XMLPlatformUtils::Terminate();

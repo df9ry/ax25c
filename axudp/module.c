@@ -16,12 +16,14 @@
  */
 
 #include "../config/configuration.h"
+#include "../runtime/primbuffer.h"
 #include "../runtime/runtime.h"
 #include "../runtime/dlsap.h"
 
 #include "_internal.h"
 
 #include <errno.h>
+#include <signal.h>
 #include <assert.h>
 
 struct plugin_handle plugin;
@@ -31,8 +33,99 @@ static struct setting_descriptor plugin_settings_descriptor[] = {
 };
 
 static struct setting_descriptor instance_settings_descriptor[] = {
+		{ "host",        CSTR_T, offsetof(struct instance_handle, host),        "localhost" },
+		{ "port",        CSTR_T, offsetof(struct instance_handle, port),        "9300"      },
+		{ "tx_buf_size", UINT_T, offsetof(struct instance_handle, tx_buf_size), "64"        },
+		{ "rx_buf_size", UINT_T, offsetof(struct instance_handle, rx_buf_size), "256"       },
+		{ "mode",        CSTR_T, offsetof(struct instance_handle, mode),        "client"    },
+		{ "ip_version",  CSTR_T, offsetof(struct instance_handle, ip_version),  "any"       },
 		{ NULL }
 };
+
+static void *rx_worker(void *id)
+{
+	int n;
+	primitive_t *prim;
+	EXCEPTION(ex);
+
+	struct instance_handle *instance = id;
+	assert(instance);
+	while (instance->alive) {
+		n = read(instance->sockfd, instance->rx_buf, instance->rx_buf_size);
+		if (n < 0) {
+			if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
+				ax25c_log(DEBUG_LEVEL_ERROR,
+						"AXUDP:rx_worker:read() error %i:%s",
+						errno, strerror(errno));
+			continue;
+		}
+		if (configuration.loglevel >= DEBUG_LEVEL_DEBUG) {
+			ax25c_log(DEBUG_LEVEL_DEBUG, "Received UDP packet on %s",
+					instance->name);
+			dump(DEBUG_LEVEL_DEBUG, instance->rx_buf, (uint16_t)n);
+		}
+		if (!instance->dls.peer)
+			continue;
+		prim = new_prim(n, AX25, -1, 0, 0, &ex);
+		if (!prim) {
+			if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
+				ax25c_log(DEBUG_LEVEL_ERROR,
+						"AXUDP:rx_worker:new_prim: Error no %i[%s] in %s:%s: %s[%s]",
+						ex.erc, strerror(ex.erc),
+						STRING_C(ex.module), STRING_C(ex.function),
+						STRING_C(ex.message), STRING_C(ex.param));
+			continue;
+		}
+		memcpy(prim->payload, instance->rx_buf, prim->size);
+		if (!dlsap_write(instance->dls.peer, prim, false, &ex)) {
+			ax25c_log(DEBUG_LEVEL_ERROR,
+					"AXUDP:rx_worker:dlsap_write: Error no %i[%s] in %s:%s: %s[%s]",
+					ex.erc, strerror(ex.erc),
+					STRING_C(ex.module), STRING_C(ex.function),
+					STRING_C(ex.message), STRING_C(ex.param));
+			continue;
+		}
+	} /* end while */
+	return NULL;
+}
+
+static void *tx_worker(void *id)
+{
+	struct instance_handle *instance = id;
+	primitive_t *prim;
+	int n;
+
+	assert(instance);
+	while (instance->alive) {
+		prim = primbuffer_read_block(instance->primbuf, NULL);
+		if (!(prim && instance->alive))
+			continue;
+		if (prim->protocol != AX25) {
+			ERROR("AXUDP:tx_worker", "Protocol != AX.25");
+			continue;
+		}
+		if (configuration.loglevel >= DEBUG_LEVEL_DEBUG) {
+			ax25c_log(DEBUG_LEVEL_DEBUG, "Send UDP packet on %s",
+					instance->name);
+			dump(DEBUG_LEVEL_DEBUG, prim->payload, prim->size);
+		}
+		n = write(instance->sockfd, prim->payload, prim->size);
+		if ((n < 0) &&
+				(configuration.loglevel >= DEBUG_LEVEL_ERROR))
+		{
+			ax25c_log(DEBUG_LEVEL_ERROR,
+					"AXUDP:tx_worker:write() error %i:%s",
+					errno, strerror(errno));
+		} else if ((n != prim->size) &&
+				(configuration.loglevel >= DEBUG_LEVEL_ERROR))
+		{
+			ax25c_log(DEBUG_LEVEL_ERROR,
+					"AXUDP:tx_worker:write(): partial:%i <> %i", prim->size, n);
+		}
+		del_prim(prim);
+	} /* end while */
+	return NULL;
+}
 
 static bool dls_open(dls_t *_dls, dls_t *receiver, struct exception *ex);
 static void dls_close(dls_t *_dls);
@@ -93,11 +186,15 @@ static bool on_write(dls_t *dls, primitive_t *prim, bool expedited,
 	}
 	struct instance_handle *instance = dls->session;
 	if (!instance) {
-		exception_fill(ex, EINVAL, MODULE_NAME,
-				"on_write", "Session is NULL", "");
+		exception_fill(ex, EINVAL, MODULE_NAME, "on_write", "Session is NULL",
+				"");
 		return false;
 	}
-	dump(DEBUG_LEVEL_DEBUG, prim->payload, prim->size);
+	if (!primbuffer_write_nonblock(instance->primbuf, prim, expedited)) {
+		exception_fill(ex, ENOMEM, MODULE_NAME, "on_write", "Buffer overflow",
+				"");
+		return false;
+	}
 	return true;
 }
 
@@ -131,7 +228,6 @@ static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 
 static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
-	assert(ex);
 	DEBUG("axudp stop", plugin->name);
 	return true;
 }
@@ -161,17 +257,156 @@ static void *get_instance(const char *name,
 	return instance;
 }
 
-static bool start_instance(struct instance_handle *instance,
-		struct exception *ex)
+static bool start_instance(struct instance_handle *instance, exception_t *ex)
 {
+	pthread_attr_t thread_args;
+	int erc, ip_v;
+	struct addrinfo  hints;
+	struct addrinfo *addrinfo, *rp;
+	bool server_mode;
+
 	DEBUG("axudp instance start", instance->name);
-	return true;
+
+	instance->rx_thread_running = false;
+	instance->tx_thread_running = false;
+
+	/* Determine mode */
+	if (strcmp(instance->mode, "client") == 0) {
+		server_mode = false;
+	} else if (strcmp(instance->mode, "server") == 0) {
+		server_mode = true;
+	} else {
+		exception_fill(ex, EINVAL, MODULE_NAME, "start_instance",
+				"Invalid mode (server|client)", instance->mode);
+		return false;
+	}
+
+	/* Determine ip_v */
+	if (strcmp(instance->ip_version, "any") == 0) {
+		ip_v = 0;
+	} else if (strcmp(instance->ip_version, "ip_v4") == 0) {
+		ip_v = 4;
+	} else if (strcmp(instance->ip_version, "ip_v6") == 0) {
+		ip_v = 6;
+	} else {
+		exception_fill(ex, EINVAL, MODULE_NAME, "start_instance",
+				"Invalid ip_version (ip_v4|ip_v6|any)", instance->ip_version);
+		return false;
+	}
+
+	/* Allocate buffers */
+	instance->primbuf = primbuffer_new(instance->tx_buf_size, ex);
+	if (!instance->primbuf)
+		return false;
+	instance->rx_buf = malloc(instance->rx_buf_size);
+	if (!instance->rx_buf) {
+		exception_fill(ex, ENOMEM, MODULE_NAME, "start_instance",
+				"Unable to allocate rx buffer", "");
+		primbuffer_del(instance->primbuf);
+		instance->primbuf = NULL;
+		return false;
+	}
+
+	/* Open connection */
+	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
+		ax25c_log(DEBUG_LEVEL_DEBUG, "Resolving host \"%s:%s\"",
+				instance->host, instance->port);
+	memset(&hints, 0x00, sizeof(hints));
+	switch (ip_v) {
+	case 4:
+		hints.ai_family   = AF_INET;
+		break;
+	case 6:
+		hints.ai_family   = AF_INET6;
+		break;
+	default:
+		hints.ai_family   = AF_UNSPEC;
+		break;
+	}
+	hints.ai_socktype = SOCK_DGRAM;
+	hints.ai_protocol = 0;
+	hints.ai_flags    = AI_CANONNAME | AI_ADDRCONFIG;
+	erc = getaddrinfo(
+			(strlen(instance->host) == 0) ? NULL : instance->host,
+			instance->port, &hints, &addrinfo);
+	if (erc != 0) {
+		exception_fill(ex, erc, MODULE_NAME, "start_instance:getaddrinfo",
+				gai_strerror(erc), instance->host);
+		return false;
+	}
+	for (rp = addrinfo; rp != NULL; rp = rp->ai_next) {
+		instance->sockfd = socket(rp->ai_family, rp->ai_socktype,
+				rp->ai_protocol);
+		if (instance->sockfd == -1)
+			continue;
+		if (server_mode) {
+			if (bind(instance->sockfd, rp->ai_addr, rp->ai_addrlen) == 0)
+				break; /* Success */
+		} else {
+			if (connect(instance->sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
+				break; /* Success */
+		}
+	   close(instance->sockfd);
+	} /* end for */
+	if (!rp) {
+		exception_fill(ex, ENOENT, MODULE_NAME, "start_instance",
+				server_mode ? "bind" : "connect", instance->host);
+		return false;
+	}
+	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
+		ax25c_log(DEBUG_LEVEL_DEBUG, "Host \"%s:%s\" resolved to %s \"%s\"",
+				instance->host, instance->port,
+				((rp->ai_family == AF_INET6) ? "AF_INET6" : "AF_INET"),
+				rp->ai_canonname);
+	freeaddrinfo(addrinfo);
+
+	/* Start threads */
+	instance->alive = true;
+	pthread_attr_init(&thread_args);
+	pthread_attr_setdetachstate(&thread_args, PTHREAD_CREATE_JOINABLE);
+	erc = pthread_create(&instance->rx_thread, &thread_args, rx_worker, instance);
+	if (erc != 0) {
+		exception_fill(ex, erc, MODULE_NAME, "start_instance",
+				"Error creating rx_thread", instance->name);
+		instance->rx_thread_running = true;
+		instance->alive = false;
+	}
+	erc = pthread_create(&instance->tx_thread, &thread_args, tx_worker, instance);
+	if (erc != 0) {
+		exception_fill(ex, erc, MODULE_NAME, "start_instance",
+				"Error creating tx_thread", instance->name);
+		instance->tx_thread_running = true;
+		instance->alive = false;
+	}
+	pthread_attr_destroy(&thread_args);
+	return instance->alive;
 }
 
-static bool stop_instance(struct instance_handle *instance, struct exception *ex) {
+static bool stop_instance(struct instance_handle *instance, exception_t *ex) {
 	assert(instance);
-	assert(ex);
+
 	DEBUG("axudp instance stop", instance->name);
+	instance->alive = false;
+	if (instance->rx_thread_running) {
+		pthread_kill(instance->rx_thread, SIGINT);
+		instance->rx_thread_running = false;
+	}
+	if (instance->tx_thread_running) {
+		pthread_kill(instance->tx_thread, SIGINT);
+		instance->rx_thread_running = false;
+	}
+	if (instance->primbuf) {
+		primbuffer_del(instance->primbuf);
+		instance->primbuf = NULL;
+	}
+	if (instance->rx_buf) {
+		free(instance->rx_buf);
+		instance->rx_buf = NULL;
+	}
+	if (instance->sockfd != -1) {
+		close(instance->sockfd);
+		instance->sockfd = -1;
+	}
 	return true;
 }
 

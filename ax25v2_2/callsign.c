@@ -31,20 +31,6 @@ union _callsign {
 	uint8_t octets[7];
 };
 
-static void fillEx(struct exception *ex, const char *fn, const char *msg,
-					const char *par, int erc)
-{
-	assert(fn);
-	assert(msg);
-	if (ex) {
-		ex->erc = erc;
-		ex->module = MODULE_NAME;
-		ex->function = fn;
-		ex->message = msg;
-		ex->param = par ? par : "";
-	}
-}
-
 static uint8_t getOctetOfChar(char ch)
 {
 
@@ -85,16 +71,14 @@ callsign callsignFromString(const char *str, const char **next,
 			break;
 		}
 		if (i > 5) {
-			fillEx(ex, "callsignFromString",
-					"Callsign too long (max. 6 characters)", _str,
-					EXIT_FAILURE);
+			exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "callsignFromString",
+					"Callsign too long (max. 6 characters)", _str);
 			return 0;
 		}
 		octet = getOctetOfChar(*str);
 		if (octet == 0) {
-			fillEx(ex, "callsignFromString",
-					"Invalid callsign character", _str,
-					EXIT_FAILURE);
+			exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "callsignFromString",
+					"Invalid callsign character", _str);
 			return 0;
 		}
 		c.octets[i] = octet;
@@ -102,9 +86,8 @@ callsign callsignFromString(const char *str, const char **next,
 		++i;
 	} /* end while */
 	if (i == 0) {
-		fillEx(ex, "callsignFromString",
-				"Callsign too short (min. 1 character)", _str,
-				EXIT_FAILURE);
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "callsignFromString",
+				"Callsign too short (min. 1 character)", _str);
 		return 0;
 	}
 	while (i < 6) {
@@ -114,9 +97,8 @@ callsign callsignFromString(const char *str, const char **next,
 	if (with_uuid) {
 		_ssid = strtol(str, &_call, 0);
 		if ((_ssid < 0) || (_ssid >= 16)) {
-			fillEx(ex, "callsignFromString",
-					"SSID is out of range (0..15)", _str,
-					EXIT_FAILURE);
+			exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "callsignFromString",
+					"SSID is out of range (0..15)", _str);
 			return 0;
 		}
 	} else {
@@ -132,7 +114,7 @@ callsign callsignFromString(const char *str, const char **next,
 static int __tooShort(const char *func, struct exception *ex)
 {
 	assert(func);
-	fillEx(ex, func, "Buffer too short", NULL, EXIT_FAILURE);
+	exception_fill(ex, EXIT_FAILURE, MODULE_NAME, func, "Buffer too short", "");
 	return -1;
 }
 
@@ -224,25 +206,15 @@ bool addressFieldFromString(callsign source, const char *dest,
 	}
 
 	/* Error */
-	if (ex) {
-		ex->erc = EXIT_FAILURE;
-		ex->module = MODULE_NAME;
-		ex->function = "addressFieldFromString";
-		ex->message = "Too many repeaters (max. 2)";
-		ex->param = dest;
-	}
+	exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "addressFieldFromString",
+			"Too many repeaters (max. 2)", dest);
 	return false;
 
 done:
 	if (next[0]) {
 		/* Error */
-		if (ex) {
-			ex->erc = EXIT_FAILURE;
-			ex->module = MODULE_NAME;
-			ex->function = "addressFieldFromString";
-			ex->message = "Exceeding characters after callsign";
-			ex->param = dest;
-		}
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "addressFieldFromString",
+				"Exceeding characters after callsign", dest);
 		return false;
 
 	}

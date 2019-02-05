@@ -34,7 +34,7 @@ static inline void _dump_segment(enum debug_level_t loglevel,
 	uint16_t i, j;
 	char ch;
 
-	i = snprintf(buffer, BUFSIZE, "%016x ", a);
+	i = snprintf(buffer, BUFSIZE, "%08x ", a);
 	j = 0;
 	for (; j < c; ++j) {
 		assert(i+4 < BUFSIZE);
@@ -42,7 +42,7 @@ static inline void _dump_segment(enum debug_level_t loglevel,
 	} /* end for */
 	ax25c_log(loglevel, "%s", buffer);
 
-	i = snprintf(buffer, BUFSIZE, "                 ");
+	i = snprintf(buffer, BUFSIZE, "         ");
 	j = 0;
 	for (; j < c; ++j) {
 		assert(i+4 < BUFSIZE);

@@ -75,6 +75,14 @@
 		<Plugin name="AXUDP" file="ax25c_udp.so">
 			<Instances>
 				<Instance name="AXUDP-1">
+					<Settings>
+						<Setting name="host">db0fhn.efi.fh-nuernberg.de</Setting>
+						<Setting name="port">9300</Setting>
+						<Setting name="mode">client</Setting>
+						<Setting name="ip_version">any</Setting>
+						<Setting name="tx_buf_size">64</Setting>
+						<Setting name="rx_buf_size">1024</Setting>
+					</Settings>
 				</Instance>
 			</Instances>
 		</Plugin>

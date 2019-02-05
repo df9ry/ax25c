@@ -58,11 +58,8 @@ static void *mem_alloc_impl(uint32_t cb, struct exception *ex)
 	assert(pthread_mutex_lock(&lock) == 0);
 	mem = malloc(sizeof(struct mem) + size + sizeof(uint16_t));
 	assert(pthread_mutex_unlock(&lock) == 0);
-	if ((!mem) && ex) {
-		ex->erc = ENOMEM;
-		ex->function = "mem_alloc";
-		ex->module = PLUGIN_NAME;
-		ex->param = "";
+	if (!mem) {
+		exception_fill(ex, ENOMEM, PLUGIN_NAME, "mem_alloc", "Out of memory", "");
 		return NULL;
 	}
 	mem->head = HEAD;

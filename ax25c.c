@@ -47,7 +47,7 @@ static void handle_signal(int signal) {
 }
 
 int main(int argc, char *argv[]) {
-	struct exception ex;
+	EXCEPTION(ex);
 
 	runtime_initialize();
 
@@ -60,18 +60,14 @@ int main(int argc, char *argv[]) {
 		void *module_handle;
 		config_func_t configure;
 
-		if (!load_so("ax25c_config.so", &module_handle, &ex)) {
+		if (!load_so("ax25c_config.so", &module_handle, &ex))
 			return print_ex(&ex);
-		}
-		if (!getsym_so(module_handle, "configure", (void **)&configure, &ex)) {
+		if (!getsym_so(module_handle, "configure", (void **)&configure, &ex))
 			return print_ex(&ex);
-		}
-		if (!configure(argc, argv, &configuration, &ex)) {
+		if (!configure(argc, argv, &configuration, &ex))
 			return print_ex(&ex);
-		}
-		if (!unload_so(module_handle, &ex)) {
+		if (!unload_so(module_handle, &ex))
 			return print_ex(&ex);
-		}
 	}
 
 	/* Start: */

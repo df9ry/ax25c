@@ -230,13 +230,13 @@ static void test(void)
 	if (!prim) {
 		state = S_ERR;
 		new_line();
-		out_str(ex.message);
+		out_str(STRING_C(ex.message));
 		goto done;
 	}
 	if (!dlsap_write(peerDLS(), prim, false, &ex)) {
 		state = S_ERR;
 		new_line();
-		out_str(ex.message);
+		out_str(STRING_C(ex.message));
 	}
 	del_prim(prim);
 done:
@@ -262,13 +262,13 @@ static void ui(void)
 	if (!prim) {
 		state = S_ERR;
 		new_line();
-		out_str(ex.message);
+		out_str(STRING_C(ex.message));
 		goto done;
 	}
 	if (!dlsap_write(peerDLS(), prim, false, &ex)) {
 		state = S_ERR;
 		new_line();
-		out_str(ex.message);
+		out_str(STRING_C(ex.message));
 	}
 	del_prim(prim);
 done:
@@ -309,7 +309,7 @@ static void onCmdI(void)
 		} else {
 			state = S_ERR;
 			new_line();
-			out_str(ex.message);
+			out_str(STRING_C(ex.message));
 		}
 	}
 	i_read_buf = 0;
@@ -340,7 +340,7 @@ static void onCmdR(void)
 		} else {
 			state = S_ERR;
 			new_line();
-			out_str(ex.message);
+			out_str(STRING_C(ex.message));
 		}
 	}
 	i_read_buf = 0;
@@ -371,7 +371,7 @@ static void onCmdC(void)
 		} else {
 			state = S_ERR;
 			new_line();
-			out_str(ex.message);
+			out_str(STRING_C(ex.message));
 		}
 	}
 	connect();
@@ -403,7 +403,7 @@ static void onCmdT(void)
 		} else {
 			state = S_ERR;
 			new_line();
-			out_str(ex.message);
+			out_str(STRING_C(ex.message));
 			state = S_TXT;
 			new_line();
 			return;
@@ -436,11 +436,11 @@ static void onCmdU(void)
 			state = S_INF;
 			new_line();
 			out_str("UI ");
-			out_str(string_c(&plugin.rem_addr));
+			out_str(STRING_C(plugin.rem_addr));
 		} else {
 			state = S_ERR;
 			new_line();
-			out_str(ex.message);
+			out_str(STRING_C(ex.message));
 			state = S_TXT;
 			new_line();
 			return;

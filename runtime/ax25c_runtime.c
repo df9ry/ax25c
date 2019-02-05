@@ -42,10 +42,10 @@ bool writeLeads = true;
 
 int print_ex(struct exception *ex)
 {
-	if (!ex) {
-		return EXIT_SUCCESS;
-	}
 	const char* erm;
+
+	if (!ex)
+		return EXIT_SUCCESS;
 
 	switch (ex->erc) {
 	case EXIT_SUCCESS :
@@ -61,10 +61,10 @@ int print_ex(struct exception *ex)
 	fprintf(stderr, "Function \"%s\" in module \"%s\""
 					" throwed exception \"%s[%s]\""
 			        " with error code %i[%s]\n",
-			(ex->function) ? ex->function : "unknown",
-			(ex->module)   ? ex->module   : "unknown",
-			(ex->message)  ? ex->message  : "error",
-			(ex->param)    ? ex->param    : "",
+			STRING_C(ex->function),
+			STRING_C(ex->module),
+			STRING_C(ex->message),
+			STRING_C(ex->param),
 			ex->erc, erm);
 	return ex->erc;
 }
@@ -90,13 +90,7 @@ bool load_so(const char *name, void **handle, struct exception *ex)
 	dlerror();
 	*handle = dlopen(name, RTLD_NOW);
 	if (!*handle) {
-		if (ex) {
-			ex->erc = EXIT_FAILURE;
-			ex->message = dlerror();
-			ex->param = name;
-			ex->module = MODULE_NAME;
-			ex->function = "load_so";
-		}
+		exception_fill(ex, errno, MODULE_NAME, "load_so", dlerror(), name);
 		return false;
 	}
 	return true;
@@ -110,13 +104,7 @@ bool getsym_so(void *handle, const char *name, void ** addr, struct exception *e
 	dlerror();
 	*addr = dlsym(handle, name);
 	if (!*addr) {
-		if (ex) {
-			ex->erc = EXIT_FAILURE;
-			ex->message = dlerror();
-			ex->param = name;
-			ex->module = MODULE_NAME;
-			ex->function = "getsym_so";
-		}
+		exception_fill(ex, errno, MODULE_NAME, "getsym_so", dlerror(), name);
 		return false;
 	}
 	return true;
@@ -129,13 +117,7 @@ bool unload_so(void *module, struct exception *ex)
 		dlerror();
 		erc = dlclose(module);
 		if (erc) {
-			if (ex) {
-				ex->erc = erc;
-				ex->message = dlerror();
-				ex->param = "";
-				ex->module = MODULE_NAME;
-				ex->function = "unload_so";
-			}
+			exception_fill(ex, erc, MODULE_NAME, "unload_so", dlerror(), "");
 			return false;
 		}
 	}
@@ -241,11 +223,12 @@ bool start(struct exception *ex)
 	DEBUG("alive", "true");
 	mapc_foreach(&configuration.plugins, start_plugin, ex);
 	if (ex->erc != EXIT_SUCCESS) {
-		struct exception ex1;
+		EXCEPTION(ex1);
 		ex1.erc = EXIT_SUCCESS;
 		stop(&ex1);
 		if (ex1.erc != EXIT_SUCCESS)
 			print_ex(&ex1);
+		EXCEPTION_RESET(ex1);
 		return false;
 	}
 	return (ex->erc == EXIT_SUCCESS);

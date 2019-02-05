@@ -20,7 +20,15 @@
 
 #include "../runtime/dlsap.h"
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netdb.h>
+#include <pthread.h>
+
 #define MODULE_NAME "AXUDP"
+
+struct primbuffer;
 
 struct plugin_handle {
 	const char  *name;
@@ -28,8 +36,23 @@ struct plugin_handle {
 
 struct instance_handle {
 	const char  *name;
+	dls_t              dls;
 	/***/
-	dls_t dls;
+	const char        *host;
+	const char        *port;
+	size_t             tx_buf_size;
+	size_t             rx_buf_size;
+	const char        *mode;
+	const char        *ip_version;
+	/***/
+	volatile bool      alive;
+	struct primbuffer *primbuf;
+	uint8_t           *rx_buf;
+	bool               rx_thread_running;
+	pthread_t          rx_thread;
+	bool               tx_thread_running;
+	pthread_t          tx_thread;
+	int                sockfd;
 };
 
 #endif /* AXUDP__INTERNAL_H_ */

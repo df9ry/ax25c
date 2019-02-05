@@ -23,6 +23,9 @@
 #ifndef RUNTIME_EXCEPTION_H_
 #define RUNTIME_EXCEPTION_H_
 
+#include <stringc/stringc.h>
+#include <unistd.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -31,12 +34,23 @@ extern "C" {
  * @brief Data structure to be filled out in case of an exception.
  */
 struct exception {
-	int   erc;            /**< Error code                                */
-	const char *module;   /**< Name of the module causing the exception. */
-	const char *function; /**< Name of the function that failed.         */
-	const char *message;  /**< Error message text.                       */
-	const char *param;    /**< Additional information, if available.     */
+	int   erc;         /**< Error code                                */
+	string_t module;   /**< Name of the module causing the exception. */
+	string_t function; /**< Name of the function that failed.         */
+	string_t message;  /**< Error message text.                       */
+	string_t param;    /**< Additional information, if available.     */
 };
+
+/**
+ * @brief Macro to define an exception.
+ * @param NAME Variable name.
+ */
+#define EXCEPTION(NAME) struct exception NAME = { \
+	.erc = EXIT_SUCCESS, \
+	.module.cb   = 0, .module.pc   = NULL, \
+	.function.cb = 0, .function.pc = NULL, \
+	.message.cb  = 0, .message.pc  = NULL, \
+	.param.cb    = 0, .param.pc    = NULL, }
 
 /**
  * @brief Exception type.
@@ -51,17 +65,30 @@ typedef struct exception exception_t;
  * @param message  Error message text.
  * @param param    Additional information, if available.
  */
-static inline void exception_fill(exception_t *ex, int erc, const char *module,
-		const char *function, const char *message, const char *param)
+extern void exception_fill(exception_t *ex, int erc, const char *module,
+		const char *function, const char *message, const char *param);
+
+/**
+ * @brief Reset exception. Must be called before exception memory is freed,
+ *        otherwise memory may be leaked.
+ * @param ex Exception to reset.
+ */
+static inline void exception_reset(exception_t *ex)
 {
 	if (ex) {
-		ex->erc = erc;
-		ex->module = module ? module : "Unknown";
-		ex->function = function ? function : "Unknown";
-		ex->message = message ? message : "No message";
-		ex->param = param ? param : "None";
+		STRING_RESET(ex->module  );
+		STRING_RESET(ex->function);
+		STRING_RESET(ex->message );
+		STRING_RESET(ex->param   );
 	}
 }
+
+/**
+ * @brief Reset exception. Must be called before exception memory is freed,
+ *        otherwise memory may be leaked.
+ * @param ex Exception to reset.
+ */
+#define EXCEPTION_RESET(EX) exception_reset(&EX)
 
 #ifdef __cplusplus
 }

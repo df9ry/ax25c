@@ -73,11 +73,7 @@ bool tick(struct exception *ex)
 	assert(initialized);
 	assert(ex);
 	if (!isAlive()) {
-		ex->erc = EXIT_SUCCESS;
-		ex->message = "Normal shutdown";
-		ex->param = "";
-		ex->module = MODULE_NAME;
-		ex->function = "tick";
+		exception_fill(ex, EXIT_SUCCESS, MODULE_NAME, "tick", "Normal shutdown", "");
 		return false;
 	}
 	list_for_each_safe(cursor, temp, &list) {
