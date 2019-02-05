@@ -17,41 +17,21 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 
-<Configuration name="Default"
+<Configuration name="TestServer"
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
 	xsi:schemaLocation="http://df9ry.ampr.org/ax25c ax25c.xsd" 
 	xmlns="http://df9ry.ampr.org/ax25c">
 	
-	<Settings>
-		<!-- Timer tick in ms -->
-		<Setting name="tick">20</Setting>
-	</Settings>
-	
 	<Plugins>
-		<!--
-			The simple memory manager uses the OS malloc and free functions
-			without any buffering.
-		-->
-		<Plugin name="MemoryManager" file="ax25c_mm_simple.so">
-		</Plugin>
-		
-		<!--
-			Terminal implements a simple command line interface.
-		-->
+		<Plugin name="MemoryManager" file="ax25c_mm_simple.so"/>
 		<Plugin name="Terminal" file="ax25c_terminal.so">
 			<Settings>
-				<!-- Name of ServiceAccessPoint to use -->
 				<Setting name="peer">AX25</Setting>
-				<!-- Max. length of a line -->
 				<Setting name="line_length">132</Setting>
-				<!-- Buffer sizes -->
 				<Setting name="buf_size">64</Setting>
 				<Setting name="buf_reserve">16</Setting>
-				<!-- Local address -->
 				<Setting name="loc_addr">DF9RY</Setting>
-				<!-- Remote address -->
 				<Setting name="rem_addr">DB0FHN</Setting>
-				<!-- Lead ins -->
 				<Setting name="lead_txt">\033[0m\033[47m\033[30m</Setting>
 				<Setting name="lead_cmd">\033[1m\033[42m\033[30m</Setting>
 				<Setting name="lead_inf">\033[1m\033[106m\033[30m</Setting>
@@ -60,18 +40,12 @@
 			</Settings>
 		</Plugin>
 		
-		<!--
-			AX25 V2.2 state machine.
-		-->
 		<Plugin name="AX25" file="ax25v2_2.so">
 			<Settings>
 				<Setting name="peer">AXUDP-1</Setting>
 			</Settings>
 		</Plugin>
 		
-		<!--
-			AXUDP Uplink.
-		-->
 		<Plugin name="AXUDP" file="ax25c_udp.so">
 			<Instances>
 				<Instance name="AXUDP-1">

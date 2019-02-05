@@ -38,7 +38,7 @@ static struct setting_descriptor instance_settings_descriptor[] = {
 		{ "tx_buf_size", UINT_T, offsetof(struct instance_handle, tx_buf_size), "64"        },
 		{ "rx_buf_size", UINT_T, offsetof(struct instance_handle, rx_buf_size), "256"       },
 		{ "mode",        CSTR_T, offsetof(struct instance_handle, mode),        "client"    },
-		{ "ip_version",  CSTR_T, offsetof(struct instance_handle, ip_version),  "any"       },
+		{ "ip_version",  CSTR_T, offsetof(struct instance_handle, ip_version),  "ax_v4"     },
 		{ NULL }
 };
 
@@ -354,8 +354,9 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 		return false;
 	}
 	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
-		ax25c_log(DEBUG_LEVEL_DEBUG, "Host \"%s:%s\" resolved to %s \"%s\"",
+		ax25c_log(DEBUG_LEVEL_DEBUG, "Host \"%s:%s\" resolved to %s %s \"%s\"",
 				instance->host, instance->port,
+				(server_mode ? "server" : "client"),
 				((rp->ai_family == AF_INET6) ? "AF_INET6" : "AF_INET"),
 				rp->ai_canonname);
 	freeaddrinfo(addrinfo);
