@@ -38,7 +38,7 @@ void ax25c_dlsap_init(void)
 {
 	int erc;
 
-	erc = pthread_spin_init(&spinlock, PTHREAD_PROCESS_SHARED); assert(erc == 0);
+	erc = pthread_spin_init(&spinlock, PTHREAD_PROCESS_PRIVATE); assert(erc == 0);
 	erc = pthread_spin_lock(&spinlock); assert(erc == 0);
 	mapc_init(&dls_map, (f_compare)strcmp);
 	erc = pthread_spin_unlock(&spinlock); assert(erc == 0);

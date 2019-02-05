@@ -115,7 +115,7 @@ int rb_init(ringbuffer_t *rb, size_t size)
 	rb->_rb = _rb = malloc(sizeof(struct _ringbuffer) + size);
 	if (!_rb)
 		return ENOMEM;
-	erc = pthread_spin_init(&_rb->spinlock, PTHREAD_PROCESS_SHARED);
+	erc = pthread_spin_init(&_rb->spinlock, PTHREAD_PROCESS_PRIVATE);
 	if (erc)
 		goto undo_spinlock;
 	erc = pthread_mutex_init(&_rb->rd_mutex, NULL);

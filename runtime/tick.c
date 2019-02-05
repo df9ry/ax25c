@@ -32,7 +32,7 @@ static pthread_spinlock_t lock;
 void ax25c_tick_init(void)
 {
 	assert(!initialized);
-	assert(pthread_spin_init(&lock, PTHREAD_PROCESS_SHARED) == 0);
+	assert(pthread_spin_init(&lock, PTHREAD_PROCESS_PRIVATE) == 0);
 	INIT_LIST_HEAD(&list);
 	initialized = true;
 }
