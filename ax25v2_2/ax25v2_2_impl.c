@@ -26,17 +26,17 @@
 
 static inline uint16_t updateCrc(uint8_t b, uint16_t crc)
 {
-	uint8_t ch = (b ^ (crc & 0x00ff));
-	ch = (ch ^ (ch << 4));
-	return ((crc >> 8) ^ (ch << 8) ^ (ch << 3) ^ (ch >> 4));
+	uint8_t ch = (uint8_t)(b^(uint8_t)(crc & 0x00ff));
+	ch = (uint8_t)(ch^(ch << 4));
+	return (uint16_t)((crc >> 8)^(ch << 8)^(ch << 3)^(ch >> 4));
 }
 
-static inline uint16_t getCrc(uint8_t *p, uint16_t c)
+static inline uint16_t crc16(uint8_t *p, uint16_t c)
 {
-	uint16_t res = 0xffff;
-	for (; c-- > 0; ++p)
+	uint16_t res = 0xffff, i;
+	for (i = 0; i < c; ++i, ++p)
 		res = updateCrc(*p, res);
-	return res;
+	return (uint16_t)~res;
 }
 
 primitive_t *new_AX25_I(
@@ -66,7 +66,6 @@ primitive_t *new_AX25_I(
 	if (!prim)
 		return NULL;
 	i += putFrameAddress(af, &prim->payload[i]);
-	prim->payload[i-1] |= 0x01; /* Set X-Bit - just to be sure. */
 	if (modulo128) {
 		prim->payload[i++] = (nr << 1) | 0x01;
 		prim->payload[i++] = ns << 1;
@@ -78,60 +77,16 @@ primitive_t *new_AX25_I(
 	prim->payload[i++] = pid;
 	memcpy(&prim->payload[i], data, size);
 	i += size;
-	crc = getCrc(prim->payload, i);
-	prim->payload[i++] = crc / 0x0100;
+	crc = crc16(prim->payload, i);
 	prim->payload[i++] = crc % 0x0100;
+	prim->payload[i++] = crc / 0x0100;
 	assert(i == frame_size);
 	mem_chck(prim);
 	return prim;
 }
 
-primitive_t *new_AX25_Supervisory(
+primitive_t *new_AX25_UI(
 		uint16_t cH, uint16_t sH,
-		AX25_CMD_t ax25_cmd,
-		enum L3_PROTOCOL pid,
-		bool modulo128,
-		struct addressField *af,
-		uint8_t nr,
-		bool poll,
-		struct exception *ex)
-{
-	size_t frame_size;
-	size_t i = 0;
-	primitive_t *prim;
-	uint16_t crc;
-
-	assert(af);
-	assert(nr >= 0);
-	frame_size =
-			getFrameAddressLength(af) /* Adress Field  */
-			+ (modulo128 ? 2 : 1)     /* Control field */
-			+ 1                       /* PID           */
-			+ 2;                      /* CRC           */
-	prim = new_prim(frame_size, AX25, ax25_cmd, cH, sH, ex);
-	if (!prim)
-		return NULL;
-	i += putFrameAddress(af, &prim->payload[i]);
-	prim->payload[i-1] |= 0x01; /* Set X-Bit - just to be sure. */
-	if (modulo128) {
-		prim->payload[i++] = (nr << 1) | poll ? 0x01 : 0x00;
-		prim->payload[i++] = ax25_cmd;
-	} else {
-		assert(nr < 8);
-		prim->payload[i++] = (nr << 5) | poll ? 0x80 : 0x00;
-	}
-	prim->payload[i++] = pid;
-	crc = getCrc(prim->payload, i);
-	prim->payload[i++] = crc / 0x0100;
-	prim->payload[i++] = crc % 0x0100;
-	assert(i == frame_size);
-	mem_chck(prim);
-	return prim;
-}
-
-primitive_t *new_AX25_Unnumbered(
-		uint16_t cH, uint16_t sH,
-		AX25_CMD_t ax25_cmd,
 		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		bool cmd, bool poll,
@@ -150,26 +105,106 @@ primitive_t *new_AX25_Unnumbered(
 			+ 1                       /* PID           */
 			+ size                    /* Data field    */
 			+ 2;                      /* CRC           */
-	prim = new_prim(frame_size, AX25, ax25_cmd, cH, sH, ex);
+	prim = new_prim(frame_size, AX25, AX25_UI, cH, sH, ex);
 	if (!prim)
 		return NULL;
 	i += putFrameAddress(af, &prim->payload[i]);
-	prim->payload[i-1] |= 0x01; /* Set X-Bit - just to be sure. */
-	prim->payload[i++] = ax25_cmd | poll ? 0x10 : 0x00;
+	prim->payload[i++] = AX25_UI | poll ? 0x10 : 0x00;
 	memcpy(&prim->payload[i], data, size);
 	if (cmd) {
-		prim->payload[6]  |= 0x10;
-		prim->payload[13] &= 0xef;
+		prim->payload[6]  |= C_BIT;
+		prim->payload[13] &= ~C_BIT;
 	} else {
-		prim->payload[6]  &= 0xef;
-		prim->payload[13] |= 0x10;
+		prim->payload[6]  &= ~C_BIT;
+		prim->payload[13] |= C_BIT;
 	}
 	prim->payload[i++] = pid;
 	memcpy(&prim->payload[i], data, size);
 	i += size;
-	crc = getCrc(prim->payload, i);
-	prim->payload[i++] = crc / 0x0100;
+	crc = crc16(prim->payload, i);
 	prim->payload[i++] = crc % 0x0100;
+	prim->payload[i++] = crc / 0x0100;
+	assert(i == frame_size);
+	mem_chck(prim);
+	return prim;
+}
+
+primitive_t *new_AX25_Supervisory(
+		uint16_t cH, uint16_t sH,
+		AX25_CMD_t ax25_cmd,
+		bool modulo128,
+		struct addressField *af,
+		uint8_t nr,
+		bool poll,
+		struct exception *ex)
+{
+	size_t frame_size;
+	size_t i = 0;
+	primitive_t *prim;
+	uint16_t crc;
+
+	assert(af);
+	assert(nr >= 0);
+	frame_size =
+			getFrameAddressLength(af) /* Adress Field  */
+			+ (modulo128 ? 2 : 1)     /* Control field */
+			+ 2;                      /* CRC           */
+	prim = new_prim(frame_size, AX25, ax25_cmd, cH, sH, ex);
+	if (!prim)
+		return NULL;
+	i += putFrameAddress(af, &prim->payload[i]);
+	if (modulo128) {
+		prim->payload[i++] = (nr << 1) | poll ? 0x01 : 0x00;
+		prim->payload[i++] = ax25_cmd;
+	} else {
+		assert(nr < 8);
+		prim->payload[i++] = (nr << 5) | poll ? 0x80 : 0x00;
+	}
+	crc = crc16(prim->payload, i);
+	prim->payload[i++] = crc % 0x0100;
+	prim->payload[i++] = crc / 0x0100;
+	assert(i == frame_size);
+	mem_chck(prim);
+	return prim;
+}
+
+primitive_t *new_AX25_Unnumbered(
+		uint16_t cH, uint16_t sH,
+		AX25_CMD_t ax25_cmd,
+		struct addressField *af,
+		bool cmd, bool poll,
+		const uint8_t *data, size_t size,
+		struct exception *ex)
+{
+	size_t frame_size;
+	int i = 0;
+	primitive_t *prim;
+	uint16_t crc;
+
+	assert(af);
+	frame_size =
+			getFrameAddressLength(af) /* Adress Field  */
+			+ 1                       /* Control field */
+			+ size                    /* Data field    */
+			+ 2;                      /* CRC           */
+	prim = new_prim(frame_size, AX25, ax25_cmd, cH, sH, ex);
+	if (!prim)
+		return NULL;
+	i += putFrameAddress(af, &prim->payload[i]);
+	prim->payload[i++] = ax25_cmd | (poll ? 0x10 : 0x00);
+	memcpy(&prim->payload[i], data, size);
+	if (cmd) {
+		prim->payload[6]  |= C_BIT;
+		prim->payload[13] &= ~C_BIT;
+	} else {
+		prim->payload[6]  &= ~C_BIT;
+		prim->payload[13] |= C_BIT;
+	}
+	memcpy(&prim->payload[i], data, size);
+	i += size;
+	crc = crc16(prim->payload, i);
+	prim->payload[i++] = crc % 0x0100;
+	prim->payload[i++] = crc / 0x0100;
 	assert(i == frame_size);
 	mem_chck(prim);
 	return prim;

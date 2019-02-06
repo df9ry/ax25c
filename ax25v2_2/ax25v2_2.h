@@ -72,11 +72,31 @@ extern primitive_t *new_AX25_I(
 		struct exception *ex);
 
 /**
+ * @brief Create a AX25 UI frame.
+ * @param cH Client Handle.
+ * @param sH Server Handle.
+ * @param pid Layer 3 protocol.
+ * @param af AddressField.
+ * @param cmd Cmd/Res bit.
+ * @param poll Poll/Final bit.
+ * @param data Pointer to payload data.
+ * @param size Size of payload data.
+ * @param ex Exception structure.
+ * @return New primitive containing a AX25 frame in payload.
+ */
+extern primitive_t *new_AX25_UI(
+		uint16_t cH, uint16_t sH,
+		enum L3_PROTOCOL pid,
+		struct addressField *af,
+		bool cmd, bool poll,
+		const uint8_t *data, size_t size,
+		struct exception *ex);
+
+/**
  * @brief Create a AX25 Supervisory frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
  * @param ax25_cmd AX25 Command.
- * @param pid Layer 3 protocol.
  * @param modulo128 Use modulo 128.
  * @param af AddressField.
  * @param nr N(R) variable.
@@ -86,7 +106,6 @@ extern primitive_t *new_AX25_I(
 extern primitive_t *new_AX25_Supervisory(
 		uint16_t cH, uint16_t sH,
 		AX25_CMD_t ax25_cmd,
-		enum L3_PROTOCOL pid,
 		bool modulo128,
 		struct addressField *af,
 		uint8_t nr,
@@ -106,20 +125,18 @@ extern primitive_t *new_AX25_Supervisory(
  */
 static inline primitive_t *new_AX25_RR(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		bool modulo128,
 		struct addressField *af,
 		uint8_t nr, bool poll,
 		struct exception *ex)
 {
-	return new_AX25_Supervisory(cH, sH, AX25_RR, pid, modulo128, af, nr, poll, ex);
+	return new_AX25_Supervisory(cH, sH, AX25_RR, modulo128, af, nr, poll, ex);
 }
 
 /**
  * @brief Create a AX25 RNR frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param modulo128 Use modulo 128.
  * @param af AddressField.
  * @param nr N(R) variable.
@@ -128,20 +145,18 @@ static inline primitive_t *new_AX25_RR(
  */
 static inline primitive_t *new_AX25_RNR(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		bool modulo128,
 		struct addressField *af,
 		uint8_t nr, bool poll,
 		struct exception *ex)
 {
-	return new_AX25_Supervisory(cH, sH, AX25_RNR, pid, modulo128, af, nr, poll, ex);
+	return new_AX25_Supervisory(cH, sH, AX25_RNR, modulo128, af, nr, poll, ex);
 }
 
 /**
  * @brief Create a AX25 REJ frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param modulo128 Use modulo 128.
  * @param af AddressField.
  * @param nr N(R) variable.
@@ -150,20 +165,18 @@ static inline primitive_t *new_AX25_RNR(
  */
 static inline primitive_t *new_AX25_REJ(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		bool modulo128,
 		struct addressField *af,
 		uint8_t nr, bool poll,
 		struct exception *ex)
 {
-	return new_AX25_Supervisory(cH, sH, AX25_REJ, pid, modulo128, af, nr, poll, ex);
+	return new_AX25_Supervisory(cH, sH, AX25_REJ, modulo128, af, nr, poll, ex);
 }
 
 /**
  * @brief Create a AX25 SREJ frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param modulo128 Use modulo 128.
  * @param af AddressField.
  * @param nr N(R) variable.
@@ -172,21 +185,19 @@ static inline primitive_t *new_AX25_REJ(
  */
 static inline primitive_t *new_AX25_SREJ(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		bool modulo128,
 		struct addressField *af,
 		uint8_t nr, bool poll,
 		struct exception *ex)
 {
-	return new_AX25_Supervisory(cH, sH, AX25_SREJ, pid, modulo128, af, nr, poll, ex);
+	return new_AX25_Supervisory(cH, sH, AX25_SREJ, modulo128, af, nr, poll, ex);
 }
 
 /**
- * @brief Create a AX25 SREJ frame.
+ * @brief Create a AX25 Unnumbered frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
  * @param ax25_cmd AX25 Command.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param cmd Cmd/Res bit.
  * @param poll Poll/Final bit.
@@ -198,7 +209,6 @@ static inline primitive_t *new_AX25_SREJ(
 extern primitive_t *new_AX25_Unnumbered(
 		uint16_t cH, uint16_t sH,
 		AX25_CMD_t ax25_cmd,
-		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		bool cmd, bool poll,
 		const uint8_t *data, size_t size,
@@ -208,61 +218,54 @@ extern primitive_t *new_AX25_Unnumbered(
  * @brief Create a AX25 SABME frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param ex Exception structure.
  * @return New primitive containing a AX25 frame in payload.
  */
 static inline primitive_t *new_AX25_SABME(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		struct exception *ex)
 {
-	return new_AX25_Unnumbered(cH, sH, AX25_SABME, pid, af, true, true, NULL, 0, ex);
+	return new_AX25_Unnumbered(cH, sH, AX25_SABME, af, true, true, NULL, 0, ex);
 }
 
 /**
  * @brief Create a AX25 SABM frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param ex Exception structure.
  * @return New primitive containing a AX25 frame in payload.
  */
 static inline primitive_t *new_AX25_SABM(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		struct exception *ex)
 {
-	return new_AX25_Unnumbered(cH, sH, AX25_SABM, pid, af, true, true, NULL, 0, ex);
+	return new_AX25_Unnumbered(cH, sH, AX25_SABM, af, true, true, NULL, 0, ex);
 }
 
 /**
  * @brief Create a AX25 DISC frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param ex Exception structure.
  * @return New primitive containing a AX25 frame in payload.
  */
 static inline primitive_t *new_AX25_DISC(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		struct exception *ex)
 {
-	return new_AX25_Unnumbered(cH, sH, AX25_DISC, pid, af, true, true, NULL, 0, ex);
+	return new_AX25_Unnumbered(cH, sH, AX25_DISC, af, true, true, NULL, 0, ex);
 }
 
 /**
  * @brief Create a AX25 DM frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param ex Exception structure.
  * @return New primitive containing a AX25 frame in payload.
@@ -273,74 +276,45 @@ static inline primitive_t *new_AX25_DM(
 		struct addressField *af,
 		struct exception *ex)
 {
-	return new_AX25_Unnumbered(cH, sH, AX25_DM, pid, af, false, false, NULL, 0, ex);
+	return new_AX25_Unnumbered(cH, sH, AX25_DM, af, false, false, NULL, 0, ex);
 }
 
 /**
  * @brief Create a AX25 UA frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param ex Exception structure.
  * @return New primitive containing a AX25 frame in payload.
  */
 static inline primitive_t *new_AX25_UA(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		struct exception *ex)
 {
-	return new_AX25_Unnumbered(cH, sH, AX25_UA, pid, af, false, false, NULL, 0, ex);
+	return new_AX25_Unnumbered(cH, sH, AX25_UA, af, false, false, NULL, 0, ex);
 }
 
 /**
  * @brief Create a AX25 FRMR frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param ex Exception structure.
  * @return New primitive containing a AX25 frame in payload.
  */
 static inline primitive_t *new_AX25_FRMR(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		struct exception *ex)
 {
-	return new_AX25_Unnumbered(cH, sH, AX25_FRMR, pid, af, false, false, NULL, 0, ex);
-}
-
-/**
- * @brief Create a AX25 UI frame.
- * @param cH Client Handle.
- * @param sH Server Handle.
- * @param pid Layer 3 protocol.
- * @param af AddressField.
- * @param cmd Cmd/Res bit.
- * @param poll Poll/Final bit.
- * @param data Pointer to payload data.
- * @param size Size of payload data.
- * @param ex Exception structure.
- * @return New primitive containing a AX25 frame in payload.
- */
-static inline primitive_t *new_AX25_UI(
-		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
-		struct addressField *af,
-		bool cmd, bool poll,
-		const uint8_t *data, size_t size,
-		struct exception *ex)
-{
-	return new_AX25_Unnumbered(cH, sH, AX25_UI, pid, af, cmd, poll, data, size, ex);
+	return new_AX25_Unnumbered(cH, sH, AX25_FRMR, af, false, false, NULL, 0, ex);
 }
 
 /**
  * @brief Create a AX25 XID frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param cmd Cmd/Res bit.
  * @param poll Poll/Final bit.
@@ -351,20 +325,18 @@ static inline primitive_t *new_AX25_UI(
  */
 static inline primitive_t *new_AX25_XID(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		bool cmd, bool poll,
 		const uint8_t *data, size_t size,
 		struct exception *ex)
 {
-	return new_AX25_Unnumbered(cH, sH, AX25_XID, pid, af, cmd, poll, data, size, ex);
+	return new_AX25_Unnumbered(cH, sH, AX25_XID, af, cmd, poll, data, size, ex);
 }
 
 /**
  * @brief Create a AX25 TEST frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
- * @param pid Layer 3 protocol.
  * @param af AddressField.
  * @param cmd Cmd/Res bit.
  * @param poll Poll/Final bit.
@@ -375,13 +347,12 @@ static inline primitive_t *new_AX25_XID(
  */
 static inline primitive_t *new_AX25_TEST(
 		uint16_t cH, uint16_t sH,
-		enum L3_PROTOCOL pid,
 		struct addressField *af,
 		bool cmd, bool poll,
 		const uint8_t *data, size_t size,
 		struct exception *ex)
 {
-	return new_AX25_Unnumbered(cH, sH, AX25_TEST, pid, af, cmd, poll, data, size, ex);
+	return new_AX25_Unnumbered(cH, sH, AX25_TEST, af, cmd, poll, data, size, ex);
 }
 
 /**

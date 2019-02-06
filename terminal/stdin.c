@@ -203,11 +203,31 @@ static void onDisconnect(void)
 	i_read_buf = 0;
 }
 
+static int16_t cConnect = 0;
+
 static void connect(void)
 {
-	state = S_ERR;
-	new_line();
-	out_str("Connect not implemented!");
+	exception_t ex;
+	const char *dstAddr = string_c(&plugin.rem_addr);
+	const char *srcAddr = string_c(&plugin.loc_addr);
+	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
+		ax25c_log(DEBUG_LEVEL_DEBUG, "TX CONNECT: %s -> %s", srcAddr, dstAddr);
+	primitive_t *prim = new_DL_CONNECT_Request(++cConnect,
+			(uint8_t*)dstAddr, strlen(dstAddr),
+			(uint8_t*)srcAddr, strlen(srcAddr), &ex);
+	if (!prim) {
+		state = S_ERR;
+		new_line();
+		out_str(STRING_C(ex.message));
+		goto done;
+	}
+	if (!dlsap_write(peerDLS(), prim, false, &ex)) {
+		state = S_ERR;
+		new_line();
+		out_str(STRING_C(ex.message));
+	}
+	del_prim(prim);
+done:
 	state = S_TXT;
 	new_line();
 	i_read_buf = 0;

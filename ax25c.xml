@@ -48,7 +48,7 @@
 				<Setting name="buf_size">64</Setting>
 				<Setting name="buf_reserve">16</Setting>
 				<!-- Local address -->
-				<Setting name="loc_addr">DF9RY</Setting>
+				<Setting name="loc_addr">DF9RY-1</Setting>
 				<!-- Remote address -->
 				<Setting name="rem_addr">DB0FHN</Setting>
 				<!-- Lead ins -->
@@ -76,8 +76,8 @@
 			<Instances>
 				<Instance name="AXUDP-1">
 					<Settings>
-						<Setting name="host">localhost</Setting>
-						<Setting name="port">9300</Setting>
+						<Setting name="host">db0fhn.ampr.org</Setting>
+						<Setting name="port">93</Setting>
 						<Setting name="mode">client</Setting>
 						<Setting name="ip_version">ip_v4</Setting>
 						<Setting name="tx_buf_size">64</Setting>

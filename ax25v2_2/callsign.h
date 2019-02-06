@@ -41,6 +41,11 @@ struct addressField {
 	callsign repeaters[2];
 };
 
+union _callsign {
+	callsign encoded;
+	uint8_t octets[7];
+};
+
 typedef struct addressField addressField_t;
 
 /**
@@ -105,29 +110,41 @@ static inline void addressFieldCopy(struct addressField *dst,
 }
 
 /**
+ * @brief Has Repeated bit value.
+ */
+#define H_BIT 0x080
+
+/**
  * @brief Get the H-Bit of a callsign.
  * @param call The callsign to investigate.
  * @return H-Bit.
  */
 static inline bool getHBit(callsign call)
 {
-	return (((uint8_t*)(&call))[6] & 0x80);
+	union _callsign c;
+	c.encoded = call;
+	return (c.octets[6] & H_BIT);
 }
 
 /**
  * @brief Set the H-Bit of a callsign.
  * @param call The callsign to modify.
- * @param h Value of H-Bit to set.
+ * @param hbit Value of H-Bit to set.
  * @return Modified callsign.
  */
-static inline void setHBit(callsign *call, bool h)
+static inline void setHBit(callsign *call, bool hbit)
 {
-	uint8_t *po = &(((uint8_t*)(call))[6]);
-	if (h)
-		*po |= 0x80;
+	union _callsign *c = (union _callsign*)call;
+	if (hbit)
+		c->octets[6] |= H_BIT;
 	else
-		*po &= ~0x80;
+		c->octets[6] &= ~H_BIT;
 }
+
+/**
+ * @brief Address field extension bit.
+ */
+#define X_BIT 0x01
 
 /**
  * @brief Get the X-Bit of a callsign.
@@ -136,23 +153,30 @@ static inline void setHBit(callsign *call, bool h)
  */
 static inline bool getXBit(callsign call)
 {
-	return (((uint8_t*)(&call))[6] & 0x01);
+	union _callsign c;
+	c.encoded = call;
+	return (c.octets[6] & X_BIT);
 }
 
 /**
  * @brief Set the X-Bit of a callsign.
  * @param call The callsign to modify.
- * @param x Value of X-Bit to set.
+ * @param xbit Value of X-Bit to set.
  * @return Modified callsign.
  */
-static inline void setXBit(callsign *call, bool x)
+static inline void setXBit(callsign *call, bool xbit)
 {
-	uint8_t *po = &(((uint8_t*)(call))[6]);
-	if (x)
-		*po |= 0x01;
+	union _callsign *c = (union _callsign*)call;
+	if (xbit)
+		c->octets[6] |= X_BIT;
 	else
-		*po &= ~0x01;
+		c->octets[6] &= ~X_BIT;
 }
+
+/**
+ * @brief Command bit.
+ */
+#define C_BIT 0x80
 
 /**
  * @brief Get the C-Bit of a callsign.
@@ -161,22 +185,24 @@ static inline void setXBit(callsign *call, bool x)
  */
 static inline bool getCBit(callsign call)
 {
-	return (((uint8_t*)(&call))[6] & 0x80);
+	union _callsign c;
+	c.encoded = call;
+	return (c.octets[6] & C_BIT);
 }
 
 /**
  * @brief Set the C-Bit of a callsign.
  * @param call The callsign to modify.
- * @param c Value of C-Bit to set.
+ * @param cbit Value of C-Bit to set.
  * @return Modified callsign.
  */
-static inline void setCBit(callsign *call, bool c)
+static inline void setCBit(callsign *call, bool cbit)
 {
-	uint8_t *po = &(((uint8_t*)(call))[6]);
-	if (c)
-		*po |= 0x80;
+	union _callsign *c = (union _callsign*)call;
+	if (cbit)
+		c->octets[6] |= C_BIT;
 	else
-		*po &= ~0x80;
+		c->octets[6] &= ~C_BIT;
 }
 
 /**

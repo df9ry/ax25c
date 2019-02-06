@@ -26,11 +26,6 @@
 #include <ctype.h>
 #include <assert.h>
 
-union _callsign {
-	callsign encoded;
-	uint8_t octets[7];
-};
-
 static uint8_t getOctetOfChar(char ch)
 {
 
@@ -292,6 +287,7 @@ size_t putFrameAddress(struct addressField *af, uint8_t *pframe)
 		pframe += 7;
 		res += 7;
 		if (!getXBit(af->repeaters[0])) {
+			assert(getXBit(af->repeaters[1]));
 			memcpy(pframe, &af->repeaters[1], 7);
 			pframe += 7;
 			res += 7;

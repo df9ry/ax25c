@@ -203,8 +203,52 @@ static bool on_write_dl_test_request(dls_t *_dls, primitive_t *prim,
 		}
 		if (!addressFieldFromString(source, STRING_C(dst), &af, ex))
 			return false;
-		frame = new_AX25_TEST(prim->clientHandle, 0, L3_NPROT, &af, true, true,
+		frame = new_AX25_TEST(prim->clientHandle, 0, &af, true, true,
 				get_prim_param_data(data), get_prim_param_size(data), ex);
+		if (frame) {
+			res = dlsap_write(server_dls.peer, frame, false, ex);
+			del_prim(frame);
+			res = true;
+		}
+	}
+exit:
+	STRING_RESET(dst);
+	STRING_RESET(src);
+	return res;
+}
+
+static bool on_write_dl_connect_request(dls_t *_dls, primitive_t *prim,
+		struct exception *ex)
+{
+	bool res = false;
+	primitive_t *frame;
+	prim_param_t *dstAddr, *srcAddr;
+	STRING(dst);
+	STRING(src);
+	callsign source;
+	addressField_t af;
+	const char *next;
+
+	if (server_dls.peer) {
+		assert(prim);
+		dstAddr = get_DL_dst_param(prim);
+		assert(dstAddr);
+		get_prim_param_cstr(dstAddr, &dst);
+		srcAddr = get_DL_src_param(prim);
+		assert(srcAddr);
+		get_prim_param_cstr(srcAddr, &src);
+		source = callsignFromString(STRING_C(src), &next, ex);
+		if (!source)
+			goto exit;
+		if (*next) {
+			exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
+					"on_write_dl_connect_request",
+					"Exceeding characters in source call", STRING_C(src));
+			goto exit;
+		}
+		if (!addressFieldFromString(source, STRING_C(dst), &af, ex))
+			return false;
+		frame = new_AX25_SABM(prim->clientHandle, 0, &af, ex);
 		if (frame) {
 			res = dlsap_write(server_dls.peer, frame, false, ex);
 			del_prim(frame);
@@ -227,6 +271,9 @@ static bool on_write_dl(dls_t *_dls, primitive_t *prim, struct exception *ex)
 		break;
 	case DL_TEST_REQUEST:
 		res = on_write_dl_test_request(_dls, prim, ex);
+		break;
+	case DL_CONNECT_REQUEST:
+		res = on_write_dl_connect_request(_dls, prim, ex);
 		break;
 	default:
 		exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
