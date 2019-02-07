@@ -37,6 +37,8 @@ extern "C" {
 #include <stdint.h>
 #include <stdbool.h>
 
+struct primitive;
+
 /**
  * @brief Initialize the runtime.
  */
@@ -239,6 +241,17 @@ extern void registerTickListener(struct tick_listener *l);
  * @param l Tick listener to unregister.
  */
 extern void unregisterTickListener(struct tick_listener *l);
+
+/**
+ * @brief Get monitor info for a frame.
+ * @param prim The primitive to get monitor info from.
+ * @param pb Pointer to buffer for monitor output.
+ * @param cb Size of the monitor buffer.
+ * @param ex Pointer to exception struct or NULL.
+ * @return Number of bytes written to pb or negative error code.
+ */
+extern int monitor(struct primitive *prim, char *pb, size_t cb,
+		struct exception *ex);
 
 /**
  * @brief Escape character.

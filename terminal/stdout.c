@@ -26,6 +26,9 @@
 #include <signal.h>
 #include <assert.h>
 
+#define S_MONITOR_BUFFER 72
+static char monitor_buffer[S_MONITOR_BUFFER];
+
 struct primbuffer *primbuffer;
 
 static volatile bool initialized = false;
@@ -88,6 +91,24 @@ static void out_dl_prim(primitive_t *prim)
 	} /* end switch */
 }
 
+static void on_monitor(primitive_t *prim)
+{
+	int l = monitor(prim, monitor_buffer, S_MONITOR_BUFFER, NULL);
+	if (l > 0) {
+		if (l+1 >= S_MONITOR_BUFFER) {
+			l = S_MONITOR_BUFFER - 1;
+			strcpy(&monitor_buffer[S_MONITOR_BUFFER-4], "...");
+		} else {
+			monitor_buffer[l] = '\0';
+		}
+		aquire_stdout_lock(STDOUT_thread);
+		out_str("Monitor: ");
+		out_str(monitor_buffer);
+		out_str("\n");
+		release_stdout_lock();
+	}
+}
+
 static void *worker(void *id)
 {
 	primitive_t *prim;
@@ -99,6 +120,10 @@ static void *worker(void *id)
 		switch (prim->protocol) {
 		case DL:
 			out_dl_prim(prim);
+			break;
+		case AX25:
+			if (monitor_flag)
+				on_monitor(prim);
 			break;
 		default:
 			break;

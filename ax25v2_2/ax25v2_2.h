@@ -49,6 +49,19 @@ enum AX25_CMD {
 typedef enum AX25_CMD AX25_CMD_t;
 
 /**
+ * @brief Flags for marking modulo and version information in the prim.
+ */
+enum AX25_VERSION_INFO {
+	AX25_MODULO_V1     = 0x0010, /**< Known as AX25 V1 frame.      */
+	AX25_MODULO_V2     = 0x0020, /**< Mask for determine AX25 V2.  */
+	AX25_VERSION_KNOWN = 0x0030, /**< Mask for version known.      */
+	AX25_MODULO_V2_8   = 0x0021, /**< Known as AX25 V2 modulo 8.   */
+	AX25_MODULO_V2_128 = 0x0022, /**< Known as AX25 V2 modulo 128. */
+	AX25_MODULO_KNOWN  = 0x0003, /**< Mask for modulo known.       */
+	AX25_MODULO_128    = 0x0002  /**< Mask for modulo 128 known.   */
+};
+
+/**
  * @brief Create a AX25 I frame.
  * @param cH Client Handle.
  * @param sH Server Handle.
@@ -363,6 +376,26 @@ static inline primitive_t *new_AX25_TEST(
 extern bool prim_check_AX25_CRC(primitive_t *prim);
 
 /**
+ * @brief Get Version of a AX25 primitive.
+ * @param prim The primitive.
+ * @return True for AX25 V2.
+ */
+static inline bool prim_get_AX25_V2(primitive_t *prim)
+{
+	return ((prim->payload[13] & 0x80) != (prim->payload[6]  & 0x80));
+}
+
+/**
+ * @brief Get the Command/Response info of a AX25 primitive.
+ * @param prim The primitive.
+ * @return True for Command, false for Response.
+ */
+static inline bool prim_get_AX25_C(primitive_t *prim)
+{
+	return (prim->payload[6] & 0x80);
+}
+
+/**
  * @brief Get the addressField of a AX25 primitive.
  * @param prim The primitive.
  * @param af AddressField to receive the result.
@@ -371,50 +404,5 @@ extern bool prim_check_AX25_CRC(primitive_t *prim);
  */
 extern bool prim_get_AX25_addressField(primitive_t *prim,
 		struct addressField *af, struct exception *ex);
-
-/**
- * @brief Get the version of a AX25 primitive.
- * @param prim The primitive.
- * @return If true, this is AX25 V2.x, privious version if false.
- */
-extern bool prim_get_AX25_V2(primitive_t *prim);
-
-/**
- * @brief Get the Cmd/Res bit of a AX25 primitive.
- * @param prim The primitive.
- * @return Cmd/Res of the primitive.
- */
-extern bool prim_get_AX25_CmdRes(primitive_t *prim);
-
-/**
- * @brief Get the Poll/Final bit of a AX25 primitive.
- * @param prim The primitive.
- * @return Poll/Final of the primitive.
- */
-extern bool prim_get_AX25_PollFinal(primitive_t *prim);
-
-/**
- * @brief Get the N(R) variable of a AX25 primitive.
- * @param prim The primitive.
- * @return N(R) variable of the primitive.
- */
-extern int8_t prim_get_AX25_NR(primitive_t *prim);
-
-/**
- * @brief Get the N(S) variable of a AX25 primitive.
- * @param prim The primitive.
- * @return N(S) variable of the primitive.
- */
-extern int8_t prim_get_AX25_NS(primitive_t *prim);
-
-/**
- * @brief Get data of a AX25 primitive.
- * @param prim The primitive.
- * @param pdata Pointer to the data pointer.
- * @param psize Pointer to the data size.
- * @return True, when data field extraction was successful.
- */
-extern bool prim_get_AX25_data(primitive_t *prim,
-		uint8_t ** pdata, size_t *psize);
 
 #endif /* AX25V2_2_AX25V2_2_H_ */

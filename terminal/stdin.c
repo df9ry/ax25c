@@ -57,7 +57,7 @@ int substate;
 static char read_buf[S_IOBUF];
 static size_t i_read_buf = 0;
 
-static bool monitor = false;
+bool monitor_flag = false;
 
 static void send_line(const char *pb, size_t cb)
 {
@@ -67,7 +67,7 @@ static void send_line(const char *pb, size_t cb)
 
 static void setMonitor(bool f)
 {
-	monitor = f;
+	monitor_flag = f;
 }
 
 static void out_str(const char *str)
@@ -481,7 +481,7 @@ static void onCmdM(char ch)
 		state = S_INF;
 		new_line();
 		out_str("Monitor is ");
-		out_str(monitor ? "on" : "off");
+		out_str(monitor_flag ? "on" : "off");
 		state = S_TXT;
 		new_line();
 		break;

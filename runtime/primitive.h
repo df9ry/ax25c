@@ -37,11 +37,12 @@ struct exception;
  * @brief List of known protocols. There might be more.
  */
 enum protocol {
-	DL   = 0, /**< Data Link Layer (3)        */
-	MDL  = 1, /**< Data Link Layer Management */
-	LM   = 2, /**< Link Multiplexer           */
-	PH   = 3, /**< Physical Layer             */
-	AX25 = 4, /**< AX.25 Frame                */
+	DL,                     /**< Data Link Layer (3)         */
+	MDL,                    /**< Data Link Layer Management  */
+	LM,                     /**< Link Multiplexer            */
+	PH,                     /**< Physical Layer              */
+	AX25,                   /**< AX.25 Frame                 */
+	PROTOCOL_UPPER          /**< Upper index (for the array) */
 };
 
 /**
@@ -53,12 +54,13 @@ typedef enum protocol protocol_t;
  * @brief Base for data primitives.
  */
 struct primitive {
-	uint16_t size;         /**< Size of the payload.           */
-	uint8_t  protocol;     /**< Protocol, value of protocol_t. */
-	uint8_t  cmd;          /**< Protocol specific command.     */
-	uint16_t clientHandle; /**< Handle assigned by the client. */
-	uint16_t serverHandle; /**< Handle assigned by the server. */
-	uint8_t  payload[0];   /**< Specific payload.              */
+	uint16_t size;         /**< Size of the payload.              */
+	uint8_t  protocol;     /**< Protocol, value of protocol_t.    */
+	uint8_t  cmd;          /**< Protocol specific command.        */
+	uint16_t flags;        /**< Room for protocol specific flags. */
+	uint16_t clientHandle; /**< Handle assigned by the client.    */
+	uint16_t serverHandle; /**< Handle assigned by the server.    */
+	uint8_t  payload[0];   /**< Specific payload.                 */
 };
 
 /**
@@ -93,6 +95,7 @@ static inline primitive_t *new_prim(uint16_t payload_size, protocol_t protocol,
 	if (prim) {
 		prim->size = payload_size;
 		prim->protocol = protocol;
+		prim->flags = 0;
 		prim->cmd = cmd;
 		prim->clientHandle = clientHandle;
 		prim->serverHandle = serverHandle;

@@ -221,49 +221,18 @@ AX25_CMD_t prim_get_AX25_CMD(primitive_t *prim)
 
 bool prim_check_AX25_CRC(primitive_t *prim)
 {
+	uint16_t i, c;
+
 	assert(prim);
-	return false;
+	if (prim->size < 2)
+		return false;
+	i = prim->size - 2;
+	c = prim->payload[i] + 256 * prim->payload[i+1];
+	return (c == crc16(prim->payload, prim->size-2));
 }
 
 bool prim_get_AX25_addressField(primitive_t *prim,
 		struct addressField *af, struct exception *ex)
-{
-	assert(prim);
-	return false;
-}
-
-bool prim_get_AX25_V2(primitive_t *prim)
-{
-	assert(prim);
-	return false;
-}
-
-bool prim_get_AX25_CmdRes(primitive_t *prim)
-{
-	assert(prim);
-	return false;
-}
-
-bool prim_get_AX25_PollFinal(primitive_t *prim)
-{
-	assert(prim);
-	return false;
-}
-
-int8_t prim_get_AX25_NR(primitive_t *prim)
-{
-	assert(prim);
-	return -1;
-}
-
-int8_t prim_get_AX25_NS(primitive_t *prim)
-{
-	assert(prim);
-	return -1;
-}
-
-bool prim_get_AX25_data(primitive_t *prim,
-		uint8_t ** pdata, size_t *psize)
 {
 	assert(prim);
 	return false;

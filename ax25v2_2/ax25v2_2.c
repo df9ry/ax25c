@@ -206,6 +206,9 @@ static bool on_write_dl_test_request(dls_t *_dls, primitive_t *prim,
 		frame = new_AX25_TEST(prim->clientHandle, 0, &af, true, true,
 				get_prim_param_data(data), get_prim_param_size(data), ex);
 		if (frame) {
+			frame->flags = AX25_MODULO_V2_8;
+			if (client_dls.peer)
+				dlsap_write(client_dls.peer, frame, false, NULL);
 			res = dlsap_write(server_dls.peer, frame, false, ex);
 			del_prim(frame);
 			res = true;
@@ -250,6 +253,9 @@ static bool on_write_dl_connect_request(dls_t *_dls, primitive_t *prim,
 			return false;
 		frame = new_AX25_SABM(prim->clientHandle, 0, &af, ex);
 		if (frame) {
+			frame->flags = AX25_MODULO_V2_8;
+			if (client_dls.peer)
+				dlsap_write(client_dls.peer, frame, false, NULL);
 			res = dlsap_write(server_dls.peer, frame, false, ex);
 			del_prim(frame);
 			res = true;

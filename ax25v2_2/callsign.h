@@ -60,6 +60,19 @@ extern callsign callsignFromString(const char *str, const char **next,
 		struct exception *ex);
 
 /**
+ * @brief Get a callsign from a frame.
+ * @param frame Pointer into a frame.
+ * @return Callsign.
+ */
+static inline callsign callsignFromFrame(const uint8_t *frame)
+{
+	union _callsign c;
+	c.encoded = 0;
+	memcpy(c.octets, frame, 7);
+	return c.encoded;
+}
+
+/**
  * @brief Decode a callsign to a string buffer.
  * @param call Internal callsign representation to decode.
  * @param pb Pointer to target char buffer.

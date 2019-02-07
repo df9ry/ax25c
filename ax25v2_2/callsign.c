@@ -148,11 +148,6 @@ int callsignToString(callsign call, char *pb, size_t cb, struct exception *ex)
 		return __tooShort("callsignToString", ex);
 	cb -= i;
 	pb += i;
-	if (getHBit(call)) {
-		if (cb-- == 0)
-			return __tooShort("callsignToString", ex);
-		*pb++ = '*';
-	}
 	if (cb-- == 0)
 		return __tooShort("callsignToString", ex);
 	*pb++ = '\0';

@@ -53,4 +53,6 @@ extern void stdout_terminate(struct plugin_handle *h);
 extern void aquire_stdout_lock(enum stdout_lock_id id);
 extern void release_stdout_lock(void);
 
+extern bool monitor_flag;
+
 #endif /* TERMINAL__INTERNAL_H_ */

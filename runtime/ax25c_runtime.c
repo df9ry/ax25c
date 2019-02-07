@@ -22,6 +22,7 @@
 #include "tick.h"
 
 #include "_internal.h"
+#include "monitor.h"
 
 #include <uki/kernel.h>
 
@@ -71,6 +72,7 @@ int print_ex(struct exception *ex)
 
 void runtime_initialize(void)
 {
+	monitor_init();
 	ax25c_log_init();
 	ax25c_dlsap_init();
 	ax25c_tick_init();
@@ -81,6 +83,7 @@ void runtime_terminate(void)
 	ax25c_tick_term();
 	ax25c_dlsap_term();
 	ax25c_log_term();
+	monitor_destroy();
 }
 
 bool load_so(const char *name, void **handle, struct exception *ex)
