@@ -28,6 +28,8 @@
 
 #define S_MONITOR_BUFFER 72
 static char monitor_buffer[S_MONITOR_BUFFER];
+#define S_MONITOR_PREFIX 16
+static char monitor_prefix[S_MONITOR_PREFIX];
 
 struct primbuffer *primbuffer;
 
@@ -91,24 +93,6 @@ static void out_dl_prim(primitive_t *prim)
 	} /* end switch */
 }
 
-static void on_monitor(primitive_t *prim)
-{
-	int l = monitor(prim, monitor_buffer, S_MONITOR_BUFFER, NULL);
-	if (l > 0) {
-		if (l+1 >= S_MONITOR_BUFFER) {
-			l = S_MONITOR_BUFFER - 1;
-			strcpy(&monitor_buffer[S_MONITOR_BUFFER-4], "...");
-		} else {
-			monitor_buffer[l] = '\0';
-		}
-		aquire_stdout_lock(STDOUT_thread);
-		out_str("Monitor: ");
-		out_str(monitor_buffer);
-		out_str("\n");
-		release_stdout_lock();
-	}
-}
-
 static void *worker(void *id)
 {
 	primitive_t *prim;
@@ -121,16 +105,41 @@ static void *worker(void *id)
 		case DL:
 			out_dl_prim(prim);
 			break;
-		case AX25:
-			if (monitor_flag)
-				on_monitor(prim);
-			break;
 		default:
 			break;
 		} /* end switch */
 		del_prim(prim);
 	} /* end while */
 	return NULL;
+}
+
+void monitor_listener(struct primitive *prim, const char *service, bool tx,
+		void *data)
+{
+	int l = monitor(prim, monitor_buffer, S_MONITOR_BUFFER, NULL);
+	if (l <= 0)
+		return;
+	if (l+1 >= S_MONITOR_BUFFER) {
+		l = S_MONITOR_BUFFER - 1;
+		strcpy(&monitor_buffer[S_MONITOR_BUFFER-4], "...");
+	} else {
+		monitor_buffer[l] = '\0';
+	}
+	l = snprintf(monitor_prefix, S_MONITOR_PREFIX, "M> %s %s", service,
+			(tx ? "TX " : "RX "));
+	if (l+1 >= S_MONITOR_PREFIX) {
+		l = S_MONITOR_PREFIX - 1;
+		strcpy(&monitor_prefix[S_MONITOR_PREFIX-4], "...");
+	} else {
+		monitor_prefix[l] = '\0';
+	}
+#if 0
+	aquire_stdout_lock(STDOUT_thread);
+	out_str(monitor_prefix);
+	out_str(monitor_buffer);
+	out_str("\n");
+	release_stdout_lock();
+#endif
 }
 
 void stdout_initialize(struct plugin_handle *h)

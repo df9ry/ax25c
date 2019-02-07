@@ -254,6 +254,40 @@ extern int monitor(struct primitive *prim, char *pb, size_t cb,
 		struct exception *ex);
 
 /**
+ * @brief Type for monitor listeners.
+ * @param prim Primitive to monitor.
+ * @param service Name of the service The primitive provides.
+ * @param tx True for TX primitive, false for RX.
+ * @param data User data passed from the register function.
+ */
+typedef void (monitor_listener_function)(struct primitive *prim,
+		const char *service, bool tx, void *data);
+
+/**
+ * @brief Register a monitor listener.
+ * @param listener Handler function to register. Note: Must never sleep!
+ * @param data User data to be passed to each callback.
+ * @return Handle to the registration.
+ */
+extern void *register_monitor_listener(monitor_listener_function *listener,
+		void *data);
+
+/**
+ * @brief Unregister a monitor listener.
+ * @param handle Registration handle.
+ * @return True if the handle was registered.
+ */
+extern bool unregister_monitor_listener(void *handle);
+
+/**
+ * @brief Pupply a primitive for monitoring.
+ * @param prim The primitive to supply.
+ * @param service Static name of the service the primitive supplies.
+ * @param tx Set true when transmitting the prim, false when receiving.
+ */
+extern void monitor_put(struct primitive *prim, const char *service, bool tx);
+
+/**
  * @brief Escape character.
  */
 extern char escapeChar;

@@ -35,6 +35,7 @@ struct plugin_handle {
 	const char *lead_cmd;
 	const char *lead_inf;
 	const char *lead_err;
+	const char *lead_mon;
 	const char *prompt;
 };
 
@@ -53,6 +54,7 @@ extern void stdout_terminate(struct plugin_handle *h);
 extern void aquire_stdout_lock(enum stdout_lock_id id);
 extern void release_stdout_lock(void);
 
-extern bool monitor_flag;
+extern void monitor_listener(struct primitive *prim, const char *service,
+		bool tx, void *data);
 
 #endif /* TERMINAL__INTERNAL_H_ */

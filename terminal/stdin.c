@@ -48,16 +48,32 @@ static pthread_t thread;
 
 static enum state {
 	S_TXT,
-	S_CMD, S_CMD_I, S_CMD_R, S_CMD_C, S_CMD_T, S_CMD_U, S_CMD_M,
+	S_CMD, S_CMD_I, S_CMD_R, S_CMD_C, S_CMD_T, S_CMD_U, S_CMD_M, S_CMD_L,
 	S_INF,
-	S_ERR
+	S_ERR,
+	S_MON
 } state;
 int substate;
+
+static const char *help =
+		"\tC [call] [digi] [digi] - Connect modulo7 to remote\n"
+		"\tD                      - Disconnect\n"
+		"\tE [call] [digi] [digi] - Connect modulo128 to remote\n"
+		"\tH                      - Display this help\n"
+		"\tI [call]               - Set or get local call\n"
+		"\tL [N|I|W|E|D]          - Set or get log level\n"
+		"\tM [+|-]                - Set or get monitor on/off\n"
+		"\tQ                      - Quit program\n"
+		"\tR [call] [digi] [digi] - Set or get default remote call\n"
+		"\tT [call] [digi] [digi] - Send TEST frame\n"
+		"\tU [call] [digi] [digi] - Send UI frame\n"
+		"\tX                      - Negotiate with remote";
 
 static char read_buf[S_IOBUF];
 static size_t i_read_buf = 0;
 
-bool monitor_flag = false;
+static bool monitor_flag = false;
+static void *monitor_handle = NULL;
 
 static void send_line(const char *pb, size_t cb)
 {
@@ -67,7 +83,16 @@ static void send_line(const char *pb, size_t cb)
 
 static void setMonitor(bool f)
 {
-	monitor_flag = f;
+	if (f != monitor_flag) {
+		monitor_flag = f;
+		if (f) {
+			assert(!monitor_handle);
+			monitor_handle = register_monitor_listener(monitor_listener, NULL);
+		} else {
+			unregister_monitor_listener(monitor_handle);
+			monitor_handle = NULL;
+		}
+	}
 }
 
 static void out_str(const char *str)
@@ -116,6 +141,9 @@ static void out_lead(void)
 			break;
 		case S_ERR:
 			out_ctrl(plugin_handle->lead_err);
+			break;
+		case S_MON:
+			out_ctrl(plugin_handle->lead_mon);
 			break;
 		default:
 			break;
@@ -207,7 +235,7 @@ static int16_t cConnect = 0;
 
 static void connect(void)
 {
-	exception_t ex;
+	EXCEPTION(ex);
 	const char *dstAddr = string_c(&plugin.rem_addr);
 	const char *srcAddr = string_c(&plugin.loc_addr);
 	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
@@ -228,6 +256,7 @@ static void connect(void)
 	}
 	del_prim(prim);
 done:
+	EXCEPTION_RESET(ex);
 	state = S_TXT;
 	new_line();
 	i_read_buf = 0;
@@ -237,7 +266,7 @@ static int16_t cTest = 0;
 
 static void test(void)
 {
-	exception_t ex;
+	EXCEPTION(ex);
 	const char *pc = getStr(true);
 	const char *dstAddr = string_c(&plugin.rem_addr);
 	const char *srcAddr = string_c(&plugin.loc_addr);
@@ -260,6 +289,7 @@ static void test(void)
 	}
 	del_prim(prim);
 done:
+	EXCEPTION_RESET(ex);
 	state = S_TXT;
 	new_line();
 	i_read_buf = 0;
@@ -269,7 +299,7 @@ static int16_t cUI = 0;
 
 static void ui(void)
 {
-	exception_t ex;
+	EXCEPTION(ex);
 	const char *pc = getStr(true);
 	const char *dstAddr = string_c(&plugin.rem_addr);
 	const char *srcAddr = string_c(&plugin.loc_addr);
@@ -292,6 +322,7 @@ static void ui(void)
 	}
 	del_prim(prim);
 done:
+	EXCEPTION_RESET(ex);
 	state = S_TXT;
 	new_line();
 	i_read_buf = 0;
@@ -304,6 +335,16 @@ static void onQuit(void)
 	new_line();
 	i_read_buf = 0;
 	die();
+}
+
+static void onHelp(void)
+{
+	out_str("Help");
+	state = S_INF;
+	new_line();
+	out_str(help);
+	state = S_TXT;
+	new_line();
 }
 
 static void onCmdI(void)
@@ -319,7 +360,7 @@ static void onCmdI(void)
 		out_str("I ");
 		out_str(pc);
 	} else {
-		exception_t ex;
+		EXCEPTION(ex);
 		if (dlsap_set_default_local_addr(peerDLS(), pc, &plugin.loc_addr, &ex))
 		{
 			state = S_INF;
@@ -331,6 +372,7 @@ static void onCmdI(void)
 			new_line();
 			out_str(STRING_C(ex.message));
 		}
+		EXCEPTION_RESET(ex);
 	}
 	i_read_buf = 0;
 	state = S_TXT;
@@ -350,7 +392,7 @@ static void onCmdR(void)
 		out_str("Remote ");
 		out_str(pc);
 	} else {
-		exception_t ex;
+		EXCEPTION(ex);
 		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))
 		{
 			state = S_INF;
@@ -362,6 +404,7 @@ static void onCmdR(void)
 			new_line();
 			out_str(STRING_C(ex.message));
 		}
+		EXCEPTION_RESET(ex);
 	}
 	i_read_buf = 0;
 	state = S_TXT;
@@ -381,7 +424,7 @@ static void onCmdC(void)
 		out_str("Connect ");
 		out_str(pc);
 	} else {
-		exception_t ex;
+		EXCEPTION(ex);
 		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))
 		{
 			state = S_INF;
@@ -393,6 +436,7 @@ static void onCmdC(void)
 			new_line();
 			out_str(STRING_C(ex.message));
 		}
+		EXCEPTION_RESET(ex);
 	}
 	connect();
 	i_read_buf = 0;
@@ -413,7 +457,7 @@ static void onCmdT(void)
 		out_str("Test ");
 		out_str(pc);
 	} else {
-		exception_t ex;
+		EXCEPTION(ex);
 		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))
 		{
 			state = S_INF;
@@ -428,6 +472,7 @@ static void onCmdT(void)
 			new_line();
 			return;
 		}
+		EXCEPTION_RESET(ex);
 	}
 	state = S_INF;
 	new_line();
@@ -450,7 +495,7 @@ static void onCmdU(void)
 		out_str("UI ");
 		out_str(pc);
 	} else {
-		exception_t ex;
+		EXCEPTION(ex);
 		if (dlsap_set_default_remote_addr(peerDLS(), pc, &plugin.rem_addr, &ex))
 		{
 			state = S_INF;
@@ -465,6 +510,7 @@ static void onCmdU(void)
 			new_line();
 			return;
 		}
+		EXCEPTION_RESET(ex);
 	}
 	state = S_INF;
 	new_line();
@@ -498,6 +544,81 @@ static void onCmdM(char ch)
 		new_line();
 		setMonitor(false);
 		out_str("Monitor is off");
+		state = S_TXT;
+		new_line();
+		break;
+	default:
+		break;
+	} /* end switch */
+}
+
+static void onCmdL(char ch)
+{
+	switch(ch) {
+	case ' ':
+		state = S_INF;
+		new_line();
+		out_str("Loglevel is ");
+		switch (configuration.loglevel) {
+		case DEBUG_LEVEL_DEBUG:
+			out_str("DEBUG");
+			break;
+		case DEBUG_LEVEL_ERROR:
+			out_str("ERROR");
+			break;
+		case DEBUG_LEVEL_WARNING:
+			out_str("WARNING");
+			break;
+		case DEBUG_LEVEL_INFO:
+			out_str("INFO");
+			break;
+		case DEBUG_LEVEL_NONE:
+			out_str("NONE");
+			break;
+		default:
+			out_str("<INVALID>");
+			break;
+		} /* end switch */
+		state = S_TXT;
+		new_line();
+		break;
+	case 'D':
+		state = S_INF;
+		new_line();
+		configuration.loglevel = DEBUG_LEVEL_DEBUG;
+		out_str("Loglevel is DEBUG");
+		state = S_TXT;
+		new_line();
+		break;
+	case 'E':
+		state = S_INF;
+		new_line();
+		configuration.loglevel = DEBUG_LEVEL_ERROR;
+		out_str("Loglevel is ERROR");
+		state = S_TXT;
+		new_line();
+		break;
+	case 'W':
+		state = S_INF;
+		new_line();
+		configuration.loglevel = DEBUG_LEVEL_WARNING;
+		out_str("Loglevel is WARNING");
+		state = S_TXT;
+		new_line();
+		break;
+	case 'I':
+		state = S_INF;
+		new_line();
+		configuration.loglevel = DEBUG_LEVEL_INFO;
+		out_str("Loglevel is INFO");
+		state = S_TXT;
+		new_line();
+		break;
+	case 'N':
+		state = S_INF;
+		new_line();
+		configuration.loglevel = DEBUG_LEVEL_NONE;
+		out_str("Loglevel is NONE");
 		state = S_TXT;
 		new_line();
 		break;
@@ -675,13 +796,53 @@ static void inputCmdM1(char ch)
 	case STOP:
 		onQuit();
 		break;
-	case '+':
-		out_str("+");
+	case '+': case 'y': case 'Y': case 'j': case 'J': case 't': case 'T':
+		out_str("on");
 		onCmdM('+');
 		break;
-	case '-':
-		out_str("-");
+	case '-': case 'n': case 'N': case 'f': case 'F':
+		out_str("off");
 		onCmdM('-');
+		break;
+	default :
+		break;
+	} /* end switch */
+}
+
+static void inputCmdL1(char ch)
+{
+	switch (ch) {
+	case DEL:
+		onDel();
+		break;
+	case LF:
+		onCmdL(' ');
+		break;
+	case ESC:
+		onEsc();
+		break;
+	case STOP:
+		onQuit();
+		break;
+	case 'n': case 'N':
+		out_str("NONE");
+		onCmdL('N');
+		break;
+	case 'i': case 'I':
+		out_str("INFO");
+		onCmdL('I');
+		break;
+	case 'w': case 'W':
+		out_str("WARNING");
+		onCmdL('W');
+		break;
+	case 'e': case 'E':
+		out_str("ERROR");
+		onCmdL('E');
+		break;
+	case 'd': case 'D':
+		out_str("DEBUG");
+		onCmdL('D');
 		break;
 	default :
 		break;
@@ -790,6 +951,22 @@ static void inputCmdM(char ch)
 	} /* end switch */
 }
 
+static void inputCmdL(char ch)
+{
+	switch (substate) {
+	case 0:
+		out_str("Loglevel ");
+		i_read_buf = 0;
+		substate = 1;
+		break;
+	case 1:
+		inputCmdL1(ch);
+		break;
+	default:
+		break;
+	} /* end switch */
+}
+
 static void inputTxt(char ch)
 {
 	switch (ch) {
@@ -846,6 +1023,9 @@ static void inputCmd0(char ch)
 	case 'd': case 'D':
 		onDisconnect();
 		break;
+	case 'h': case 'H': case '?':
+		onHelp();
+		break;
 	case 'q': case 'Q':
 		onQuit();
 		break;
@@ -863,6 +1043,11 @@ static void inputCmd0(char ch)
 		state = S_CMD_M;
 		substate = 0;
 		inputCmdM(ch);
+		break;
+	case 'l': case 'L':
+		state = S_CMD_L;
+		substate = 0;
+		inputCmdL(ch);
 		break;
 	default:
 		break;
@@ -910,6 +1095,9 @@ static void input(char ch)
 		break;
 	case S_CMD_M:
 		inputCmdM(ch);
+		break;
+	case S_CMD_L:
+		inputCmdL(ch);
 		break;
 	default :
 		break;
@@ -960,6 +1148,12 @@ extern void stdin_terminate(struct plugin_handle *h)
 	int erc;
 
 	assert(h);
+	state = S_INF;
+	substate = 0;
+	new_line();
+	out_str("Terminal Quit");
+	state = S_TXT;
+	new_line();
 	tcgetattr(STDIN_FILENO, &t);
 	t.c_lflag |= (ICANON | ECHO | ISIG);
 	tcsetattr(STDIN_FILENO, TCSANOW, &t);

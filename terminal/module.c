@@ -40,6 +40,7 @@ static struct setting_descriptor plugin_settings_descriptor[] = {
 		{ "lead_cmd",     CSTR_T, offsetof(struct plugin_handle, lead_cmd),     ">"      },
 		{ "lead_inf",     CSTR_T, offsetof(struct plugin_handle, lead_inf),     "+"      },
 		{ "lead_err",     CSTR_T, offsetof(struct plugin_handle, lead_err),     "!"      },
+		{ "lead_mon",     CSTR_T, offsetof(struct plugin_handle, lead_mon),     "#"      },
 		{ "prompt",       CSTR_T, offsetof(struct plugin_handle, prompt),       "cmd>"   },
 		{ NULL }
 };

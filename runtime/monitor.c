@@ -21,11 +21,15 @@
 #include "_internal.h"
 #include "exception.h"
 
+#include <uki/list.h>
+#include <uki/kernel.h>
+
 #include <pthread.h>
 #include <errno.h>
 #include <assert.h>
 
-static pthread_spinlock_t lock;
+static pthread_spinlock_t monitor_lock;
+static pthread_spinlock_t listener_lock;
 
 static monitor_function* monitor_providers[PROTOCOL_UPPER];
 
@@ -35,7 +39,7 @@ bool register_monitor_provider(protocol_t protocol, monitor_function *func,
 	bool res = false;
 
 	assert(protocol < PROTOCOL_UPPER);
-	pthread_spin_lock(&lock);
+	pthread_spin_lock(&monitor_lock);
 	if (monitor_providers[protocol]) {
 		exception_fill(ex, EEXIST, MODULE_NAME, "register_monitor_provider",
 				"Protocol already registered", "");
@@ -44,7 +48,7 @@ bool register_monitor_provider(protocol_t protocol, monitor_function *func,
 	monitor_providers[protocol] = func;
 	res = true;
 exit:
-	pthread_spin_unlock(&lock);
+	pthread_spin_unlock(&monitor_lock);
 	return res;
 }
 
@@ -54,7 +58,7 @@ bool unregister_monitor_provider(protocol_t protocol, monitor_function *func,
 	bool res = false;
 
 	assert(protocol < PROTOCOL_UPPER);
-	pthread_spin_lock(&lock);
+	pthread_spin_lock(&monitor_lock);
 	if (monitor_providers[protocol] != func) {
 		exception_fill(ex, EPERM, MODULE_NAME, "unregister_monitor_provider",
 				"Invalid monitor function", "");
@@ -63,7 +67,7 @@ bool unregister_monitor_provider(protocol_t protocol, monitor_function *func,
 	monitor_providers[protocol] = NULL;
 	res = true;
 exit:
-	pthread_spin_unlock(&lock);
+	pthread_spin_unlock(&monitor_lock);
 	return res;
 }
 
@@ -75,7 +79,7 @@ int monitor(struct primitive *prim, char *pb, size_t cb, struct exception *ex)
 	assert(prim);
 	assert(pb);
 	assert(prim->protocol < PROTOCOL_UPPER);
-	pthread_spin_lock(&lock);
+	pthread_spin_lock(&monitor_lock);
 	f = monitor_providers[prim->protocol];
 	if (f) {
 		f(prim, pb, cb, ex);
@@ -84,17 +88,79 @@ int monitor(struct primitive *prim, char *pb, size_t cb, struct exception *ex)
 				"No monitor provider registered", "");
 		res = -ENOENT;
 	}
-	pthread_spin_unlock(&lock);
+	pthread_spin_unlock(&monitor_lock);
 	return res;
+}
+
+static LIST_HEAD(monitor_listener_list);
+
+struct monitor_listener {
+	struct list_head           node;
+	monitor_listener_function *listener;
+	void                      *data;
+};
+
+void *register_monitor_listener(monitor_listener_function *listener, void *data)
+{
+	struct monitor_listener *l;
+
+	assert(listener);
+	l = malloc(sizeof(struct monitor_listener));
+	if (!l)
+		return NULL;
+	INIT_LIST_HEAD(&l->node);
+	l->listener = listener;
+	l->data = data;
+	pthread_spin_lock(&listener_lock);
+	list_add_tail(&l->node, &monitor_listener_list);
+	pthread_spin_unlock(&listener_lock);
+	return l;
+}
+
+bool unregister_monitor_listener(void *handle)
+{
+	bool res = false;
+	struct monitor_listener *cursor;
+
+	pthread_spin_lock(&listener_lock);
+	if (handle) {
+		list_for_each_entry(cursor, &monitor_listener_list, node) {
+			if (cursor == handle) {
+				res = true;
+				list_del(&cursor->node);
+				break;
+			}
+		} /* end list_for_each_entry */
+	}
+	pthread_spin_unlock(&listener_lock);
+	if (res)
+		free(handle);
+	return res;
+}
+
+void monitor_put(primitive_t *prim, const char *service, bool tx)
+{
+	struct monitor_listener *cursor;
+
+	assert(service);
+	if (!prim)
+		return;
+	pthread_spin_lock(&listener_lock);
+	list_for_each_entry(cursor, &monitor_listener_list, node) {
+		cursor->listener(prim, service, tx, cursor->data);
+	} /* end list_for_each_entry */
+	pthread_spin_unlock(&listener_lock);
 }
 
 void monitor_init(void)
 {
 	memset(&monitor_providers, 0x00, sizeof(monitor_providers));
-	pthread_spin_init(&lock, PTHREAD_PROCESS_PRIVATE);
+	pthread_spin_init(&monitor_lock, PTHREAD_PROCESS_PRIVATE);
+	pthread_spin_init(&listener_lock, PTHREAD_PROCESS_PRIVATE);
 }
 
 void monitor_destroy(void)
 {
-	pthread_spin_destroy(&lock);
+	pthread_spin_destroy(&listener_lock);
+	pthread_spin_destroy(&monitor_lock);
 }

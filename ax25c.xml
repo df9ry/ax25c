@@ -52,10 +52,11 @@
 				<!-- Remote address -->
 				<Setting name="rem_addr">DB0FHN</Setting>
 				<!-- Lead ins -->
-				<Setting name="lead_txt">\033[0m\033[47m\033[30m</Setting>
-				<Setting name="lead_cmd">\033[1m\033[42m\033[30m</Setting>
-				<Setting name="lead_inf">\033[1m\033[106m\033[30m</Setting>
-				<Setting name="lead_err">\033[1m\033[43m\033[32m</Setting>
+				<Setting name="lead_txt">\033[47;30m</Setting>
+				<Setting name="lead_cmd">\033[42;30m</Setting>
+				<Setting name="lead_inf">\033[44;37m</Setting>
+				<Setting name="lead_err">\033[41;37m</Setting>
+				<Setting name="lead_mon">\033[40;37m</Setting>
 				<Setting name="prompt">Command:> </Setting>
 			</Settings>
 		</Plugin>

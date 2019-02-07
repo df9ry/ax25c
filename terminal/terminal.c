@@ -99,6 +99,5 @@ bool terminal_stop(struct plugin_handle *h, struct exception *ex)
 	stdout_terminate(h);
 	dlsap_close(local_dls.peer);
 	local_dls.peer = NULL;
-	printf("Terminal Stop\n");
 	return true;
 }
