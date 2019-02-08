@@ -36,6 +36,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdint.h>
 #include <stdbool.h>
+#include <ctype.h>
 
 struct primitive;
 
@@ -286,6 +287,18 @@ extern bool unregister_monitor_listener(void *handle);
  * @param tx Set true when transmitting the prim, false when receiving.
  */
 extern void monitor_put(struct primitive *prim, const char *service, bool tx);
+
+/**
+ * @brief Extended isprint, that treats ASCII codes from 128 to 254 as
+ *        printable too.
+ * @param ch The caharacter to test.
+ * @return True, when this character is printable.
+ */
+static inline bool extended_isprint(char ch)
+{
+	uint8_t _ch = (uint8_t)ch;
+	return isprint(ch) || ((_ch >= 128) && (_ch < 255));
+}
 
 /**
  * @brief Escape character.

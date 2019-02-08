@@ -164,7 +164,8 @@ static const char *getStr(bool add_nl)
 {
 	const char *p;
 
-	assert(i_read_buf + 2 < S_IOBUF);
+	if (i_read_buf + 3 >= S_IOBUF)
+		i_read_buf = S_IOBUF - 3;
 	if (add_nl)
 		read_buf[i_read_buf++] = '\n';
 	read_buf[i_read_buf] = '\0';
@@ -176,13 +177,12 @@ static const char *getStr(bool add_nl)
 
 static void inputCh(char ch)
 {
-	if (i_read_buf + 1 >= S_IOBUF) {
+	if (i_read_buf + 4 > S_IOBUF) {
 		out_ch(BEL);
 		return;
 	}
-	read_buf[i_read_buf] = ch;
+	read_buf[i_read_buf++] = ch;
 	out_ch(ch);
-	++i_read_buf;
 }
 
 static void onDel(void)
@@ -643,7 +643,7 @@ static void inputCmdI1(char ch)
 		onQuit();
 		break;
 	default :
-		if (isprint(ch))
+		if (extended_isprint(ch))
 			inputCh(ch);
 		break;
 	} /* end switch */
@@ -665,7 +665,7 @@ static void inputCmdR1(char ch)
 		onQuit();
 		break;
 	default :
-		if (isprint(ch))
+		if (extended_isprint(ch))
 			inputCh(ch);
 		break;
 	} /* end switch */
@@ -687,7 +687,7 @@ static void inputCmdC1(char ch)
 		onQuit();
 		break;
 	default :
-		if (isprint(ch))
+		if (extended_isprint(ch))
 			inputCh(ch);
 		break;
 	} /* end switch */
@@ -709,7 +709,7 @@ static void inputCmdT1(char ch)
 		onQuit();
 		break;
 	default :
-		if (isprint(ch))
+		if (extended_isprint(ch))
 			inputCh(ch);
 		break;
 	} /* end switch */
@@ -731,7 +731,7 @@ static void inputCmdT2(char ch)
 		onQuit();
 		break;
 	default :
-		if (isprint(ch))
+		if (extended_isprint(ch))
 			inputCh(ch);
 		break;
 	} /* end switch */
@@ -753,7 +753,7 @@ static void inputCmdU1(char ch)
 		onQuit();
 		break;
 	default :
-		if (isprint(ch))
+		if (extended_isprint(ch))
 			inputCh(ch);
 		break;
 	} /* end switch */
@@ -775,7 +775,7 @@ static void inputCmdU2(char ch)
 		onQuit();
 		break;
 	default :
-		if (isprint(ch))
+		if (extended_isprint(ch))
 			inputCh(ch);
 		break;
 	} /* end switch */
@@ -986,7 +986,7 @@ static void inputTxt(char ch)
 		onQuit();
 		break;
 	default :
-		if (isprint(ch))
+		if (extended_isprint(ch))
 			inputCh(ch);
 		break;
 	} /* end switch */

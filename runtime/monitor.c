@@ -82,7 +82,7 @@ int monitor(struct primitive *prim, char *pb, size_t cb, struct exception *ex)
 	pthread_spin_lock(&monitor_lock);
 	f = monitor_providers[prim->protocol];
 	if (f) {
-		f(prim, pb, cb, ex);
+		res = f(prim, pb, cb, ex);
 	} else {
 		exception_fill(ex, ENOENT, MODULE_NAME, "monitor",
 				"No monitor provider registered", "");

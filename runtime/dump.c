@@ -47,7 +47,7 @@ static inline void _dump_segment(enum debug_level_t loglevel,
 	for (; j < c; ++j) {
 		assert(i+4 < BUFSIZE);
 		ch = (char)p[j];
-		if (!isprint(ch))
+		if (!extended_isprint(ch))
 			ch = '.';
 		i += snprintf(&buffer[i], BUFSIZE-i, " %1c ", ch);
 	} /* end for */

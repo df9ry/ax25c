@@ -27,7 +27,7 @@ struct plugin_handle {
 	const char *name;
 	const char *peer;
 	size_t      buf_size;
-	size_t      buf_reserve;
+	size_t      mon_size;
 	size_t      line_length;
 	string_t    loc_addr;
 	string_t    rem_addr;
@@ -39,7 +39,7 @@ struct plugin_handle {
 	const char *prompt;
 };
 
-enum stdout_lock_id { NO_thread, STDIN_thread, STDOUT_thread };
+enum stdout_lock_id { NO_thread, STDIN_thread, STDOUT_thread, MONITOR_thread };
 
 struct dls;
 extern struct dls  local_dls;

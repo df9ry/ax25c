@@ -32,10 +32,9 @@ void exception_fill(exception_t *ex, int erc, const char *module,
 	if (!param)
 		param = "";
 
-	if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
-		ax25c_log(DEBUG_LEVEL_ERROR,
-				"Throw exception %i[%s] in %s:%s with param %s",
-				erc, message, module, function, param);
+	ax25c_log(DEBUG_LEVEL_DEBUG,
+			"Throw exception %i[%s] in %s:%s with param %s",
+			erc, message, module, function, param);
 	if (ex) {
 		ex->erc = erc;
 		STRING_SET_C(ex->module,   module  );

@@ -17,6 +17,7 @@
 
 #include "../runtime/monitor.h"
 #include "../runtime/primitive.h"
+#include "../runtime/runtime.h"
 
 #include "callsign.h"
 #include "monitor.h"
@@ -49,10 +50,10 @@ static int put_str(const char* str, char *pb, int cb)
 		return 0;
 	if ((cb <= 0) || (l == 0))
 		return 0;
-	if (l+2 >= cb) {
-		l = cb-2;
+	if (l+1 >= cb) {
+		l = cb-1;
 		memcpy(pb, str, l);
-		*(pb+l) = '\0';
+		pb[l] = '\0';
 	} else {
 		memcpy(pb, str, l+1);
 	}
@@ -61,29 +62,26 @@ static int put_str(const char* str, char *pb, int cb)
 
 static int put_info(uint8_t *po, int co, char *pb, int cb)
 {
-	int ib = 2, ch;
+	int ib = 0, ch;
 
 	if (cb < 2)
 		return 0;
-	*pb++ = '"';
-	while ((co > 0) && (cb > 0)) {
-		ch = *po++;
-		co--; cb--; ib++;
-		if (isprint(ch))
+	*pb++ = '"'; cb--; ib++;
+	while ((co >= 0) && (cb > 1)) {
+		ch = *po++; co--;
+		if (extended_isprint(ch))
 			*pb++ = ch;
 		else
 			*pb++ = '.';
+		cb--; ib++;
 	} /* end while */
-	*pb++ = '"';
-	if (cb > 0)
-		return ib;
-	else
-		return 0;
+	*pb++ = '"'; cb--; ib++;
+	return ib;
 }
 
 static int _monitor_provider(struct primitive *prim, char *pb, size_t cb)
 {
-	int i, _i, j = 0, _cb = cb, nr, ns;
+	int i, _i, j = 0, k, _cb = cb, nr, ns;
 	callsign call;
 	bool x_bit, h_bit;
 	uint8_t o;
@@ -92,7 +90,7 @@ static int _monitor_provider(struct primitive *prim, char *pb, size_t cb)
 	assert(pb);
 	assert(prim->protocol == AX25);
 	pb[0] = '\0';
-	i = put_str("AX25:", pb, _cb);
+	i = put_str("AX25: ", pb, _cb);
 	if (!prim_check_AX25_CRC(prim)) {
 		i += snprintf(&pb[i], _cb-i, "CRC invalid (%i byte): ", prim->size);
 		goto data;
@@ -296,14 +294,16 @@ static int _monitor_provider(struct primitive *prim, char *pb, size_t cb)
 				return i;
 			o = prim->payload[j++];
 			i += snprintf(&pb[i], _cb-i, "[%02x] ", o);
-			i += put_info(&prim->payload[j], prim->size-j-2, &pb[i], _cb-i);
-		} else if ((o & 0xef) == 0xe3) { /* TEST */
-			i += put_info(&prim->payload[j], prim->size-j-2, &pb[i], _cb-i);
 		}
 	}
 data:
-	i += put_str(" ", &pb[i], _cb-i);
-	i += put_dump(&prim->payload[j], prim->size-j-2, &pb[i], _cb-i);
+	k = prim->size - j - 2;
+	if (k > 0) {
+		i += snprintf(&pb[i], _cb-i, "(%i byte) ", k);
+		i += put_info(&prim->payload[j], prim->size-j-2, &pb[i], _cb-i);
+		i += put_str(" ", &pb[i], _cb-i);
+		i += put_dump(&prim->payload[j], prim->size-j-2, &pb[i], _cb-i);
+	}
 	return i;
 }
 
@@ -323,9 +323,9 @@ static int monitor_provider(struct primitive *prim, char *pb, size_t cb,
 				"internal error", "");
 		return -EINVAL;
 	}
-	if (res+3 >= cb) {
-		strcpy(&pb[cb-5], "...");
-		return res+3;
+	if (res+4 >= cb) {
+		memcpy(&pb[cb-5], "...", 4);
+		return cb-1;
 	} else {
 		pb[res] = '\0';
 		return res;

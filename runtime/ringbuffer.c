@@ -136,9 +136,8 @@ int rb_init(ringbuffer_t *rb, size_t size)
 	erc = pthread_cond_init(&_rb->wr_cond, NULL);
 	if (erc)
 		goto undo_wr_cond;
-	_rb->size = _rb->tail = _rb->lost = 0;
+	_rb->used = _rb->tail = _rb->lost = 0;
 	_rb->size = size;
-
 	return 0;
 
 undo_wr_cond:
