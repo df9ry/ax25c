@@ -153,8 +153,6 @@ undo_rd_cond_lock:
 undo_rd_mutex:
 	pthread_spin_destroy(&_rb->spinlock);
 undo_spinlock:
-	free(_rb);
-	rb->_rb = NULL;
 	return erc;
 }
 

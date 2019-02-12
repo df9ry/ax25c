@@ -35,8 +35,7 @@ static struct setting_descriptor plugin_settings_descriptor[] = {
 static struct setting_descriptor instance_settings_descriptor[] = {
 		{ "host",        CSTR_T, offsetof(struct instance_handle, host),        "localhost" },
 		{ "port",        CSTR_T, offsetof(struct instance_handle, port),        "9300"      },
-		{ "tx_buf_size", UINT_T, offsetof(struct instance_handle, tx_buf_size), "64"        },
-		{ "rx_buf_size", UINT_T, offsetof(struct instance_handle, rx_buf_size), "256"       },
+		{ "rx_buf_size", UINT_T, offsetof(struct instance_handle, rx_buf_size), "1024"      },
 		{ "mode",        CSTR_T, offsetof(struct instance_handle, mode),        "client"    },
 		{ "ip_version",  CSTR_T, offsetof(struct instance_handle, ip_version),  "ax_v4"     },
 		{ NULL }
@@ -128,7 +127,7 @@ static void *tx_worker(void *id)
 
 	assert(instance);
 	while (instance->alive) {
-		prim = primbuffer_read_block(instance->primbuf, NULL);
+		prim = primbuffer_read_block(&instance->primbuffer, NULL);
 		if (!(prim && instance->alive))
 			continue;
 		if (prim->protocol != AX25) {
@@ -241,11 +240,7 @@ static bool on_write(dls_t *dls, primitive_t *prim, bool expedited,
 				"");
 		return false;
 	}
-	if (!primbuffer_write_nonblock(instance->primbuf, prim, expedited)) {
-		exception_fill(ex, ENOMEM, MODULE_NAME, "on_write", "Buffer overflow",
-				"");
-		return false;
-	}
+	primbuffer_write_nonblock(&instance->primbuffer, prim, expedited);
 	return true;
 }
 
@@ -347,15 +342,12 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 	}
 
 	/* Allocate buffers */
-	instance->primbuf = primbuffer_new(instance->tx_buf_size, ex);
-	if (!instance->primbuf)
-		return false;
+	primbuffer_init(&instance->primbuffer);
 	instance->rx_buf = malloc(instance->rx_buf_size);
 	if (!instance->rx_buf) {
 		exception_fill(ex, ENOMEM, MODULE_NAME, "start_instance",
 				"Unable to allocate rx buffer", "");
-		primbuffer_del(instance->primbuf);
-		instance->primbuf = NULL;
+		primbuffer_destroy(&instance->primbuffer);
 		return false;
 	}
 
@@ -448,10 +440,7 @@ static bool stop_instance(struct instance_handle *instance, exception_t *ex) {
 		pthread_kill(instance->tx_thread, SIGINT);
 		instance->rx_thread_running = false;
 	}
-	if (instance->primbuf) {
-		primbuffer_del(instance->primbuf);
-		instance->primbuf = NULL;
-	}
+	primbuffer_destroy(&instance->primbuffer);
 	if (instance->rx_buf) {
 		free(instance->rx_buf);
 		instance->rx_buf = NULL;

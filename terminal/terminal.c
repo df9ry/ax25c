@@ -31,9 +31,7 @@ static volatile bool initialized = false;
 static bool on_write(dls_t *dls, primitive_t *prim, bool expedited,
 			struct exception *ex)
 {
-	assert(primbuffer);
-	if (!primbuffer_write_nonblock(primbuffer, prim, false))
-		WARNING("Lost one primitive in Terminal", "");
+	primbuffer_write_nonblock(&primbuffer, prim, false);
 	return true;
 }
 

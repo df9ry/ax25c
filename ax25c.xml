@@ -45,7 +45,6 @@
 				<!-- Max. length of a line -->
 				<Setting name="line_length">132</Setting>
 				<!-- Buffer sizes -->
-				<Setting name="buf_size">64</Setting>
 				<Setting name="mon_size">1024</Setting>
 				<!-- Local address -->
 				<Setting name="loc_addr">DF9RY-1</Setting>
@@ -81,7 +80,6 @@
 						<Setting name="port">93</Setting>
 						<Setting name="mode">client</Setting>
 						<Setting name="ip_version">ip_v4</Setting>
-						<Setting name="tx_buf_size">64</Setting>
 						<Setting name="rx_buf_size">1024</Setting>
 					</Settings>
 				</Instance>

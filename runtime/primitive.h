@@ -21,6 +21,7 @@
 #include "runtime.h"
 
 #include <stringc/stringc.h>
+#include <uki/list.h>
 
 #include <stdint.h>
 #include <unistd.h>
@@ -54,13 +55,14 @@ typedef enum protocol protocol_t;
  * @brief Base for data primitives.
  */
 struct primitive {
-	uint16_t size;         /**< Size of the payload.              */
-	uint8_t  protocol;     /**< Protocol, value of protocol_t.    */
-	uint8_t  cmd;          /**< Protocol specific command.        */
-	uint16_t flags;        /**< Room for protocol specific flags. */
-	uint16_t clientHandle; /**< Handle assigned by the client.    */
-	uint16_t serverHandle; /**< Handle assigned by the server.    */
-	uint8_t  payload[0];   /**< Specific payload.                 */
+	struct list_head node;    /**< List Node.                        */
+	uint16_t    size;         /**< Size of the payload.              */
+	uint8_t     protocol;     /**< Protocol, value of protocol_t.    */
+	uint8_t     cmd;          /**< Protocol specific command.        */
+	uint16_t    flags;        /**< Room for protocol specific flags. */
+	uint16_t    clientHandle; /**< Handle assigned by the client.    */
+	uint16_t    serverHandle; /**< Handle assigned by the server.    */
+	uint8_t     payload[0];   /**< Specific payload.                 */
 };
 
 /**
@@ -93,6 +95,7 @@ static inline primitive_t *new_prim(uint16_t payload_size, protocol_t protocol,
 	uint16_t total_size = sizeof(struct primitive) + payload_size;
 	primitive_t *prim = mem_alloc(total_size, ex);
 	if (prim) {
+		INIT_LIST_HEAD(&prim->node);
 		prim->size = payload_size;
 		prim->protocol = protocol;
 		prim->flags = 0;

@@ -33,8 +33,10 @@
 static char mon_line_buffer[S_MONITOR_BUFFER];
 static int i_mon_line_buffer = 0;
 
+struct primbuffer primbuffer;
+
 static volatile bool initialized = false;
-struct primbuffer *primbuffer;
+
 static ringbuffer_t  rb_monitor;
 static struct plugin_handle *plugin_handle = NULL;
 static pthread_mutex_t mutex;
@@ -101,7 +103,7 @@ static void *prim_worker(void *id)
 	primitive_t *prim;
 
 	while (initialized) {
-		prim = primbuffer_read_block(primbuffer, NULL);
+		prim = primbuffer_read_block(&primbuffer, NULL);
 		if (!initialized) {
 			if (prim)
 				del_prim(prim);
@@ -237,8 +239,7 @@ void stdout_initialize(struct plugin_handle *h)
 	assert(!initialized);
 	initialized = true;
 	plugin_handle = h;
-	primbuffer = primbuffer_new(plugin_handle->buf_size, NULL);
-	assert(primbuffer);
+	primbuffer_init(&primbuffer);
 	erc = rb_init(&rb_monitor, plugin_handle->mon_size);
 	assert(!erc);
 	erc = pthread_mutex_init(&mutex, NULL);
@@ -265,8 +266,7 @@ void stdout_terminate(struct plugin_handle *h)
 	pthread_kill(prim_thread, SIGINT);
 	pthread_kill(monitor_thread, SIGINT);
 	rb_destroy(&rb_monitor);
-	primbuffer_del(primbuffer);
-	primbuffer = NULL;
+	primbuffer_destroy(&primbuffer);
 	plugin_handle = NULL;
 }
 

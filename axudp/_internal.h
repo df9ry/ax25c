@@ -40,13 +40,12 @@ struct instance_handle {
 	/***/
 	const char             *host;
 	const char             *port;
-	size_t                  tx_buf_size;
 	size_t                  rx_buf_size;
 	const char             *mode;
 	const char             *ip_version;
 	/***/
 	volatile bool           alive;
-	struct primbuffer      *primbuf;
+	struct primbuffer       primbuffer;
 	uint8_t                *rx_buf;
 	bool                    rx_thread_running;
 	pthread_t               rx_thread;

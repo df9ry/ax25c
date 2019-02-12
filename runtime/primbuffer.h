@@ -21,30 +21,39 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <unistd.h>
+#include <pthread.h>
+
+#include <uki/list.h>
 
 struct exception;
 struct primbuffer;
 struct primitive;
 typedef struct primbuffer primbuffer_t;
 
+struct primbuffer {
+	size_t size;
+	pthread_spinlock_t spinlock;
+	pthread_mutex_t cond_lock;
+	pthread_cond_t cond;
+	struct list_head expedited_list;
+	struct list_head routine_list;
+};
+
 struct primbuffer_stats {
 	size_t size;
-	size_t free;
 };
 
 /**
- * @brief Create a new primbuffer.
- * @param size Requested size of the primbuffer.
- * @param ex Exception structure, optional.
- * @return New primbuffer or NULL, in the case of an error.
+ * @brief Initialize a primbuffer.
+ * @pb Primbuffer to initialize.
  */
-extern primbuffer_t *primbuffer_new(size_t size, struct exception *ex);
+extern void primbuffer_init(primbuffer_t *pb);
 
 /**
- * @brief Delete a primbuffer.
- * @pb Primbuffer to delete.
+ * @brief Clear a primbuffer.
+ * @pb Primbuffer to clear.
  */
-extern void primbuffer_del(primbuffer_t *pb);
+extern void primbuffer_destroy(primbuffer_t *pb);
 
 /**
  * @brief get primbuffer stats.
@@ -58,11 +67,19 @@ extern void primbuffer_stats(primbuffer_t *pb, struct primbuffer_stats *stats);
  * @pb Primbuffer to write into.
  * @prim Prim to write.
  * @expedited When true, this is a expedited prim.
- * @return True, when successfully written, false, when no buffer space is
- *         available.
  */
-extern bool primbuffer_write_nonblock(primbuffer_t *pb,
-		struct primitive *prim, bool expedited);
+extern void primbuffer_write_nonblock(primbuffer_t *pb,	struct primitive *prim,
+		bool expedited);
+
+/**
+ * @brief Read prim from primbuffer, nonblocking.
+ * @pb Primbuffer to read from.
+ * @expedited. Pointer to bool that is set, when the prim is expedited.
+ *             Optional.
+ * @return Prim or NULL.
+ */
+extern struct primitive *primbuffer_read_nonblock(primbuffer_t *pb,
+		bool *expedited);
 
 /**
  * @brief Read prim from primbuffer, blocking.

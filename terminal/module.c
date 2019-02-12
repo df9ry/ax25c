@@ -33,7 +33,6 @@ static struct setting_descriptor plugin_settings_descriptor[] = {
 		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256"    },
 		{ "loc_addr",     STR_T,  offsetof(struct plugin_handle, loc_addr),     "NOCALL" },
 		{ "rem_addr",     STR_T,  offsetof(struct plugin_handle, rem_addr),     "NOCALL" },
-		{ "buf_size",     SIZE_T, offsetof(struct plugin_handle, buf_size),     "64"     },
 		{ "mon_size",     SIZE_T, offsetof(struct plugin_handle, mon_size),     "1024"   },
 		{ "peer",         CSTR_T, offsetof(struct plugin_handle, peer),         "AX25"   },
 		{ "lead_txt",     CSTR_T, offsetof(struct plugin_handle, lead_txt),     ":"      },

@@ -20,13 +20,14 @@
 
 #define MODULE_NAME "TERMINAL"
 
+#include "../runtime/primbuffer.h"
+
 #include <stdlib.h>
 #include <stringc/stringc.h>
 
 struct plugin_handle {
 	const char *name;
 	const char *peer;
-	size_t      buf_size;
 	size_t      mon_size;
 	size_t      line_length;
 	string_t    loc_addr;
@@ -45,7 +46,7 @@ struct dls;
 extern struct dls  local_dls;
 extern struct dls *peerDLS(void);
 extern struct plugin_handle plugin;
-extern struct primbuffer *primbuffer;
+extern struct primbuffer primbuffer;
 
 extern void stdin_initialize(struct plugin_handle *h);
 extern void stdin_terminate(struct plugin_handle *h);
