@@ -4,9 +4,6 @@
 [submodule "mapc"]
 	path = mapc
 	url = https://github.com/df9ry/mapc.git
-[submodule "ringbuffer"]
-	path = ringbuffer
-	url = https://github.com/df9ry/ringbuffer.git
 [submodule "stringc"]
 	path = stringc
 	url = https://github.com/df9ry/stringc.git
