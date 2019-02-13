@@ -15,12 +15,6 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "../runtime/runtime.h"
-
-#include "ax25c_config.h"
-#include "configuration.h"
-#include "DOMTreeErrorReporter.hpp"
-
 #include <xercesc/dom/DOM.hpp>
 #include <xercesc/parsers/XercesDOMParser.hpp>
 
@@ -34,6 +28,12 @@
 
 #include <stddef.h>
 #include <unistd.h>
+
+#include "../runtime/runtime.h"
+
+#include "ax25c_config.h"
+#include "configuration.h"
+#include "DOMTreeErrorReporter.hpp"
 
 #define MODULE_NAME "ax25c_config"
 
