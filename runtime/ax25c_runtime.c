@@ -15,16 +15,14 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define _POSIX_SOURCE 1
-
 #include "runtime.h"
 #include "log.h"
 #include "tick.h"
-
 #include "_internal.h"
 #include "monitor.h"
 
 #include <uki/kernel.h>
+#include <uki/timer.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -32,6 +30,7 @@
 #include <string.h>
 #include <dlfcn.h>
 #include <assert.h>
+#include "ax25c_timer.h"
 
 struct configuration configuration = {
 		.name = NULL,
@@ -72,6 +71,8 @@ int print_ex(struct exception *ex)
 
 void runtime_initialize(void)
 {
+	pthread_spin_init(&elapsed_timer_list_lock, PTHREAD_PROCESS_PRIVATE);
+	init_timers();
 	monitor_init();
 	ax25c_log_init();
 	ax25c_dlsap_init();
@@ -84,6 +85,7 @@ void runtime_terminate(void)
 	ax25c_dlsap_term();
 	ax25c_log_term();
 	monitor_destroy();
+	pthread_spin_destroy(&elapsed_timer_list_lock);
 }
 
 bool load_so(const char *name, void **handle, struct exception *ex)
