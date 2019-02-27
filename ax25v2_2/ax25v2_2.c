@@ -333,7 +333,7 @@ static bool on_server_write(dls_t *_dls, primitive_t *prim, bool expedited,
 bool ax25v2_2_initialize(struct plugin_handle *h, struct exception *ex)
 {
 	client_dls.name = h->name;
-	INFO("Register Service Access Point", h->name);
+	DBG_INFO("Register Service Access Point", h->name);
 	return dlsap_register_dls(&client_dls, ex);
 }
 

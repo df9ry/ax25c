@@ -51,7 +51,7 @@ static void *get_plugin(const char *name,
 
 static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
-	DEBUG("Start", plugin->name);
+	DBG_DEBUG("Start", plugin->name);
 	if (!ax25v2_2_monitor_init(ex))
 		return false;
 	if (!ax25v2_2_start(plugin, ex))
@@ -62,7 +62,7 @@ static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	assert(ex);
-	DEBUG("Stop", plugin->name);
+	DBG_DEBUG("Stop", plugin->name);
 	ax25v2_2_stop(plugin, ex);
 	ax25v2_2_monitor_dest(ex);
 	return true;

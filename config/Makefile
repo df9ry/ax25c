@@ -21,20 +21,20 @@ else
 
 VPATH    = $(SRCDIR)
 CXXFLAGS = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
-			-I/usr/local/include/
+			-I$(LOCAL)/include/
 
 TARGET   = ax25c_config.so
 OBJS     = DOMTreeErrorReporter.o ax25c_config.o
 LIBS     = -L$(SRCDIR)/../_$(_CONF) -lax25c_runtime \
 			-lxerces-c \
-			-L/usr/local/lib -lmapc -lstringc \
+			-L$(LOCAL)/$(SODIR) -lmapc -lstringc \
 			-lpthread
 
 all: $(TARGET)
 	cp $(TARGET) $(SRCDIR)/../_$(_CONF)
 	
 clean:
-	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
+	rm -rf $(SRCDIR)/$(OBJDIR)/* $(SRCDIR)/$(DOCDIR)/*
 
 install:
 

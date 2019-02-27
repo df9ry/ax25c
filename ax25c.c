@@ -30,21 +30,46 @@
 #include <assert.h>
 #include <time.h>
 
+#ifdef __MINGW32__
+#include <windows.h>
+#include <winsock2.h>
+#else
 #include <termios.h>
+#endif
 
 static void exit_handler(void)
 {
+#ifndef __MINGW32__
 	struct termios t;
 
 	tcgetattr(STDIN_FILENO, &t);
 	t.c_lflag |= (ICANON | ECHO | ISIG);
 	tcsetattr(STDIN_FILENO, TCSANOW, &t);
+#endif
 }
 
 static void handle_signal(int signal) {
 	if (signal == SIGINT)
 		die();
 }
+
+#ifdef __MINGW32__
+#include <windows.h>
+void _usleep(__int64 usec)
+{
+    HANDLE timer;
+    LARGE_INTEGER ft;
+
+    ft.QuadPart = -(10*usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+
+    timer = CreateWaitableTimer(NULL, TRUE, NULL);
+    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
+    WaitForSingleObject(timer, INFINITE);
+    CloseHandle(timer);
+}
+#else
+#define _usleep usleep
+#endif
 
 int main(int argc, char *argv[]) {
 	EXCEPTION(ex);
@@ -71,22 +96,22 @@ int main(int argc, char *argv[]) {
 	}
 
 	/* Start: */
-	INFO("Startup", "");
+	DBG_INFO("Startup", "");
 	if (!start(&ex)) {
 		return print_ex(&ex);
 	}
 
 	/* Run: */
-	INFO("Run", "");
+	DBG_INFO("Run", "");
 	ex.erc = EXIT_SUCCESS;
 	while (tick(&ex)) {
-		usleep(configuration.tick * 1000);
+		_usleep(configuration.tick * 1000);
 	} /* end while */
 	if (ex.erc != EXIT_SUCCESS)
 		return print_ex(&ex);
 
 	/* Shutdown: */
-	INFO("Shutdown", "");
+	DBG_INFO("Shutdown", "");
 	stop(&ex);
 	runtime_terminate();
 

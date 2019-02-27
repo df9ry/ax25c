@@ -19,8 +19,9 @@ include target.mk
 else
 
 VPATH    =  $(SRCDIR)
+
 CFLAGS   =  -Wall -Werror -g -ggdb -fmessage-length=0 -pthread \
-			-I/usr/local/include/
+			-I$(LOCAL)/include/
 
 LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF)/ -lax25c_runtime -lpthread
 TARGET   =  ax25c
@@ -75,7 +76,7 @@ doc:
 
 .PHONY: clean
 clean:
-	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
+	rm -rf $(SRCDIR)/$(OBJDIR)/* $(SRCDIR)/$(DOCDIR)/*
 	@$(MAKE) -C $(SRCDIR)/runtime clean
 	@$(MAKE) -C $(SRCDIR)/config clean
 	@$(MAKE) -C $(SRCDIR)/terminal clean
@@ -99,24 +100,32 @@ installsub:
 
 run: all
 	@echo "Executing $(TARGET)"
-	@cp /usr/local/lib/libstringc.$(SOEXT) .
-	@cp /usr/local/lib/libmapc.$(SOEXT) .
-	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:DEBUG" "--pid:$(TARGET).pid" \
-		"../$(TARGET).xml"
+	@cp $(LOCAL)/$(SODIR)/libstringc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libmapc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libuki.$(SOEXT) .
+	@LD_LIBRARY_PATH=./	./$(TARGET) \
+		"--loglevel:DEBUG" \
+		"--pid:$(SRCDIR)/_$(_CONF)/$(TARGET).pid" \
+		"$(SRCDIR)/$(TARGET).xml"
 	@echo "OK"
 	
 test: all
 	@echo "Executing $(TARGET)"
-	@cp /usr/local/lib/libstringc.$(SOEXT) .
-	@cp /usr/local/lib/libmapc.$(SOEXT) .
-	@LD_LIBRARY_PATH=./	./$(TARGET) "--loglevel:NONE" "--pid:$(TARGET).pid" \
-		"--esc:\\" "../$(TARGET).xml"
+	@cp $(LOCAL)/$(SODIR)/libstringc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libmapc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libuki.$(SOEXT) .
+	@LD_LIBRARY_PATH=./	./$(TARGET) \
+		"--loglevel:NONE" \
+		"--pid:$(SRCDIR)/_$(_CONF)/$(TARGET).pid" \
+		"--esc:\\" \
+		"$(SRCDIR)/$(TARGET).xml"
 	@echo "OK"
 	
 testclient:
 	@echo "Executing Client in _Client"
-	@cp /usr/local/lib/libstringc.$(SOEXT) .
-	@cp /usr/local/lib/libmapc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libstringc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libmapc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libuki.$(SOEXT) .
 	@cp -rp ../_Debug ../_Client
 	@LD_LIBRARY_PATH=../_Client ../_Client/$(TARGET) \
 		"--loglevel:DEBUG" "../testclient.xml"
@@ -124,8 +133,9 @@ testclient:
 	
 testserver:
 	@echo "Executing Server in _Server"
-	@cp /usr/local/lib/libstringc.$(SOEXT) .
-	@cp /usr/local/lib/libmapc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libstringc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libmapc.$(SOEXT) .
+	@cp $(LOCAL)/$(SODIR)/libuki.$(SOEXT) .
 	@cp -rp ../_Debug ../_Server
 	@LD_LIBRARY_PATH=../_Server ../_Server/$(TARGET) \
 		"--loglevel:DEBUG" "../testserver.xml"

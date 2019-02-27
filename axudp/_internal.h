@@ -21,9 +21,19 @@
 #include "../runtime/dlsap.h"
 
 #include <sys/types.h>
+
+#ifdef __MINGW32__
+#include <windows.h>
+#include <winsock2.h>
+#include <winsock.h>
+#include <ws2tcpip.h>
+#define AI_ADDRCONFIG 0x00000400
+#else
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
+#endif
+
 #include <pthread.h>
 
 #define MODULE_NAME "AXUDP"

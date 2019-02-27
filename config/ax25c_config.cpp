@@ -19,6 +19,7 @@
 #include <xercesc/parsers/XercesDOMParser.hpp>
 
 #include <string>
+#include <algorithm>
 #include <exception>
 #include <iostream>
 #include <sstream>
@@ -330,33 +331,33 @@ static bool configurator(void *handle, struct setting_descriptor *descriptor,
 			case INT_T:
 				if (!getInt(nodeList, name, (int*)ptr, def, ex))
 					return false;
-				DEBUG(name, str_int(*(int*)ptr).c_str());
+				DBG_DEBUG(name, str_int(*(int*)ptr).c_str());
 				break;
 			case UINT_T:
 				if (!getUInt(nodeList, name, (unsigned int*)ptr, def, ex))
 					return false;
-				DEBUG(name, str_uint(*(unsigned int*)ptr).c_str());
+				DBG_DEBUG(name, str_uint(*(unsigned int*)ptr).c_str());
 				break;
-			case SIZE_T:
+			case NSIZE_T:
 				if (!getSize(nodeList, name, (size_t*)ptr, def, ex))
 					return false;
-				DEBUG(name, str_size(*(size_t*)ptr).c_str());
+				DBG_DEBUG(name, str_size(*(size_t*)ptr).c_str());
 				break;
 			case CSTR_T:
 				if (!getCString(nodeList, name, (const char **)ptr, def, ex))
 						return false;
 				assert(ptr);
-				DEBUG(name, *(const char**)ptr);
+				DBG_DEBUG(name, *(const char**)ptr);
 				break;
 			case DEBUG_T:
 				if (!getDebugLevel(nodeList, name, (debug_level_t*)ptr, def, ex))
 						return false;
-				DEBUG(name, str_debug_level(*(debug_level_t*)ptr).c_str());
+				DBG_DEBUG(name, str_debug_level(*(debug_level_t*)ptr).c_str());
 				break;
 			case STR_T:
 				if (!getString(nodeList, name, (struct ::string*)ptr, def, ex))
 					return false;
-				DEBUG(name, ::string_c((struct ::string*)ptr));
+				DBG_DEBUG(name, ::string_c((struct ::string*)ptr));
 				break;
 			default:
 				exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configurator",
@@ -385,7 +386,7 @@ static bool readInstance(struct plugin *plug, DOMElement* element,
     auto name = element->getAttribute(toX("name"));
     assert(name);
     inst->name = fmX2(name);
-    INFO("CNFIG INST", inst->name);
+    DBG_INFO("CNFIG INST", inst->name);
     // Get instance handle:
     assert(plug->plugin_descriptor);
     assert(plug->plugin_descriptor->get_instance_handle);
@@ -405,7 +406,7 @@ static bool readPlugin(DOMElement* element, struct plugin *plug,
     auto name = element->getAttribute(toX("name"));
     assert(name);
     plug->name = fmX2(name);
-    INFO("CNFIG PLUG", plug->name);
+    DBG_INFO("CNFIG PLUG", plug->name);
     // Get plugin file:
     auto file = element->getAttribute(toX("file"));
     assert(file);
@@ -457,7 +458,7 @@ static bool readConfig(DOMElement* element, struct configuration *conf,
     assert(name);
     conf->name = fmX2(name);
     // Configure the configuration:
-    INFO("CNFIG MAIN", conf->name);
+    DBG_INFO("CNFIG MAIN", conf->name);
     if (!configurator(conf, settings_descriptor, element, ex))
     	return false;
     // Init the plugin map:
@@ -483,6 +484,21 @@ static bool readConfig(DOMElement* element, struct configuration *conf,
 	return true;
 }
 
+#ifdef __MINGW32__
+/*
+ * Case Insensitive Implementation of endsWith()
+ * It checks if the string 'mainStr' ends with given string 'toMatch'
+ */
+static bool endsWithCaseInsensitive(std::string mainStr, std::string toMatch)
+{
+	auto it = toMatch.begin();
+	return mainStr.size() >= toMatch.size() &&
+			std::all_of(std::next(mainStr.begin(),mainStr.size() - toMatch.size()), mainStr.end(), [&it](const char & c){
+				return ::tolower(c) == ::tolower(*(it++))  ;
+	} );
+}
+#endif
+
 extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 		struct ::exception *ex)
 {
@@ -493,7 +509,7 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 		if (strncmp(argv[1], "--loglevel:", 11) == 0) {
 			const char *s = &argv[1][11];
 			configuration.loglevel = decodeDebugLevel(s);
-			INFO("Set loglevel", s);
+			DBG_INFO("Set loglevel", s);
 			if (configuration.loglevel < 0) {
 				exception_fill(ex, EXIT_FAILURE, MODULE_NAME, "configure",
 						"Invalid debug level", "");
@@ -501,7 +517,7 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 			}
 		} else if (strncmp(argv[1], "--pid:", 6) == 0) {
 			const char *s = &argv[1][6];
-			INFO("Set pid", s);
+			DBG_INFO("Set pid", s);
 			int pid = getpid();
 			try {
 				ofstream stream;
@@ -528,7 +544,7 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 					"Invalid argument", argv[1]);
 			return false;
 		}
-		DEBUG("argv[1]=", argv[1]);
+		DBG_DEBUG("argv[1]=", argv[1]);
 		--argc;
 		memmove(&argv[1], &argv[2], argc * sizeof(char*));
 	} // end while //
@@ -542,6 +558,10 @@ extern "C" bool configure(int argc, char *argv[], struct configuration *conf,
 		xmlpath.append(argv[0]);
 		unsigned int pos = xmlpath.find_last_of('/');
 		if (pos != std::string::npos) xmlpath.erase(0, pos + 1);
+#ifdef __MINGW32__
+		if (endsWithCaseInsensitive(xmlpath, ".exe"))
+			xmlpath.erase(xmlpath.length()-4);
+#endif
 		xmlpath.append(".xml");
 	}
 	// Load configuration:

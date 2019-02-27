@@ -21,21 +21,32 @@ else
 #----- End Boilerplate
 
 VPATH = $(SRCDIR)
-CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
-			-I/usr/local/include/
-LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
-			
+ifneq ($(OS),GNU/Linux)
+	WINFLAGS = -DWINVER=0x0501 -D_WIN32_WINNT=0x0501
+	WINLIBS  = -lwsock32 -lws2_32
+else
+	WINFLAGS =
+	WINLIBS  =
+endif	
 
+CFLAGS   =  $(WINFLAGS) \
+			-shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
+			-I$(LOCAL)/include/
+LDFLAGS  =  $(WINFLAGS) \
+			-shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
+			
 TARGET   =  ax25c_udp.so
 OBJS     =  module.o
-LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
-			-lstringc -lpthread
+LIBS     =  $(WINLIBS) \
+			-L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
+			-L$(LOCAL)/$(SODIR) -lstringc \
+			-lpthread
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
 	
 clean:
-	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
+	rm -rf $(SRCDIR)/$(OBJDIR)/* $(SRCDIR)/$(DOCDIR)/*
 
 install:
 

@@ -133,7 +133,7 @@ static inline void dump (enum debug_level_t loglevel,
  * @param msg Message to print.
  * @param par Parameter to print.
  */
-static inline void DEBUG(const char *msg, const char *par)
+static inline void DBG_DEBUG(const char *msg, const char *par)
 {
 	if (configuration.loglevel >= DEBUG_LEVEL_DEBUG)
 		ax25c_log(DEBUG_LEVEL_DEBUG, "%s:%s", msg, par);
@@ -144,7 +144,7 @@ static inline void DEBUG(const char *msg, const char *par)
  * @param msg Message to print.
  * @param par Parameter to print.
  */
-static inline void ERROR(const char *msg, const char *par)
+static inline void DBG_ERROR(const char *msg, const char *par)
 {
 	if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
 		ax25c_log(DEBUG_LEVEL_ERROR, "%s:%s", msg, par);
@@ -155,7 +155,7 @@ static inline void ERROR(const char *msg, const char *par)
  * @param msg Message to print.
  * @param par Parameter to print.
  */
-static inline void WARNING(const char *msg, const char *par)
+static inline void DBG_WARNING(const char *msg, const char *par)
 {
 	if (configuration.loglevel >= DEBUG_LEVEL_WARNING)
 		ax25c_log(DEBUG_LEVEL_WARNING, "%s:%s", msg, par);
@@ -166,7 +166,7 @@ static inline void WARNING(const char *msg, const char *par)
  * @param msg Message to print.
  * @param par Parameter to print.
  */
-static inline void INFO(const char *msg, const char *par)
+static inline void DBG_INFO(const char *msg, const char *par)
 {
 	if (configuration.loglevel >= DEBUG_LEVEL_INFO)
 		ax25c_log(DEBUG_LEVEL_INFO, "%s:%s", msg, par);

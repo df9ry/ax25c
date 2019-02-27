@@ -150,14 +150,14 @@ static void *get_plugin(const char *name,
 static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	assert(ex);
-	DEBUG("mm_simple start", plugin->name);
+	DBG_DEBUG("mm_simple start", plugin->name);
 	return true;
 }
 
 static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	assert(ex);
-	DEBUG("mm_simple stop", plugin->name);
+	DBG_DEBUG("mm_simple stop", plugin->name);
 	return true;
 }
 

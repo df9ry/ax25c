@@ -145,7 +145,7 @@ static void start_instance(struct mapc_node *elem, void *user_data)
 	inst = container_of(elem, struct instance, node);
 	assert(inst);
 	assert(pcbi->pd->start_instance);
-	INFO("START INST", inst->name);
+	DBG_INFO("START INST", inst->name);
 	pcbi->pd->start_instance(inst->handle, pcbi->ex);
 }
 
@@ -160,7 +160,7 @@ static void stop_instance(struct mapc_node *elem, void *user_data)
 	inst = container_of(elem, struct instance, node);
 	assert(inst);
 	assert(pcbi->pd->stop_instance);
-	INFO("STOP INST", inst->name);
+	DBG_INFO("STOP INST", inst->name);
 	pcbi->pd->stop_instance(inst->handle, pcbi->ex);
 }
 
@@ -176,7 +176,7 @@ static void start_plugin(struct mapc_node *elem, void *user_data)
 	cbi.pd = plugin->plugin_descriptor;
 	assert(cbi.pd);
 	assert(cbi.pd->start_plugin);
-	INFO("START PLUG", plugin->name);
+	DBG_INFO("START PLUG", plugin->name);
 	if (!cbi.pd->start_plugin(plugin->handle, cbi.ex))
 		return;
 	mapc_foreach(&plugin->instances, start_instance, &cbi);
@@ -196,7 +196,7 @@ static void stop_plugin(struct mapc_node *elem, void *user_data)
 	mapc_foreach_reverse(&plugin->instances, stop_instance, &cbi);
 	if (cbi.ex->erc != EXIT_SUCCESS)
 		return;
-	INFO("STOP PLUG", plugin->name);
+	DBG_INFO("STOP PLUG", plugin->name);
 	assert(cbi.pd->stop_plugin);
 	cbi.pd->stop_plugin(plugin->handle, cbi.ex);
 }
@@ -215,7 +215,7 @@ bool stop(struct exception *ex) {
 	assert(ex);
 	ex->erc = EXIT_SUCCESS;
 	die();
-	DEBUG("alive", "false");
+	DBG_DEBUG("alive", "false");
 	mapc_foreach_reverse(&configuration.plugins, stop_plugin, ex);
 	return (ex->erc == EXIT_SUCCESS);
 }
@@ -225,7 +225,7 @@ bool start(struct exception *ex)
 	assert(ex);
 	ex->erc = EXIT_SUCCESS;
 	alive = true;
-	DEBUG("alive", "true");
+	DBG_DEBUG("alive", "true");
 	mapc_foreach(&configuration.plugins, start_plugin, ex);
 	if (ex->erc != EXIT_SUCCESS) {
 		EXCEPTION(ex1);

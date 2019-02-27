@@ -22,20 +22,20 @@ else
 
 VPATH = $(SRCDIR)
 CFLAGS   =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
-			-I/usr/local/include/
+			-I$(LOCAL)/include/
 LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
 
 TARGET   =  ax25c_terminal.so
 OBJS     =  module.o terminal.o stdin.o stdout.o
 LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
-			-lstringc -lpthread
+			-L$(LOCAL)/$(SODIR) -lstringc -lpthread
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)
 	
 clean:
-	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
+	rm -rf $(SRCDIR)/$(OBJDIR)/* $(SRCDIR)/$(DOCDIR)/*
 
 install:
 

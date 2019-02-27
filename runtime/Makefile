@@ -21,19 +21,19 @@ else
 
 VPATH    = $(SRCDIR)
 CFLAGS   = -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread \
-			-I/usr/local/include/
+			-I$(LOCAL)/include/
 			
 TARGET   = libax25c_runtime.$(SOEXT)
 OBJS     = ax25c_runtime.o memory.o log.o tick.o dlsap.o dl_prim.o \
 			primbuffer.o dump.o exception.o ringbuffer.o monitor.o \
 			ax25c_timer.o
-LIBS     = -L/usr/local/lib -luki -lmapc -lstringc -ldl -lpthread
+LIBS     = -L$(LOCAL)/$(SODIR) -luki -lmapc -lstringc -ldl -lpthread
 
 all: $(TARGET)
 	cp $(TARGET) $(SRCDIR)/../_$(_CONF)
 	
 clean:
-	rm -rf $(SRCDIR)/$(OBJDIR) $(SRCDIR)/$(DOCDIR)
+	rm -rf $(SRCDIR)/$(OBJDIR)/* $(SRCDIR)/$(DOCDIR)/*
 
 install:
 

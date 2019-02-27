@@ -52,8 +52,13 @@ static void *rx_worker(void *id)
 	while (instance->alive) {
 		if (instance->server_mode) {
 			instance->peer_addr_len = sizeof(struct sockaddr_storage);
-			n = recvfrom(instance->sockfd, instance->rx_buf,
-					instance->rx_buf_size, 0,
+			n = recvfrom(instance->sockfd,
+#ifdef __MINGW32__
+					(char*)
+#endif
+					instance->rx_buf,
+					instance->rx_buf_size,
+					0,
 					(struct sockaddr*) &instance->peer_addr,
 					&instance->peer_addr_len);
 			if (n < 0) {
@@ -80,7 +85,11 @@ static void *rx_worker(void *id)
 				}
 			}
 		} else {
+#ifdef __MINGW32__
+			n = recv(instance->sockfd, (char*)instance->rx_buf, instance->rx_buf_size, 0);
+#else
 			n = read(instance->sockfd, instance->rx_buf, instance->rx_buf_size);
+#endif
 			if (n < 0) {
 				if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
 					ax25c_log(DEBUG_LEVEL_ERROR,
@@ -131,7 +140,7 @@ static void *tx_worker(void *id)
 		if (!(prim && instance->alive))
 			continue;
 		if (prim->protocol != AX25) {
-			ERROR("AXUDP:tx_worker", "Protocol != AX.25");
+			DBG_ERROR("AXUDP:tx_worker", "Protocol != AX.25");
 			continue;
 		}
 		if (configuration.loglevel >= DEBUG_LEVEL_DEBUG) {
@@ -140,9 +149,14 @@ static void *tx_worker(void *id)
 			dump(DEBUG_LEVEL_DEBUG, prim->payload, prim->size);
 		}
 		if (instance->server_mode) {
-			n = sendto(instance->sockfd, prim->payload, prim->size, 0,
-			                    (struct sockaddr*) &instance->peer_addr,
-			                    instance->peer_addr_len);
+			n = sendto(instance->sockfd,
+#ifdef __MINGW32__
+					(const char*)
+#endif
+					prim->payload,
+					prim->size, 0,
+			        (struct sockaddr*) &instance->peer_addr,
+			        instance->peer_addr_len);
 			if ((n < 0) &&
 					(configuration.loglevel >= DEBUG_LEVEL_ERROR))
 			{
@@ -157,7 +171,11 @@ static void *tx_worker(void *id)
 						prim->size, n);
 			}
 		} else {
+#ifdef __MINGW32__
+			n = send(instance->sockfd, (const char*)prim->payload, prim->size, 0);
+#else
 			n = write(instance->sockfd, prim->payload, prim->size);
+#endif
 			if ((n < 0) &&
 					(configuration.loglevel >= DEBUG_LEVEL_ERROR))
 			{
@@ -268,13 +286,25 @@ static void *get_plugin(const char *name,
 
 static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
-	DEBUG("axudp start", plugin->name);
+	DBG_DEBUG("axudp start", plugin->name);
+#ifdef __MINGW32__
+	WSADATA wsadata;
+	int erc = WSAStartup(0x0202, &wsadata);
+	if (erc) {
+		exception_fill(ex, erc, MODULE_NAME, "start_plugin:WSAStartup",
+				strerror(erc), NULL);
+		return false;
+	}
+#endif
 	return true;
 }
 
 static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
-	DEBUG("axudp stop", plugin->name);
+	DBG_DEBUG("axudp stop", plugin->name);
+#ifdef __MINGW32__
+	WSACleanup();
+#endif
 	return true;
 }
 
@@ -284,7 +314,7 @@ static void *get_instance(const char *name,
 	struct instance_handle *instance;
 	assert(name);
 	assert(configurator);
-	DEBUG("axudp instance greate", name);
+	DBG_DEBUG("axudp instance create", name);
 	instance = (struct instance_handle*)malloc(sizeof(struct instance_handle));
 	assert(instance);
 	memset(instance, 0x00, sizeof(struct instance_handle));
@@ -297,7 +327,7 @@ static void *get_instance(const char *name,
 	memcpy(&instance->dls, &dls_template, sizeof(struct dls));
 	instance->dls.name = name;
 	instance->dls.session = instance;
-	INFO("Register Service Access Point", instance->name);
+	DBG_INFO("Register Service Access Point", instance->name);
 	if (!dlsap_register_dls(&instance->dls, ex))
 		return false;
 	return instance;
@@ -310,7 +340,7 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 	struct addrinfo  hints;
 	struct addrinfo *addrinfo, *rp;
 
-	DEBUG("axudp instance start", instance->name);
+	DBG_DEBUG("axudp instance start", instance->name);
 
 	instance->rx_thread_running = false;
 	instance->tx_thread_running = false;
@@ -320,7 +350,7 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 		instance->server_mode = false;
 	} else if (strcmp(instance->mode, "server") == 0) {
 		instance->server_mode = true;
-		WARNING("Server mode is partially implemented only!", "");
+		DBG_WARNING("Server mode is partially implemented only!", "");
 		instance->peer_addr_len = 0;
 	} else {
 		exception_fill(ex, EINVAL, MODULE_NAME, "start_instance",
@@ -390,7 +420,11 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 			if (connect(instance->sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
 				break; /* Success */
 		}
-	   close(instance->sockfd);
+#ifdef __MINGW32__
+		closesocket(instance->sockfd);
+#else
+	    close(instance->sockfd);
+#endif
 	} /* end for */
 	if (!rp) {
 		exception_fill(ex, ENOENT, MODULE_NAME, "start_instance",
@@ -430,7 +464,7 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 static bool stop_instance(struct instance_handle *instance, exception_t *ex) {
 	assert(instance);
 
-	DEBUG("axudp instance stop", instance->name);
+	DBG_DEBUG("axudp instance stop", instance->name);
 	instance->alive = false;
 	if (instance->rx_thread_running) {
 		pthread_kill(instance->rx_thread, SIGINT);
@@ -446,7 +480,11 @@ static bool stop_instance(struct instance_handle *instance, exception_t *ex) {
 		instance->rx_buf = NULL;
 	}
 	if (instance->sockfd != -1) {
+#ifdef __MINGW__
+		closesocket(instance->sockfd);
+#else
 		close(instance->sockfd);
+#endif
 		instance->sockfd = -1;
 	}
 	return true;

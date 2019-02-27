@@ -30,10 +30,10 @@
 struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
-		{ "line_length",  SIZE_T, offsetof(struct plugin_handle, line_length),  "256"    },
+		{ "line_length",  NSIZE_T, offsetof(struct plugin_handle, line_length),  "256"    },
 		{ "loc_addr",     STR_T,  offsetof(struct plugin_handle, loc_addr),     "NOCALL" },
 		{ "rem_addr",     STR_T,  offsetof(struct plugin_handle, rem_addr),     "NOCALL" },
-		{ "mon_size",     SIZE_T, offsetof(struct plugin_handle, mon_size),     "1024"   },
+		{ "mon_size",     NSIZE_T, offsetof(struct plugin_handle, mon_size),     "1024"   },
 		{ "peer",         CSTR_T, offsetof(struct plugin_handle, peer),         "AX25"   },
 		{ "lead_txt",     CSTR_T, offsetof(struct plugin_handle, lead_txt),     ":"      },
 		{ "lead_cmd",     CSTR_T, offsetof(struct plugin_handle, lead_cmd),     ">"      },
@@ -61,14 +61,14 @@ static void *get_plugin(const char *name,
 
 static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
-	DEBUG("terminal start", plugin->name);
+	DBG_DEBUG("terminal start", plugin->name);
 	return terminal_start(plugin, ex);
 }
 
 static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	assert(ex);
-	DEBUG("terminal stop", plugin->name);
+	DBG_DEBUG("terminal stop", plugin->name);
 	return terminal_stop(plugin, ex);
 }
 

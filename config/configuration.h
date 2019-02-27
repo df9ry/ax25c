@@ -90,7 +90,7 @@ struct configuration {
 enum setting_type_t {
 	INT_T,   /**< Setting is an 'int'          */
 	UINT_T,  /**< Setting is an 'unsigned int' */
-	SIZE_T,  /**< Setting is a 'size_t'        */
+	NSIZE_T, /**< Setting is a 'size_t'        */
 	CSTR_T,  /**< Setting is a 'char*'         */
 	DEBUG_T, /**< Setting is a 'debug_level_t' */
 	STR_T,   /**< Setting is a 'string_t'.     */

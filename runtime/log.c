@@ -101,21 +101,27 @@ void *worker(void *id)
 
 void ax25c_log_init(void)
 {
+	int erc;
+
 	assert(!initialized);
 	configuration.loglevel = DEBUG_LEVEL_NONE;
 	assert(rb_init(&ring_buffer, LOGBUF_SIZE) == 0);
 	initialized = true;
 	pthread_attr_init(&thread_args);
 	pthread_attr_setdetachstate(&thread_args, PTHREAD_CREATE_JOINABLE);
-	assert(pthread_create(&thread, &thread_args, worker, NULL) == 0);
+	erc = pthread_create(&thread, &thread_args, worker, NULL);
+	assert(erc == 0);
 	pthread_attr_destroy(&thread_args);
 }
 
 void ax25c_log_term(void)
 {
+	int erc;
+
 	assert(initialized);
 	initialized = false;
-	assert(pthread_kill(thread, SIGINT) == 0);
+	pthread_kill(thread, SIGINT);
 
-	assert(rb_destroy(&ring_buffer) == 0);
+	erc = rb_destroy(&ring_buffer);
+	assert(erc == 0);
 }

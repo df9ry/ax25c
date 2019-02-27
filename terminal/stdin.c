@@ -29,7 +29,9 @@
 #include <signal.h>
 #include <assert.h>
 
+#ifndef __MINGW32__
 #include <termios.h>
+#endif
 
 #define S_IOBUF 256
 
@@ -1117,15 +1119,17 @@ static void *worker(void *id)
 
 void stdin_initialize(struct plugin_handle *h)
 {
-	struct termios t;
 	int erc;
 
 	assert(h);
 	assert(!initialized);
 
+#ifndef __MINGW32__
+	struct termios t;
 	tcgetattr(STDIN_FILENO, &t);
 	t.c_lflag &= ~(ICANON | ECHO | ISIG);
 	tcsetattr(STDIN_FILENO, TCSANOW, &t);
+#endif
 
 	plugin_handle = h;
 	initialized = true;
@@ -1144,9 +1148,6 @@ void stdin_initialize(struct plugin_handle *h)
 
 extern void stdin_terminate(struct plugin_handle *h)
 {
-	struct termios t;
-	int erc;
-
 	assert(h);
 	state = S_INF;
 	substate = 0;
@@ -1154,14 +1155,16 @@ extern void stdin_terminate(struct plugin_handle *h)
 	out_str("Terminal Quit");
 	state = S_TXT;
 	new_line();
+#ifndef __MINGW32__
+	struct termios t;
 	tcgetattr(STDIN_FILENO, &t);
 	t.c_lflag |= (ICANON | ECHO | ISIG);
 	tcsetattr(STDIN_FILENO, TCSANOW, &t);
+#endif
 	if (!initialized)
 		return;
 	assert(initialized);
 	initialized = false;
-	erc = pthread_kill(thread, SIGINT);
-	assert(erc == 0);
+	pthread_kill(thread, SIGINT);
 	plugin_handle = NULL;
 }
