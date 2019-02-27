@@ -26,6 +26,10 @@
 #include <signal.h>
 #include <assert.h>
 
+#ifndef __MINGW32__
+#define closesocket(sock) close(sock)
+#endif
+
 struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
@@ -52,13 +56,8 @@ static void *rx_worker(void *id)
 	while (instance->alive) {
 		if (instance->server_mode) {
 			instance->peer_addr_len = sizeof(struct sockaddr_storage);
-			n = recvfrom(instance->sockfd,
-#ifdef __MINGW32__
-					(char*)
-#endif
-					instance->rx_buf,
-					instance->rx_buf_size,
-					0,
+			n = recvfrom(instance->sockfd, (char*)instance->rx_buf,
+					instance->rx_buf_size, 0,
 					(struct sockaddr*) &instance->peer_addr,
 					&instance->peer_addr_len);
 			if (n < 0) {
@@ -85,11 +84,8 @@ static void *rx_worker(void *id)
 				}
 			}
 		} else {
-#ifdef __MINGW32__
-			n = recv(instance->sockfd, (char*)instance->rx_buf, instance->rx_buf_size, 0);
-#else
-			n = read(instance->sockfd, instance->rx_buf, instance->rx_buf_size);
-#endif
+			n = recv(instance->sockfd, (char*)instance->rx_buf,
+					instance->rx_buf_size, 0);
 			if (n < 0) {
 				if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
 					ax25c_log(DEBUG_LEVEL_ERROR,
@@ -149,11 +145,7 @@ static void *tx_worker(void *id)
 			dump(DEBUG_LEVEL_DEBUG, prim->payload, prim->size);
 		}
 		if (instance->server_mode) {
-			n = sendto(instance->sockfd,
-#ifdef __MINGW32__
-					(const char*)
-#endif
-					prim->payload,
+			n = sendto(instance->sockfd, (const char*)prim->payload,
 					prim->size, 0,
 			        (struct sockaddr*) &instance->peer_addr,
 			        instance->peer_addr_len);
@@ -171,11 +163,7 @@ static void *tx_worker(void *id)
 						prim->size, n);
 			}
 		} else {
-#ifdef __MINGW32__
 			n = send(instance->sockfd, (const char*)prim->payload, prim->size, 0);
-#else
-			n = write(instance->sockfd, prim->payload, prim->size);
-#endif
 			if ((n < 0) &&
 					(configuration.loglevel >= DEBUG_LEVEL_ERROR))
 			{
@@ -420,11 +408,7 @@ static bool start_instance(struct instance_handle *instance, exception_t *ex)
 			if (connect(instance->sockfd, rp->ai_addr, rp->ai_addrlen) != -1)
 				break; /* Success */
 		}
-#ifdef __MINGW32__
 		closesocket(instance->sockfd);
-#else
-	    close(instance->sockfd);
-#endif
 	} /* end for */
 	if (!rp) {
 		exception_fill(ex, ENOENT, MODULE_NAME, "start_instance",
@@ -480,11 +464,7 @@ static bool stop_instance(struct instance_handle *instance, exception_t *ex) {
 		instance->rx_buf = NULL;
 	}
 	if (instance->sockfd != -1) {
-#ifdef __MINGW__
 		closesocket(instance->sockfd);
-#else
-		close(instance->sockfd);
-#endif
 		instance->sockfd = -1;
 	}
 	return true;
