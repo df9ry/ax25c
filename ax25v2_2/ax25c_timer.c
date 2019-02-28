@@ -20,6 +20,19 @@
 pthread_spinlock_t elapsed_timer_list_lock;
 LIST_HEAD(elapsed_timer_list);
 
+void init_ax25c_timer(void)
+{
+	int erc = pthread_spin_init(&elapsed_timer_list_lock, PTHREAD_PROCESS_PRIVATE);
+	assert(erc == 0);
+}
+
+void term_ax25c_timer(void)
+{
+	while (!list_empty(&elapsed_timer_list))
+		list_del(elapsed_timer_list.next);
+	pthread_spin_destroy(&elapsed_timer_list_lock);
+}
+
 static void callback(unsigned long data)
 {
 	ax25c_timer_t *timer = (ax25c_timer_t*)data;

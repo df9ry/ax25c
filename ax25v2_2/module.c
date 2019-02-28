@@ -20,6 +20,7 @@
 #include "../runtime/dlsap.h"
 
 #include "_internal.h"
+#include "ax25c_timer.h"
 #include "monitor.h"
 
 #include <assert.h>
@@ -52,6 +53,7 @@ static void *get_plugin(const char *name,
 static bool start_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	assert(plugin);
 	DBG_DEBUG("Start", plugin->name);
+	init_ax25c_timer();
 	if (!ax25v2_2_monitor_init(ex))
 		return false;
 	if (!ax25v2_2_start(plugin, ex))
@@ -65,6 +67,7 @@ static bool stop_plugin(struct plugin_handle *plugin, struct exception *ex) {
 	DBG_DEBUG("Stop", plugin->name);
 	ax25v2_2_stop(plugin, ex);
 	ax25v2_2_monitor_dest(ex);
+	term_ax25c_timer();
 	return true;
 }
 

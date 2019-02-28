@@ -29,8 +29,8 @@
 #include <errno.h>
 #include <string.h>
 #include <dlfcn.h>
+#include <pthread.h>
 #include <assert.h>
-#include "ax25c_timer.h"
 
 struct configuration configuration = {
 		.name = NULL,
@@ -71,7 +71,6 @@ int print_ex(struct exception *ex)
 
 void runtime_initialize(void)
 {
-	pthread_spin_init(&elapsed_timer_list_lock, PTHREAD_PROCESS_PRIVATE);
 	init_timers();
 	monitor_init();
 	ax25c_log_init();
@@ -85,7 +84,6 @@ void runtime_terminate(void)
 	ax25c_dlsap_term();
 	ax25c_log_term();
 	monitor_destroy();
-	pthread_spin_destroy(&elapsed_timer_list_lock);
 }
 
 bool load_so(const char *name, void **handle, struct exception *ex)

@@ -27,9 +27,11 @@ LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
 
 TARGET   =  ax25v2_2.so
-OBJS     =  module.o ax25v2_2.o ax25v2_2_impl.o callsign.o monitor.o
+OBJS     =  module.o ax25v2_2.o ax25v2_2_impl.o callsign.o monitor.o \
+			ax25c_timer.o
 LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
-			-L$(LOCAL)/$(SODIR) -lstringc -lpthread
+			-L$(LOCAL)/$(SODIR) -lstringc -luki \
+			-lpthread
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)

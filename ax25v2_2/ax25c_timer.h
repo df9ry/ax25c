@@ -15,8 +15,8 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef RUNTIME_AX25C_TIMER_H_
-#define RUNTIME_AX25C_TIMER_H_
+#ifndef AX25V2_2_AX25C_TIMER_H_
+#define AX25V2_2_AX25C_TIMER_H_
 
 #include <time.h>
 #include <pthread.h>
@@ -51,6 +51,10 @@ struct ax25c_timer {
 };
 
 typedef struct ax25c_timer ax25c_timer_t;
+
+extern void init_ax25c_timer(void);
+
+extern void term_ax25c_timer(void);
 
 extern void ax25c_timer_init(ax25c_timer_t *timer, unsigned long data,
 		unsigned long duration, struct session *session,
@@ -119,4 +123,4 @@ static inline void ax25c_timer_set_duration_ms(ax25c_timer_t *timer,
 	timer->duration = msecs_to_jiffies(ms);
 }
 
-#endif /* RUNTIME_AX25C_TIMER_H_ */
+#endif /* AX25V2_2_AX25C_TIMER_H_ */

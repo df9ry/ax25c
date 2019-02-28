@@ -23,7 +23,9 @@ VPATH    =  $(SRCDIR)
 CFLAGS   =  -Wall -Werror -g -ggdb -fmessage-length=0 -pthread \
 			-I$(LOCAL)/include/
 
-LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF)/ -lax25c_runtime -lpthread
+LIBS     =  -L$(SRCDIR)/runtime/_$(_CONF)/ -lax25c_runtime \
+			-L$(LOCAL)/$(SODIR) -l uki \
+			-lpthread
 TARGET   =  ax25c
 OBJS     =  ax25c.o
 

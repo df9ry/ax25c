@@ -23,6 +23,7 @@
 #include "runtime/tick.h"
 
 #include <sys/types.h>
+#include <uki/delay.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,10 +31,7 @@
 #include <assert.h>
 #include <time.h>
 
-#ifdef __MINGW32__
-#include <windows.h>
-#include <winsock2.h>
-#else
+#ifndef __MINGW32__
 #include <termios.h>
 #endif
 
@@ -52,24 +50,6 @@ static void handle_signal(int signal) {
 	if (signal == SIGINT)
 		die();
 }
-
-#ifdef __MINGW32__
-#include <windows.h>
-void _usleep(__int64 usec)
-{
-    HANDLE timer;
-    LARGE_INTEGER ft;
-
-    ft.QuadPart = -(10*usec); // Convert to 100 nanosecond interval, negative value indicates relative time
-
-    timer = CreateWaitableTimer(NULL, TRUE, NULL);
-    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0);
-    WaitForSingleObject(timer, INFINITE);
-    CloseHandle(timer);
-}
-#else
-#define _usleep usleep
-#endif
 
 int main(int argc, char *argv[]) {
 	EXCEPTION(ex);
@@ -105,7 +85,7 @@ int main(int argc, char *argv[]) {
 	DBG_INFO("Run", "");
 	ex.erc = EXIT_SUCCESS;
 	while (tick(&ex)) {
-		_usleep(configuration.tick * 1000);
+		msleep(configuration.tick);
 	} /* end while */
 	if (ex.erc != EXIT_SUCCESS)
 		return print_ex(&ex);
