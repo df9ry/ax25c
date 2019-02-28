@@ -44,9 +44,8 @@ static bool onTick(void *user_data, struct exception *ex)
 {
 	int erc;
 
-	bool busy = true;
 	assert(user_data == &plugin);
-	while (busy) {
+	while (true) {
 		/* Handle RX */
 		{
 			bool expedited;
@@ -93,6 +92,7 @@ static bool onTick(void *user_data, struct exception *ex)
 				continue;
 			}
 		}
+		break;
 	} /* end while */
 	return true;
 }

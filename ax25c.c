@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
 	stop(&ex);
 	runtime_terminate();
 
-	if (configuration.loglevel >= DEBUG_LEVEL_INFO) {
+	if ((configuration.loglevel >= DEBUG_LEVEL_INFO) && (ex.erc != 0)) {
 		return print_ex(&ex);
 	} else {
 		return ex.erc;
