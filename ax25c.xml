@@ -66,6 +66,7 @@
 		<Plugin name="AX25" file="ax25v2_2.so">
 			<Settings>
 				<Setting name="peer">AXUDP-1</Setting>
+				<Setting name="n_sessions">1</Setting>
 			</Settings>
 		</Plugin>
 		

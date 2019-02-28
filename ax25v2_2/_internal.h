@@ -22,14 +22,24 @@
 
 #include "callsign.h"
 
+#include "../runtime/primbuffer.h"
+
+#include <uki/list.h>
 #include <stdbool.h>
+#include <pthread.h>
 
 struct exception;
+struct session;
 
 struct plugin_handle {
-	const char *name;
-	addressField_t default_addr;
-	const char *peer;
+	const char        *name;
+	addressField_t     default_addr;
+	const char        *peer;
+	size_t             n_sessions;
+	pthread_spinlock_t session_lock;
+	struct session    *sessions;
+	primbuffer_t       rx_buffer;
+	primbuffer_t       tx_buffer;
 };
 
 extern struct plugin_handle plugin;

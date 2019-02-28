@@ -98,11 +98,12 @@ void primbuffer_write_nonblock(primbuffer_t *pb, struct primitive *prim,
 	assert(erc == 0);
 	list_add_tail(&prim->node,
 			expedited ? &pb->expedited_list : &pb->routine_list);
+	_cond_signal(pb);
 	erc = pthread_spin_unlock(&pb->spinlock); /*-----------------------------^*/
 	assert(erc == 0);
 }
 
-struct primitive *primitive_read_nonblock(primbuffer_t *pb,
+struct primitive *primbuffer_read_nonblock(primbuffer_t *pb,
 		bool *expedited)
 {
 	primitive_t *prim;
@@ -138,7 +139,7 @@ struct primitive *primbuffer_read_block(primbuffer_t *pb, bool *expedited)
 
 	assert(pb);
 	while (!prim) {
-		prim = primitive_read_nonblock(pb, expedited);
+		prim = primbuffer_read_nonblock(pb, expedited);
 		if (!prim)
 			_cond_wait(pb);
 	} /* end while */

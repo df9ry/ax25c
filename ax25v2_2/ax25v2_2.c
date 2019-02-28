@@ -21,11 +21,13 @@
 
 #include "_internal.h"
 #include "callsign.h"
+#include "session.h"
 #include "ax25v2_2.h"
 
 #include <stringc/stringc.h>
 
 #include <errno.h>
+#include <pthread.h>
 #include <assert.h>
 
 static bool set_client_local_addr(dls_t *_dls, const char *addr,
@@ -142,129 +144,40 @@ static void client_dls_close(dls_t *_dls)
 	client_dls.peer = NULL;
 }
 
-static bool on_write_dl_unit_data_request(dls_t *_dls, primitive_t *prim,
-		struct exception *ex)
-{
-	bool res = false;
-	primitive_t *resp;
-	prim_param_t *dstAddr, *srcAddr, *data;
-
-	assert(prim);
-	if (_dls->peer) {
-		dstAddr = get_DL_dst_param(prim);
-		assert(dstAddr);
-		srcAddr = get_DL_src_param(prim);
-		assert(srcAddr);
-		data = get_DL_data_param(prim);
-		assert(data);
-		resp = new_DL_UNIT_DATA_Indication(0,
-				get_prim_param_data(srcAddr), get_prim_param_size(srcAddr),
-				get_prim_param_data(dstAddr), get_prim_param_size(dstAddr),
-				get_prim_param_data(data),    get_prim_param_size(data), ex);
-		if (resp) {
-			monitor_put(resp, client_dls.name, true);
-			res = dlsap_write(client_dls.peer, resp, false, ex);
-		} else {
-			res = false;
-		}
-	}
-	del_prim(resp);
-	return res;
-}
-
-static bool on_write_dl_test_request(dls_t *_dls, primitive_t *prim,
-		struct exception *ex)
-{
-	bool res = false;
-	primitive_t *frame;
-	prim_param_t *dstAddr, *srcAddr, *data;
-	STRING(dst);
-	STRING(src);
-	callsign source;
-	addressField_t af;
-	const char *next;
-
-	if (server_dls.peer) {
-		assert(prim);
-		dstAddr = get_DL_dst_param(prim);
-		assert(dstAddr);
-		get_prim_param_cstr(dstAddr, &dst);
-		srcAddr = get_DL_src_param(prim);
-		assert(srcAddr);
-		get_prim_param_cstr(srcAddr, &src);
-		data = get_DL_data_param(prim);
-		assert(data);
-		source = callsignFromString(STRING_C(src), &next, ex);
-		if (!source)
-			goto exit;
-		if (*next) {
-			exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
-					"on_write_dl_test_request",
-					"Exceeding characters in source call", STRING_C(src));
-			goto exit;
-		}
-		if (!addressFieldFromString(source, STRING_C(dst), &af, ex))
-			return false;
-		frame = new_AX25_TEST(prim->clientHandle, 0, &af, true, true,
-				get_prim_param_data(data), get_prim_param_size(data), ex);
-		if (frame) {
-			frame->flags = AX25_MODULO_V2_8;
-			monitor_put(frame, client_dls.name, true);
-			res = dlsap_write(server_dls.peer, frame, false, ex);
-			del_prim(frame);
-			res = true;
-		}
-	}
-exit:
-	STRING_RESET(dst);
-	STRING_RESET(src);
-	return res;
-}
-
 static bool on_write_dl_connect_request(dls_t *_dls, primitive_t *prim,
 		struct exception *ex)
 {
-	bool res = false;
-	primitive_t *frame;
-	prim_param_t *dstAddr, *srcAddr;
-	STRING(dst);
-	STRING(src);
-	callsign source;
-	addressField_t af;
-	const char *next;
+	struct session *session;
+	int i, erc;
 
-	if (server_dls.peer) {
-		assert(prim);
-		dstAddr = get_DL_dst_param(prim);
-		assert(dstAddr);
-		get_prim_param_cstr(dstAddr, &dst);
-		srcAddr = get_DL_src_param(prim);
-		assert(srcAddr);
-		get_prim_param_cstr(srcAddr, &src);
-		source = callsignFromString(STRING_C(src), &next, ex);
-		if (!source)
-			goto exit;
-		if (*next) {
-			exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
-					"on_write_dl_connect_request",
-					"Exceeding characters in source call", STRING_C(src));
-			goto exit;
-		}
-		if (!addressFieldFromString(source, STRING_C(dst), &af, ex))
-			return false;
-		frame = new_AX25_SABM(prim->clientHandle, 0, &af, ex);
-		if (frame) {
-			frame->flags = AX25_MODULO_V2_8;
-			monitor_put(frame, client_dls.name, true);
-			res = dlsap_write(server_dls.peer, frame, false, ex);
-			del_prim(frame);
-			res = true;
-		}
+	assert(&client_dls == _dls);
+	if (!server_dls.peer) {
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
+				"on_write_dl_connect_request", "Channel closed", client_dls.name);
+		return false;
 	}
-exit:
-	STRING_RESET(dst);
-	STRING_RESET(src);
-	return res;
+	assert(prim);
+	session = NULL;
+	erc = pthread_spin_lock(&plugin.session_lock); /* ===v */
+	assert(erc == 0);
+	for (i = 0; i < plugin.n_sessions; ++i) {
+		if (!plugin.sessions[i].is_active) {
+			session = &plugin.sessions[i];
+			session->is_active = true;
+			break;
+		}
+	} /* end for */
+	erc = pthread_spin_unlock(&plugin.session_lock); /* =^ */
+	assert(erc == 0);
+	if (!session) {
+		exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
+				"on_write_dl_connect_request",
+				"No session available", client_dls.name);
+		return false;
+	}
+	session->client_id = prim->clientHandle;
+	prim->serverHandle = session->server_id;
+	return true;
 }
 
 static bool on_write_dl(dls_t *_dls, primitive_t *prim, struct exception *ex)
@@ -272,19 +185,10 @@ static bool on_write_dl(dls_t *_dls, primitive_t *prim, struct exception *ex)
 	bool res = false;
 
 	switch (prim->cmd) {
-	case DL_UNIT_DATA_REQUEST:
-		res = on_write_dl_unit_data_request(_dls, prim, ex);
-		break;
-	case DL_TEST_REQUEST:
-		res = on_write_dl_test_request(_dls, prim, ex);
-		break;
 	case DL_CONNECT_REQUEST:
 		res = on_write_dl_connect_request(_dls, prim, ex);
 		break;
 	default:
-		exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
-				"on_write_dl", "Unimplemented Command", "");
-		res = false;
 		break;
 	} /* end switch */
 	return res;
@@ -293,8 +197,6 @@ static bool on_write_dl(dls_t *_dls, primitive_t *prim, struct exception *ex)
 static bool on_client_write(dls_t *_dls, primitive_t *prim, bool expedited,
 		struct exception *ex)
 {
-	bool res = false;
-
 	if (_dls != &client_dls) {
 		exception_fill(ex, EINVAL, MODULE_NAME,
 				"on_write", "Channel disruption", "");
@@ -305,17 +207,21 @@ static bool on_client_write(dls_t *_dls, primitive_t *prim, bool expedited,
 				"on_write", "Primitive is NULL", "");
 		return false;
 	}
+
 	switch (prim->protocol) {
 	case DL:
-		res = on_write_dl(_dls, prim, ex);
+		if (!on_write_dl(_dls, prim, ex))
+			return false;
 		break;
 	default:
 		exception_fill(ex, EXIT_FAILURE, MODULE_NAME,
 				"on_write", "Unhandled Protocol", "");
-		res = false;
-		break;
+		return false;
 	} /* end switch */
-	return res;
+
+	monitor_put(prim, _dls->name, true);
+	primbuffer_write_nonblock(&plugin.tx_buffer, prim, expedited);
+	return true;
 }
 
 static void client_dls_queue_stats(dls_t *_dls, dls_stats_t *stats)
@@ -332,6 +238,7 @@ static bool on_server_write(dls_t *_dls, primitive_t *prim, bool expedited,
 
 bool ax25v2_2_initialize(struct plugin_handle *h, struct exception *ex)
 {
+	assert(h);
 	client_dls.name = h->name;
 	DBG_INFO("Register Service Access Point", h->name);
 	return dlsap_register_dls(&client_dls, ex);
@@ -339,6 +246,9 @@ bool ax25v2_2_initialize(struct plugin_handle *h, struct exception *ex)
 
 bool ax25v2_2_start(struct plugin_handle *h, struct exception *ex)
 {
+	assert(h);
+	primbuffer_init(&h->rx_buffer);
+	primbuffer_init(&h->tx_buffer);
 	server_dls.peer = dlsap_lookup_dls(h->peer);
 	if (!server_dls.peer) {
 		exception_fill(ex, ENOENT, MODULE_NAME, "ax25v2_2_start",
@@ -352,7 +262,10 @@ bool ax25v2_2_start(struct plugin_handle *h, struct exception *ex)
 
 bool ax25v2_2_stop(struct plugin_handle *h, struct exception *ex)
 {
+	assert(h);
 	dlsap_close(server_dls.peer);
 	server_dls.peer = NULL;
+	primbuffer_destroy(&h->rx_buffer);
+	primbuffer_destroy(&h->tx_buffer);
 	return true;
 }

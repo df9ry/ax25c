@@ -60,6 +60,8 @@ static void *rx_worker(void *id)
 					instance->rx_buf_size, 0,
 					(struct sockaddr*) &instance->peer_addr,
 					&instance->peer_addr_len);
+			if (!instance->alive)
+				break;
 			if (n < 0) {
 				if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
 					ax25c_log(DEBUG_LEVEL_ERROR,
@@ -86,11 +88,13 @@ static void *rx_worker(void *id)
 		} else {
 			n = recv(instance->sockfd, (char*)instance->rx_buf,
 					instance->rx_buf_size, 0);
+			if (!instance->alive)
+				break;
 			if (n < 0) {
 				if (configuration.loglevel >= DEBUG_LEVEL_ERROR)
 					ax25c_log(DEBUG_LEVEL_ERROR,
 							"AXUDP:rx_worker:read() error %i:%s",
-							errno, strerror(errno));
+							-n, strerror(-n));
 				continue;
 			}
 		}

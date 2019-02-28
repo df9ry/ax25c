@@ -18,12 +18,13 @@
 #include "ax25c_timer.h"
 
 pthread_spinlock_t elapsed_timer_list_lock;
-LIST_HEAD(elapsed_timer_list);
+struct list_head elapsed_timer_list;
 
 void init_ax25c_timer(void)
 {
 	int erc = pthread_spin_init(&elapsed_timer_list_lock, PTHREAD_PROCESS_PRIVATE);
 	assert(erc == 0);
+	INIT_LIST_HEAD(&elapsed_timer_list);
 }
 
 void term_ax25c_timer(void)
