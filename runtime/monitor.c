@@ -29,14 +29,14 @@
 #include <errno.h>
 #include <assert.h>
 
-static int put_info(uint8_t *po, int co, char *pb, int cb)
+int monitor_put_info(uint8_t *po, int co, char *pb, int cb)
 {
 	int ib = 0, ch;
 
 	if (cb < 2)
 		return 0;
 	*pb++ = '"'; cb--; ib++;
-	while ((co >= 0) && (cb > 1)) {
+	while ((co > 0) && (cb > 1)) {
 		ch = *po++; co--;
 		if (extended_isprint(ch))
 			*pb++ = ch;
@@ -48,7 +48,7 @@ static int put_info(uint8_t *po, int co, char *pb, int cb)
 	return ib;
 }
 
-static int put_dump(uint8_t *po, int co, char *pb, int cb)
+int monitor_put_dump(uint8_t *po, int co, char *pb, int cb)
 {
 	int i, ib = 0;
 
@@ -62,6 +62,23 @@ static int put_dump(uint8_t *po, int co, char *pb, int cb)
 		return ib;
 	else
 		return 0;
+}
+
+int monitor_put_str(const char* str, char *pb, int cb)
+{
+	int l = strlen(str);
+	if (cb <= 0)
+		return 0;
+	if ((cb <= 0) || (l == 0))
+		return 0;
+	if (l+1 >= cb) {
+		l = cb-1;
+		memcpy(pb, str, l);
+		pb[l] = '\0';
+	} else {
+		memcpy(pb, str, l+1);
+	}
+	return l;
 }
 
 static int _dl_monitor_provider(struct primitive *prim, char *pb, size_t cb)
@@ -151,7 +168,7 @@ static int _dl_monitor_provider(struct primitive *prim, char *pb, size_t cb)
 		}
 		l += i; pb += i; cb -= i;
 
-		i = put_info(prim->payload, prim->size, pb, cb);
+		i = monitor_put_info(prim->payload, prim->size, pb, cb);
 		if (i+1 >= cb) {
 			pb[cb-1] = '\0';
 			return l + cb - 1;
@@ -169,7 +186,7 @@ static int _dl_monitor_provider(struct primitive *prim, char *pb, size_t cb)
 		}
 		l += i; pb += i; cb -= i;
 
-		i = put_dump(prim->payload, prim->size, pb, cb);
+		i = monitor_put_dump(prim->payload, prim->size, pb, cb);
 		if (i+1 >= cb) {
 			pb[cb-1] = '\0';
 			return l + cb - 1;

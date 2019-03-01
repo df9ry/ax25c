@@ -33,4 +33,10 @@ extern void monitor_init(void);
 
 extern void monitor_destroy(void);
 
+extern int monitor_put_info(uint8_t *po, int co, char *pb, int cb);
+
+extern int monitor_put_dump(uint8_t *po, int co, char *pb, int cb);
+
+extern int monitor_put_str(const char* str, char *pb, int cb);
+
 #endif /* RUNTIME_MONITOR_H_ */
