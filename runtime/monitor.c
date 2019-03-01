@@ -18,6 +18,7 @@
 #include "monitor.h"
 #include "runtime.h"
 #include "primitive.h"
+#include "dl_prim.h"
 #include "_internal.h"
 #include "exception.h"
 
@@ -27,6 +28,182 @@
 #include <pthread.h>
 #include <errno.h>
 #include <assert.h>
+
+static int put_info(uint8_t *po, int co, char *pb, int cb)
+{
+	int ib = 0, ch;
+
+	if (cb < 2)
+		return 0;
+	*pb++ = '"'; cb--; ib++;
+	while ((co >= 0) && (cb > 1)) {
+		ch = *po++; co--;
+		if (extended_isprint(ch))
+			*pb++ = ch;
+		else
+			*pb++ = '.';
+		cb--; ib++;
+	} /* end while */
+	*pb++ = '"'; cb--; ib++;
+	return ib;
+}
+
+static int put_dump(uint8_t *po, int co, char *pb, int cb)
+{
+	int i, ib = 0;
+
+	if (cb <= 0)
+		return 0;
+	while ((co > 0) && (cb > 0)) {
+		i = snprintf(pb, cb, "%02x ", *po++); co--;
+		pb += i; cb -= i; ib += i;
+	} /* end while */
+	if (cb >= 0)
+		return ib;
+	else
+		return 0;
+}
+
+static int _dl_monitor_provider(struct primitive *prim, char *pb, size_t cb)
+{
+	int i, l = 0;
+	const char *s;
+
+	assert(prim);
+	assert(pb);
+	assert(prim->protocol == DL);
+	pb[0] = '\0';
+	switch (prim->cmd) {
+	case DL_CONNECT_REQUEST :
+		s = "DL_CONNECT_REQUEST";
+		break;
+	case DL_CONNECT_INDICATION :
+		s = "DL_CONNECT_INDICATION";
+		break;
+	case DL_CONNECT_CONFIRM :
+		s = "DL_CONNECT_CONFIRM";
+		break;
+	case DL_DISCONNECT_REQUEST :
+		s = "DL_DISCONNECT_REQUEST";
+		break;
+	case DL_DISCONNECT_INDICATION :
+		s = "DL_DISCONNECT_INDICATION";
+		break;
+	case DL_DISCONNECT_CONFIRM :
+		s = "DL_DISCONNECT_CONFIRM";
+		break;
+	case DL_DATA_REQUEST :
+		s = "DL_DATA_REQUEST";
+		break;
+	case DL_DATA_INDICATION :
+		s = "DL_DATA_INDICATION";
+		break;
+	case DL_UNIT_DATA_REQUEST :
+		s = "DL_UNIT_DATA_REQUEST";
+		break;
+	case DL_UNIT_DATA_INDICATION :
+		s = "DL_UNIT_DATA_INDICATION";
+		break;
+	case DL_ERROR_INDICATION :
+		s = "DL_ERROR_INDICATION";
+		break;
+	case DL_FLOW_OFF_REQUEST :
+		s = "DL_FLOW_OFF_REQUEST";
+		break;
+	case DL_FLOW_ON_REQUEST :
+		s = "DL_FLOW_ON_REQUEST";
+		break;
+	case MDL_NEGOTIATE_REQUEST :
+		s = "MDL_NEGOTIATE_REQUEST";
+		break;
+	case MDL_NEGOTIATE_CONFIRM :
+		s = "MDL_NEGOTIATE_CONFIRM";
+		break;
+	case MDL_ERROR_INDICATION :
+		s = "MDL_ERROR_INDICATION";
+		break;
+	case DL_TEST_REQUEST :
+		s = "DL_TEST_REQUEST";
+		break;
+	case DL_TEST_INDICATION :
+		s = "DL_TEST_INDICATION";
+		break;
+	case DL_TEST_CONFIRM :
+		s = "DL_TEST_CONFIRM";
+		break;
+	default :
+		s = "DL_???";
+		break;
+	} /* end switch */
+
+	i = snprintf(pb, cb, "%s [%i:%i]", s, prim->clientHandle, prim->serverHandle);
+	if (i+1 >= cb) {
+		pb[cb-1] = '\0';
+		return l + cb - 1;
+	}
+	l += i; pb += i; cb -= i;
+
+	if (prim->size > 0) {
+		i = snprintf(pb, cb, " %i bytes: ", prim->size);
+		if (i+1 >= cb) {
+			pb[cb-1] = '\0';
+			return l + cb - 1;
+		}
+		l += i; pb += i; cb -= i;
+
+		i = put_info(prim->payload, prim->size, pb, cb);
+		if (i+1 >= cb) {
+			pb[cb-1] = '\0';
+			return l + cb - 1;
+		}
+		if (i+1 >= cb) {
+			pb[cb-1] = '\0';
+			return l + cb - 1;
+		}
+		l += i; pb += i; cb -= i;
+
+		i = snprintf(pb, cb, ": ");
+		if (i+1 >= cb) {
+			pb[cb-1] = '\0';
+			return l + cb - 1;
+		}
+		l += i; pb += i; cb -= i;
+
+		i = put_dump(prim->payload, prim->size, pb, cb);
+		if (i+1 >= cb) {
+			pb[cb-1] = '\0';
+			return l + cb - 1;
+		}
+		l += i; pb += i; cb -= i;
+	}
+	pb[0] = '\0';
+	return l;
+}
+
+static int dl_monitor_provider(struct primitive *prim, char *pb, size_t cb,
+		struct exception *ex)
+{
+	int res;
+
+	if (cb < 5) {
+		exception_fill(ex, ENOMEM, MODULE_NAME, "dl_monitor_provider",
+				"buffer too small (< 5)", "");
+		return -ENOMEM;
+	}
+	res = _dl_monitor_provider(prim, pb, cb);
+	if (res < 0) {
+		exception_fill(ex, EINVAL, MODULE_NAME, "dl_monitor_provider",
+				"internal error", "");
+		return -EINVAL;
+	}
+	if (res+4 >= cb) {
+		memcpy(&pb[cb-5], "...", 4);
+		return cb-1;
+	} else {
+		pb[res] = '\0';
+		return res;
+	}
+}
 
 static pthread_spinlock_t monitor_lock;
 static pthread_spinlock_t listener_lock;
@@ -157,10 +334,12 @@ void monitor_init(void)
 	memset(&monitor_providers, 0x00, sizeof(monitor_providers));
 	pthread_spin_init(&monitor_lock, PTHREAD_PROCESS_PRIVATE);
 	pthread_spin_init(&listener_lock, PTHREAD_PROCESS_PRIVATE);
+	register_monitor_provider(DL, dl_monitor_provider, NULL);
 }
 
 void monitor_destroy(void)
 {
+	unregister_monitor_provider(DL, dl_monitor_provider, NULL);
 	pthread_spin_destroy(&listener_lock);
 	pthread_spin_destroy(&monitor_lock);
 }

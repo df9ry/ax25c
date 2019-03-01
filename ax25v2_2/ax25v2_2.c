@@ -246,7 +246,11 @@ bool ax25v2_2_initialize(struct plugin_handle *h, struct exception *ex)
 
 bool ax25v2_2_start(struct plugin_handle *h, struct exception *ex)
 {
+	int erc;
+
 	assert(h);
+	erc = pthread_spin_init(&h->session_lock, PTHREAD_PROCESS_PRIVATE);
+	assert(erc == 0);
 	primbuffer_init(&h->rx_buffer);
 	primbuffer_init(&h->tx_buffer);
 	server_dls.peer = dlsap_lookup_dls(h->peer);
@@ -263,6 +267,7 @@ bool ax25v2_2_start(struct plugin_handle *h, struct exception *ex)
 bool ax25v2_2_stop(struct plugin_handle *h, struct exception *ex)
 {
 	assert(h);
+	pthread_spin_destroy(&h->session_lock);
 	dlsap_close(server_dls.peer);
 	server_dls.peer = NULL;
 	primbuffer_destroy(&h->rx_buffer);

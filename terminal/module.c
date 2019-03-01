@@ -30,17 +30,18 @@
 struct plugin_handle plugin;
 
 static struct setting_descriptor plugin_settings_descriptor[] = {
-		{ "line_length",  NSIZE_T, offsetof(struct plugin_handle, line_length),  "256"    },
-		{ "loc_addr",     STR_T,  offsetof(struct plugin_handle, loc_addr),     "NOCALL" },
-		{ "rem_addr",     STR_T,  offsetof(struct plugin_handle, rem_addr),     "NOCALL" },
-		{ "mon_size",     NSIZE_T, offsetof(struct plugin_handle, mon_size),     "1024"   },
-		{ "peer",         CSTR_T, offsetof(struct plugin_handle, peer),         "AX25"   },
-		{ "lead_txt",     CSTR_T, offsetof(struct plugin_handle, lead_txt),     ":"      },
-		{ "lead_cmd",     CSTR_T, offsetof(struct plugin_handle, lead_cmd),     ">"      },
-		{ "lead_inf",     CSTR_T, offsetof(struct plugin_handle, lead_inf),     "+"      },
-		{ "lead_err",     CSTR_T, offsetof(struct plugin_handle, lead_err),     "!"      },
-		{ "lead_mon",     CSTR_T, offsetof(struct plugin_handle, lead_mon),     "#"      },
-		{ "prompt",       CSTR_T, offsetof(struct plugin_handle, prompt),       "cmd>"   },
+		{ "line_length", NSIZE_T, offsetof(struct plugin_handle, line_length), "256"    },
+		{ "loc_addr",    STR_T,   offsetof(struct plugin_handle, loc_addr),    "NOCALL" },
+		{ "rem_addr",    STR_T,   offsetof(struct plugin_handle, rem_addr),    "NOCALL" },
+		{ "mon_length",  NSIZE_T, offsetof(struct plugin_handle, mon_length),  "256"    },
+		{ "mon_size",    NSIZE_T, offsetof(struct plugin_handle, mon_size),    "1024"   },
+		{ "peer",        CSTR_T,  offsetof(struct plugin_handle, peer),        "AX25"   },
+		{ "lead_txt",    CSTR_T,  offsetof(struct plugin_handle, lead_txt),    ":"      },
+		{ "lead_cmd",    CSTR_T,  offsetof(struct plugin_handle, lead_cmd),    ">"      },
+		{ "lead_inf",    CSTR_T,  offsetof(struct plugin_handle, lead_inf),    "+"      },
+		{ "lead_err",    CSTR_T,  offsetof(struct plugin_handle, lead_err),    "!"      },
+		{ "lead_mon",    CSTR_T,  offsetof(struct plugin_handle, lead_mon),    "#"      },
+		{ "prompt",      CSTR_T,  offsetof(struct plugin_handle, prompt),      "cmd>"   },
 		{ NULL }
 };
 

@@ -28,10 +28,10 @@
 #include <string.h>
 #include <assert.h>
 
-#define S_MONITOR_BUFFER 100
-#define L_MONITOR_BUFFER 72
-static char mon_line_buffer[S_MONITOR_BUFFER];
+#define MONITOR_BUFFER_RESERVE 16
+static char *mon_line_buffer;
 static int i_mon_line_buffer = 0;
+static char *mon_get_buffer;
 
 struct primbuffer primbuffer;
 
@@ -174,7 +174,7 @@ static void *monitor_worker(void *id)
 
 	while (initialized) {
 		n = rb_read_block_ch(&rb_monitor, &mon_line_buffer[i_mon_line_buffer],
-				S_MONITOR_BUFFER - i_mon_line_buffer);
+				plugin.mon_length + MONITOR_BUFFER_RESERVE - i_mon_line_buffer);
 		if (!initialized)
 			return NULL;
 		if (n <= 0)
@@ -182,20 +182,17 @@ static void *monitor_worker(void *id)
 		i_mon_line_buffer += n;
 		while (true) {
 			p = memchr(mon_line_buffer, '\n', i_mon_line_buffer);
-			if (p) {
-				m = p - (void*)mon_line_buffer + 1;
-				monitor_write(handle, mon_line_buffer, m);
-				memmove(mon_line_buffer, &mon_line_buffer[m], m);
-				i_mon_line_buffer -= m;
-			} else {
+			if (p == NULL)
 				break;
-			}
+			m = p - (void*)mon_line_buffer + 1;
+			monitor_write(handle, mon_line_buffer, m);
+			i_mon_line_buffer -= m;
+			memmove(&mon_line_buffer[0], &mon_line_buffer[m], i_mon_line_buffer);
 		} /* end while */
-		if (i_mon_line_buffer >= L_MONITOR_BUFFER) {
-			monitor_write(handle, mon_line_buffer, L_MONITOR_BUFFER);
-			memmove(mon_line_buffer, &mon_line_buffer[L_MONITOR_BUFFER],
-					L_MONITOR_BUFFER);
-			i_mon_line_buffer -= L_MONITOR_BUFFER;
+		if (i_mon_line_buffer > handle->mon_length) {
+			DBG_ERROR("Terminal monitor worker, No EOL found", "");
+			monitor_write(handle, mon_line_buffer, i_mon_line_buffer);
+			i_mon_line_buffer = 0;
 		}
 	} /* end while */
 	return NULL;
@@ -204,29 +201,28 @@ static void *monitor_worker(void *id)
 void monitor_listener(struct primitive *prim, const char *service, bool tx,
 		void *data)
 {
-	int l = snprintf(mon_line_buffer, S_MONITOR_BUFFER, "%s %s", service,
-			(tx ? "TX " : "RX "));
+	int l = snprintf(mon_get_buffer, plugin.mon_length, "[%s]%s:", service,
+			(tx ? ">" : "<"));
 	int m;
 
-	if (l+1 >= S_MONITOR_BUFFER) {
-		l = S_MONITOR_BUFFER - 1;
-		strcpy(&mon_line_buffer[S_MONITOR_BUFFER-4], "...");
-	} else {
-		mon_line_buffer[l] = '\0';
+	if (l+1 >= plugin.mon_length) {
+		l = plugin.mon_length;
+		strcpy(&mon_get_buffer[plugin.mon_length-5], "...\n");
+		goto out;
 	}
-	m = monitor(prim, &mon_line_buffer[l], S_MONITOR_BUFFER-l, NULL);
+	m = monitor(prim, &mon_get_buffer[l], plugin.mon_length-l, NULL);
 	if (m <= 0)
 		return;
 	l += m;
-	if (l+2 >= S_MONITOR_BUFFER) {
-		l = S_MONITOR_BUFFER - 5;
-		strcpy(&mon_line_buffer[l], "...");
-		l += 3;
+	if (l+1 >= plugin.mon_length) {
+		l = plugin.mon_length;
+		strcpy(&mon_get_buffer[plugin.mon_length-5], "...\n");
+		goto out;
 	}
-	strcpy(&mon_line_buffer[l], "\n");
-	l += 1;
+	strcpy(&mon_get_buffer[l++], "\n");
+out:
 	if (rb_get_free(&rb_monitor) >= l)
-		rb_write_nonblock_ch(&rb_monitor, mon_line_buffer, l);
+		rb_write_nonblock_ch(&rb_monitor, mon_get_buffer, l);
 	else
 		ax25c_log(DEBUG_LEVEL_WARNING, "Lost %i monitor bytes: buffer full", l);
 }
@@ -240,6 +236,12 @@ void stdout_initialize(struct plugin_handle *h)
 	initialized = true;
 	plugin_handle = h;
 	primbuffer_init(&primbuffer);
+	assert(plugin_handle->mon_length >= MONITOR_BUFFER_RESERVE);
+	i_mon_line_buffer = 0;
+	mon_line_buffer = malloc(plugin_handle->mon_length + MONITOR_BUFFER_RESERVE);
+	assert(mon_line_buffer);
+	mon_get_buffer = malloc(plugin_handle->mon_length);
+	assert(mon_get_buffer);
 	erc = rb_init(&rb_monitor, plugin_handle->mon_size);
 	assert(!erc);
 	erc = pthread_mutex_init(&mutex, NULL);
@@ -265,6 +267,10 @@ void stdout_terminate(struct plugin_handle *h)
 	pthread_mutex_destroy(&mutex);
 	pthread_kill(prim_thread, SIGINT);
 	pthread_kill(monitor_thread, SIGINT);
+	free(mon_line_buffer);
+	mon_line_buffer = NULL;
+	free(mon_get_buffer);
+	mon_get_buffer = NULL;
 	rb_destroy(&rb_monitor);
 	primbuffer_destroy(&primbuffer);
 	plugin_handle = NULL;

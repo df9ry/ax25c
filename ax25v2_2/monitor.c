@@ -79,7 +79,7 @@ static int put_info(uint8_t *po, int co, char *pb, int cb)
 	return ib;
 }
 
-static int _monitor_provider(struct primitive *prim, char *pb, size_t cb)
+static int _ax25_monitor_provider(struct primitive *prim, char *pb, size_t cb)
 {
 	int i, _i, j = 0, k, _cb = cb, nr, ns;
 	callsign call;
@@ -307,19 +307,19 @@ data:
 	return i;
 }
 
-static int monitor_provider(struct primitive *prim, char *pb, size_t cb,
+static int ax25_monitor_provider(struct primitive *prim, char *pb, size_t cb,
 		struct exception *ex)
 {
 	int res;
 
 	if (cb < 5) {
-		exception_fill(ex, ENOMEM, MODULE_NAME, "monitor_provider",
+		exception_fill(ex, ENOMEM, MODULE_NAME, "ax25_monitor_provider",
 				"buffer too small (< 5)", "");
 		return -ENOMEM;
 	}
-	res = _monitor_provider(prim, pb, cb);
+	res = _ax25_monitor_provider(prim, pb, cb);
 	if (res < 0) {
-		exception_fill(ex, EINVAL, MODULE_NAME, "monitor_provider",
+		exception_fill(ex, EINVAL, MODULE_NAME, "ax25_monitor_provider",
 				"internal error", "");
 		return -EINVAL;
 	}
@@ -334,10 +334,10 @@ static int monitor_provider(struct primitive *prim, char *pb, size_t cb,
 
 bool ax25v2_2_monitor_init(struct exception *ex)
 {
-	return register_monitor_provider(AX25, monitor_provider, ex);
+	return register_monitor_provider(AX25, ax25_monitor_provider, ex);
 }
 
 bool ax25v2_2_monitor_dest(struct exception *ex)
 {
-	return unregister_monitor_provider(AX25, monitor_provider, ex);
+	return unregister_monitor_provider(AX25, ax25_monitor_provider, ex);
 }

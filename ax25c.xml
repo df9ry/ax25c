@@ -44,6 +44,8 @@
 				<Setting name="peer">AX25</Setting>
 				<!-- Max. length of a line -->
 				<Setting name="line_length">132</Setting>
+				<!-- Max. length of a monitor line -->
+				<Setting name="mon_length">132</Setting>
 				<!-- Buffer sizes -->
 				<Setting name="mon_size">1024</Setting>
 				<!-- Local address -->

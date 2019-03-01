@@ -29,6 +29,7 @@ struct plugin_handle {
 	const char *name;
 	const char *peer;
 	size_t      mon_size;
+	size_t      mon_length;
 	size_t      line_length;
 	string_t    loc_addr;
 	string_t    rem_addr;

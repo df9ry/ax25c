@@ -72,7 +72,7 @@ static bool onTick(void *user_data, struct exception *ex)
 				continue;
 			}
 		}
-		/* Handle timer */
+		/* Handle Timer */
 		{
 			struct ax25c_timer *timer;
 
