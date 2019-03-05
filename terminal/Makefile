@@ -29,7 +29,7 @@ LDFLAGS  =  -shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 TARGET   =  ax25c_terminal.so
 OBJS     =  module.o terminal.o stdin.o stdout.o
 LIBS     =  -L$(SRCDIR)/../runtime/_$(_CONF) -lax25c_runtime \
-			-L$(LOCAL)/$(SODIR) -lstringc -lpthread
+			-L$(LOCAL)/$(SODIR) -lstringc -lringbuffer -lpthread
 
 all: $(TARGET)
 	cp $(TARGET) ../../_$(_CONF)

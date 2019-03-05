@@ -16,7 +16,6 @@
  */
 
 #include "../runtime/primbuffer.h"
-#include "../runtime/ringbuffer.h"
 #include "../runtime/dl_prim.h"
 
 #include "_internal.h"
@@ -27,6 +26,8 @@
 #include <signal.h>
 #include <string.h>
 #include <assert.h>
+
+#include <ringbuffer/ringbuffer.h>
 
 #define MONITOR_BUFFER_RESERVE 16
 static char *mon_line_buffer;
