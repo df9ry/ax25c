@@ -86,19 +86,7 @@ clean:
 	@$(MAKE) -C $(SRCDIR)/ax25v2_2 clean
 	@$(MAKE) -C $(SRCDIR)/axudp clean
 
-.PHONY: cleansub
-cleansub:
-	( cd $(SRCDIR)/user_kernel_interface/ && make clean )
-	( cd $(SRCDIR)/stringc/               && make clean )
-	( cd $(SRCDIR)/mapc/                  && make clean )
-
 install: all
-
-.PHONY: installsub
-installsub:
-	@( cd $(SRCDIR)/user_kernel_interface/ && make install )
-	@( cd $(SRCDIR)/stringc/               && make install )
-	@( cd $(SRCDIR)/mapc/                  && make install )
 
 run: all
 	@echo "Executing $(TARGET)"
