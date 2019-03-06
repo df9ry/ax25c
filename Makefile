@@ -30,14 +30,9 @@ TARGET   =  ax25c
 OBJS     =  ax25c.o
 
 .PHONY: all
-all: runtime config terminal mm_simple ax25v2_2 axudp $(TARGET)
+all: runtime serial config terminal mm_simple ax25v2_2 axudp \
+			$(TARGET)
 	@echo "** Build ax25c OK ***"
-
-.PHONY: sub
-sub:
-	@( cd $(SRCDIR)/user_kernel_interface/ && make all )
-	@( cd $(SRCDIR)/stringc/               && make all )
-	@( cd $(SRCDIR)/mapc/                  && make all )
 
 $(TARGET): runtime $(OBJS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJS) $(LIBS)
@@ -45,6 +40,10 @@ $(TARGET): runtime $(OBJS)
 .PHONY: runtime
 runtime:
 	$(MAKE) -C $(SRCDIR)/runtime all
+	
+.PHONY: serial
+serial:
+	$(MAKE) -C $(SRCDIR)/serial all
 
 .PHONY: config
 config:
@@ -80,6 +79,7 @@ doc:
 clean:
 	rm -rf $(SRCDIR)/$(OBJDIR)/* $(SRCDIR)/$(DOCDIR)/*
 	@$(MAKE) -C $(SRCDIR)/runtime clean
+	@$(MAKE) -C $(SRCDIR)/serial clean
 	@$(MAKE) -C $(SRCDIR)/config clean
 	@$(MAKE) -C $(SRCDIR)/terminal clean
 	@$(MAKE) -C $(SRCDIR)/mm_simple clean
