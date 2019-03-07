@@ -26,6 +26,8 @@
 #include <signal.h>
 #include <assert.h>
 
+#undef DEBUG_POLLS
+
 struct plugin_handle plugin;
 
 static struct  setting_descriptor plugin_settings_descriptor[] = {
@@ -34,7 +36,8 @@ static struct  setting_descriptor plugin_settings_descriptor[] = {
 
 static struct setting_descriptor instance_settings_descriptor[] = {
 		{ "comport",  CSTR_T, offsetof(struct instance_handle, comport),  "COM1"   },
-		{ "baudrate", UINT_T, offsetof(struct instance_handle, baudrate), "115200" },
+		{ "baudrate", UINT_T, offsetof(struct instance_handle, baudrate), "9600"   },
+		{ "channels", UINT_T, offsetof(struct instance_handle, channels), "4"      },
 		{ NULL }
 };
 
@@ -72,9 +75,11 @@ static inline int write_cstr(struct instance_handle *instance,
 	instance->sio_buf[0] = channel;
 	instance->sio_buf[1] = code;
 	memcpy(&instance->sio_buf[2], s, l+1);
+#ifdef DEBUG_POLLS
 	ax25c_log(DEBUG_LEVEL_DEBUG,
 			MODULE_NAME ":worker:response [%i,%i] \"%s\"",
 			channel, code, s);
+#endif
 	return write_n(instance->serial, instance->sio_buf, l+3);
 }
 
@@ -84,9 +89,11 @@ static inline int write_ok(struct instance_handle *instance,
 	assert(instance);
 	instance->sio_buf[0] = channel;
 	instance->sio_buf[1] = 0;
+#ifdef DEBUG_POLLS
 	ax25c_log(DEBUG_LEVEL_DEBUG,
 			MODULE_NAME ":worker:response [%i,OK]",
 			channel);
+#endif
 	return write_n(instance->serial, instance->sio_buf, 2);
 }
 
@@ -111,15 +118,12 @@ static void *worker(void *id)
 		channel = instance->sio_buf[0];
 		cmd = instance->sio_buf[1];
 		len = instance->sio_buf[2] + 1;
-		if (channel < 0)
-			channel = 0;
 		assert(len <= 256);
 		/*
 		ax25c_log(DEBUG_LEVEL_DEBUG,
 				MODULE_NAME ":worker: channel %i [%s] %i bytes",
 				channel, cmd ? "cmd" : "data", len);
 		*/
-
 		n = read_n(instance->serial, instance->sio_buf, len);
 		if (!instance->alive)
 			return NULL;
@@ -130,49 +134,208 @@ static void *worker(void *id)
 			continue;
 		}
 		assert(n == len);
+		instance->sio_buf[len] = '\0';
+
+		if ((channel < 0) || (channel > instance->channels)) {
+			n = write_cstr(instance, channel, 2, "INVALID CHANNEL NUMBER");
+			continue;
+		}
 
 		if (cmd) {
 			/* Handle command */
-			instance->sio_buf[len] = '\0';
+#ifdef DEBUG_POLLS
 			ax25c_log(DEBUG_LEVEL_DEBUG,
 					MODULE_NAME ":worker:command [%i]: \"%s\"",
 					channel, instance->sio_buf);
+#endif
 			char c = instance->sio_buf[0];
 			if (c >= 0x20) {
 				switch (c) {
-				case 'C':
+				case 'A':
 					ax25c_log(DEBUG_LEVEL_INFO,
-							MODULE_NAME ":worker:command [%i]: \"%s\"",
+							MODULE_NAME ": AUTO LINEFEED [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'B':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": TERMINAL BAUDRATE [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'C':
+					if (len == 1) {
+						n = write_cstr(instance, channel, 1, "CHANNEL NOT CONNECTED");
+					} else {
+						ax25c_log(DEBUG_LEVEL_INFO,
+								MODULE_NAME ": CONNECT REQUEST [%i] %s",
+								channel, instance->sio_buf);
+						n = write_ok(instance, channel);
+					}
+					break;
+				case 'D':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": DISCONNECT [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'E':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": ECHO INPUT [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'F':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": FRAME ACKNOWLEDGE [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'G':
+					n = write_ok(instance, channel);
+					break;
+				case 'H':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": HDLC BAUDRATE [%i] %s",
 							channel, instance->sio_buf);
 					n = write_ok(instance, channel);
 					break;
 				case 'I':
-					//n = write_cstr(instance, channel, 1, "DF9RY ");
 					n = write_ok(instance, channel);
 					break;
-				case 'V': /* Hostmode version */
+				case 'J':
+					if (strcmp(instance->sio_buf, "JHOST1") == 0)
+						ax25c_log(DEBUG_LEVEL_INFO,
+								MODULE_NAME ": HOSTMODE ENTER");
+					else
+						ax25c_log(DEBUG_LEVEL_INFO,
+								MODULE_NAME ": HOSTMODE EXIT");
+					n = write_ok(instance, channel);
+					break;
+				case 'K':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": CALIBRATE [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'L':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": L POLL [%i] %s",
+							channel, instance->sio_buf);
+					if (channel == 0)
+						n = write_cstr(instance, channel, 1, "0 0");
+					else
+						n = write_cstr(instance, channel, 1, "0 0 0 0 0 1");
+					break;
+				case 'M':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": MONITOR CONFIG [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'O':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": OUTSTANDING I FRAMES [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'P':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": PERM COMMAND [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'Q':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": RESTART FIRMWARE [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'R':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": REPEATER ENABLE [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'S':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": SELECT CHANNEL [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'T':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": TRANSMITTER DELAY [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'U':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": UNATTENDED MODE [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'V':
 					n = write_cstr(instance, channel, 1, "2");
 					break;
+				case 'W':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": TRANSMITTER WAIT [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'X':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": PTT ENABLE [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'Y':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": MAXIMUM CONNECTIONS [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case 'Z':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": FLOW CONTROL [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case '@':
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": BUFFERS [%i] %s",
+							channel, instance->sio_buf);
+					n = write_ok(instance, channel);
+					break;
+				case '#':
+					n = write_cstr(instance, channel, 1, "CHANNEL NOT CONNECTD");
+					break;
 				default:
+					ax25c_log(DEBUG_LEVEL_INFO,
+							MODULE_NAME ": UNIDENTIFIED COMMAND [%i] %s",
+							channel, instance->sio_buf);
 					n = write_ok(instance, channel);
 					break;
 				} /* end switch */
 			} else {
 				n = write_cstr(instance, channel, 2, "INVALID COMMAND");
 			}
-			if (n < 0) {
-				ax25c_log(DEBUG_LEVEL_ERROR,
-						MODULE_NAME ":worker:write_str(resp) error %i:%s",
-						-n, strerror(-n));
-				continue;
-			}
 		} else {
 			/* Handle data */
-			ax25c_log(DEBUG_LEVEL_INFO,
+#ifdef DEBUG_POLLS
+			ax25c_log(DEBUG_LEVEL_DEBUG,
 					MODULE_NAME ":worker:data [%i]: \"%s\"",
 					channel, instance->sio_buf);
+#endif
+			n = write_ok(instance, channel);
 		}
-
+		if (n < 0) {
+			ax25c_log(DEBUG_LEVEL_ERROR,
+					MODULE_NAME ":worker:write_str(resp) error %i:%s",
+					-n, strerror(-n));
+			continue;
+		}
 	} /* end while */
 	return NULL;
 }

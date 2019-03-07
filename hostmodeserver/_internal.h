@@ -35,6 +35,7 @@ struct instance_handle {
 	/* Settings */
 	const char   *comport;
 	unsigned int  baudrate;
+	unsigned int  channels;
 	/* State */
 	HANDLE        serial;
 	char          sio_buf[S_SIO_BUF];

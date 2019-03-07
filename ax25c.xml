@@ -98,6 +98,7 @@
 					<Settings>
 						<Setting name="comport">COM4</Setting>
 						<Setting name="baudrate">9600</Setting>
+						<Setting name="channels">8</Setting>
 					</Settings>
 				</Instance>
 			</Instances>
