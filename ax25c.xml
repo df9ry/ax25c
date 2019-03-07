@@ -89,6 +89,20 @@
 			</Instances>
 		</Plugin>
 		
+		<!--
+			Hostmode server.
+		-->
+		<Plugin name="HOSTMODESERVER" file="hostmodeserver.so">
+			<Instances>
+				<Instance name="HOSTMODE-1">
+					<Settings>
+						<Setting name="comport">COM4</Setting>
+						<Setting name="baudrate">9600</Setting>
+					</Settings>
+				</Instance>
+			</Instances>
+		</Plugin>
+		
 	</Plugins>
 	
 </Configuration>

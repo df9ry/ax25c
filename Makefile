@@ -31,7 +31,7 @@ OBJS     =  ax25c.o
 
 .PHONY: all
 all: runtime serial config terminal mm_simple ax25v2_2 axudp \
-			$(TARGET)
+			hostmodeserver $(TARGET)
 	@echo "** Build ax25c OK ***"
 
 $(TARGET): runtime $(OBJS)
@@ -65,6 +65,10 @@ ax25v2_2:
 axudp:
 	$(MAKE) -C $(SRCDIR)/axudp all
 
+.PHONY: hostmodeserver
+hostmodeserver:
+	$(MAKE) -C $(SRCDIR)/hostmodeserver all
+
 %.o: %.c %.h Makefile
 	$(CC) $(CFLAGS) -c $<	
 
@@ -85,6 +89,7 @@ clean:
 	@$(MAKE) -C $(SRCDIR)/mm_simple clean
 	@$(MAKE) -C $(SRCDIR)/ax25v2_2 clean
 	@$(MAKE) -C $(SRCDIR)/axudp clean
+	@$(MAKE) -C $(SRCDIR)/hostmodeserver clean
 
 install: all
 
