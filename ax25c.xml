@@ -73,6 +73,16 @@
 		</Plugin>
 		
 		<!--
+			AX25 TNOS state machine.
+		-->
+		<Plugin name="TNOS" file="axtnos.so">
+			<Settings>
+				<Setting name="peer">AXUDP-1</Setting>
+				<Setting name="n_sessions">16</Setting>
+			</Settings>
+		</Plugin>
+		
+		<!--
 			AXUDP Uplink.
 		-->
 		<Plugin name="AXUDP" file="ax25c_udp.so">
