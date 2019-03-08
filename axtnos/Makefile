@@ -29,8 +29,8 @@ LDFLAGS  =  $(WINFLAGS) \
 			-shared -Wall -g -ggdb -fpic -fmessage-length=0 -pthread
 			
 TARGET   =  axtnos.so
-OBJS     =  module.o lapb.o ax25.o ax25_subr.o mbuf.o timer.o misc.o \
-			unix.o kernel.o
+OBJS     =  module.o lapb.o lapbtime.o ax25.o ax25_subr.o mbuf.o timer.o \
+			misc.o unix.o kernel.o
 LIBS     =  $(WINLIBS) \
 			-L$(SRCDIR)/../_$(_CONF) -lax25c_runtime \
 			-lpthread

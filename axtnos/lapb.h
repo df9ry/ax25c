@@ -158,7 +158,4 @@ void redundant (void *p);
 /* In ax25subr.c: */
 int16 ftype (int control);
 
-/* In nr3.c: */
-void nr_derate ( struct ax25_cb *axp);
-
 #endif /* AXTNOS_LAPB_H_ */

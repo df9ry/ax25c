@@ -104,10 +104,10 @@ int recovery = 0;
 	switch (class) {
 		case I:
 		case I + 2:
-			ns = (control >> 1) & MMASK;	/*lint !e702 !e616 */
+			ns = (control >> 1) & MMASK;
 		case S:	/* Note fall-thru */
 		default:
-			nr = (control >> 5) & MMASK;	/*lint !e702 */
+			nr = (control >> 5) & MMASK;
 			break;
 	}
 	/* This section follows the SDL diagrams by K3NA fairly closely */
