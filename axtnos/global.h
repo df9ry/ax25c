@@ -20,10 +20,6 @@
 #ifndef AXTNOS_GLOBAL_H_
 #define AXTNOS_GLOBAL_H_
 
-#ifdef TNOS_MALLOC
-#define MALLOC_DEBUG
-#endif
-
 #define _HAVE_STRING_ARCH_strdup
 #define _HAVE_STRING_ARCH_strndup
 #define _HAVE_STRING_ARCH_strcpy
@@ -31,14 +27,7 @@
 
 #include <assert.h>
 
-#ifndef _SYSTEM_H
 #include "system.h"
-#endif
-
-#if defined(USE_ALT_SYS_ERRLIST)
-extern char * sys_errlist (int x);
-#define SYS_ERRLIST(x)  	sys_errlist(x)
-#endif
 
 #ifndef SYS_ERRLIST
 #define SYS_ERRLIST(x)		sys_errlist[x]
@@ -58,28 +47,12 @@ extern char * sys_errlist (int x);
  * Some may be compiler dependent.
  */
 
-#ifndef _STDIO_H
 # include <stdio.h>
-#endif
-#undef  _STDIO_H_
-#define _STDIO_H_	1
-
-#if !defined(_STDLIB_H)
 # include <stdlib.h>
-#endif
-#undef  _STDLIB_H_
-#define _STDLIB_H_
-
-#ifndef _STRING_H
 # include <string.h>
-#endif
-#undef  _STRING_H_
-#define _STRING_H_	1
 
 #define O_BINARY 0
-#ifndef _SYS_TYPES_H
 # include <sys/types.h>
-#endif
 
 #ifndef TNOS_TIMEZONE
 #define TNOS_TIMEZONE timezone
@@ -136,12 +109,6 @@ typedef unsigned char uint8;	/*  8-bit unsigned integer */
 # define ASSIGN(a,b)	memcpy((char *)&(a),(char *)&(b),sizeof(b));
 #else			/* Version for compilers that do */
 # define ASSIGN(a,b)	((a) = (b))
-#endif
-
-/* Define null object pointer in case stdio.h isn't included */
-#ifndef	NULL
-/* General purpose NULL pointer */
-# define NULL (void *)0
 #endif
 
 #define	NULLCHAR	(char *)0	/* Null character pointer */
@@ -203,13 +170,6 @@ void textattr (int color);
 void textbackground (int color);
 void textcolor (int color);
 void textrefresh (void);
-#ifdef BSD_RANDOM
-# define SRANDOM(n) srandom(n)
-# define RANDOM(n) ((int) (random() * (n)))
-#else
-# ifdef sun
-   extern double drand48(void);
-# endif
 # define SRANDOM(n) srand48(n)
 # define RANDOM(n) ((int) (drand48() * (n)))
 #endif
@@ -221,10 +181,6 @@ void textrefresh (void);
   /* and work around a collision which is currently making me drop core... */
 #undef tputs
 #define tputs j_tputs
-  /* some older systems lack strtoul(); we'll just have to hope this is okay */
-#ifdef NO_STRTOUL
-# define strtoul(s,cp,b) ((unsigned long) strtol((s),(cp),(b)))
-#endif
 
 int tputs (const char *s);
 
@@ -310,19 +266,8 @@ int tprintf (const char *fmt,...)
 #include <errno.h>
 #endif
 
-#ifdef BROKE_SPRINTF
-# define SPRINTF(x) (int)strlen(sprintf x)
-# define VSPRINTF(x) (int)strlen((char *)vsprintf x)
-#else
 # define SPRINTF(x) sprintf x
 # define VSPRINTF(x) vsprintf x
-#endif
-
-#if 0
-/* Externals used by getopt */
-extern int optind;
-extern char *optarg;
-#endif
 
 /* System clock - count of ticks since startup */
 extern volatile int32 Clock;
@@ -352,43 +297,15 @@ extern const char System[];
 /* I know this is cheating, but it definitely makes sure that
  * each module has config.h included ! - WG7J
  */
-#ifndef _CONFIG_H
-# include "config.h"
-#endif
-
-#ifndef _UNIXTM_H
   /* this is separate so unix.c can load it without global.h */
 # include "unixtm.h"
-#endif
 
 int getopt (int argc,char * const *argv,const char *opts);
 
 /* in main.c  */
 void where_outta_here (int resetme, char const *where);
 
-#ifndef MALLOC_DEBUG
-  /* can't do this above, GNU libc defines malloc to gnu_malloc in stdlib.h */
-# undef malloc
-  /*lint -save -e652 */
-# define malloc mallocw
-  /*lint -restore */
-  /* minimal malloc checking is done, so intercept free() */
-# undef free
-  /*lint -save -e652 */
-# define free j_free
-  /*lint -restore */
-# ifdef J_FREE_HACK
-   void j_free (void *);
-# else
-   void j_free (const void *);
-# endif
-#else
-# define mallocw malloc
-# define callocw calloc
-# define j_free free
-#endif
-
-#include "rmalloc.h"
+#define mallocw malloc
+#define callocw calloc
+#define j_free free
 #define freeIfSet(x) if (x) free (x);
-
-#endif /* AXTNOS_GLOBAL_H_ */

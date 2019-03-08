@@ -15,6 +15,13 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#ifdef __MINGW32__
+#include "windows.h"
+#include <winsock2.h>
+#include <ws2tcpip.h>
+#else
+#endif
+
 /** @file system.h */
 
 #ifndef AXTNOS_SYSTEM_H_

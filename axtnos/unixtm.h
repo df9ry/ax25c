@@ -39,8 +39,6 @@ extern void tnos_getdate (struct date *);
 extern void gettime (struct time *);
 extern long secclock (void);
 extern long msclock (void);
-#ifndef _HARDWARE_H
 extern long dostounix (struct date *, struct time *);
-#endif
 
 #endif /* AXTNOS_UNIXTM_H_ */

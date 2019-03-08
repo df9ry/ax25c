@@ -20,24 +20,9 @@
 #ifndef AXTNOS_AX25_H_
 #define AXTNOS_AX25_H_
 
-#ifndef	_GLOBAL_H
 #include "global.h"
-#endif
-
-#include "ip.h"
-
-#ifndef	_MBUF_H
 #include "mbuf.h"
-#endif
-
-#ifndef	_IFACE_H
 #include "iface.h"
-#endif
-
-#ifndef	_SOCKADDR_H
-#include "sockaddr.h"
-#endif
-
 
 /* AX.25 datagram (address) sub-layer definitions */
 

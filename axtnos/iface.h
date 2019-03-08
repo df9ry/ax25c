@@ -28,13 +28,8 @@
 struct iface;			/* forward declaration for gcc */
 #endif
 
-#include "tcp.h"
-
-#ifdef AX25
-#ifndef _AX25_H
+//#include "tcp.h"
 #include "ax25.h"
-#endif
-#endif
 
 /* Interface encapsulation mode table entry. An array of these structures
  * are initialized in config.c with all of the information necessary
@@ -43,7 +38,7 @@ struct iface;			/* forward declaration for gcc */
 
 #if !defined(send) && !defined(_SOCKET_H)
 /* ugly hack to avoid both libc collisions and jnos misconnections */
-#include "socket.h"
+//#include "socket.h"
 #endif
 
 
@@ -63,8 +58,6 @@ struct iftype {
 #define	NULLIFT	(struct iftype *)0
 extern struct iftype Iftypes[];
 
-
-#ifdef AX25	/* placed here to prevent interdependency problems w/header files */
 struct ax25_counters	{
 	int32	msgin;
 	int32	msgout;
@@ -80,8 +73,6 @@ struct ax25_counters	{
 	int32	rejout;
 	int32	retries;
 };
-#endif
-
 
 /* Interface control structure */
 struct iface {
@@ -161,10 +152,8 @@ struct iface {
 	char *rmtaddr;		/* AXIP remote address, if any */
 
 	/* Encapsulation dependant */
-#ifdef AX25
 	struct ifax25 *ax25;    /* Pointer to ax.25 protocol structure */
 	struct ax25_counters axcnt; /* AX25 counters */
-#endif
 	struct iftcp *tcp;      /* Tcp protocol variables */
 	void *edv;		/* Pointer to protocol extension block, if any */
 	int type;		/* Link header type for phdr */
@@ -203,14 +192,6 @@ struct phdr {
 	unsigned short type;	/* Use pktdrvr "class" values */
 };
 
-#if 0
-/* Header put on front of each packet sent to an interface */
-struct qhdr {
-	char tos;
-	uint32 gateway;
-};
-#endif
-
 extern struct mbuf *Hopper;
 
 /* In iface.c: */
@@ -225,7 +206,5 @@ int mask2width (uint32 mask);         /* Added N0POY, for rip code */
 
 /* In config.c: */
 int net_route (struct iface *ifp,int type,struct mbuf *bp);
-
-
 
 #endif /* AXTNOS_IFACE_H_ */

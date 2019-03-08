@@ -31,7 +31,7 @@ struct session;			/* forward declaration */
 #endif
 
 #define	OUTBUFSIZE	512	/* Size to be malloc'ed for outbuf */
-
+#define STACKBASE   0x1000000
 
 /* Kernel process control block */
 #define	PHASH	16		/* Number of wait table hash chains */
@@ -52,9 +52,7 @@ struct proc {
 	volatile void *event;	/* Wait event */
 	int16 *stack;		/* Process stack */
 	unsigned stksize;	/* Size of same */
-#ifdef __CYGWIN__
 	int16 *stkptr;		/* Process stack pointer */
-#endif
 	char *name;		/* Arbitrary user-assigned name */
 	int retval;		/* Return value from next kwait() */
 	struct timer alarm;	/* Alarm clock timer */
